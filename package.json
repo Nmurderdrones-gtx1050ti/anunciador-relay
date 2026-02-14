@@ -10,4 +10,5 @@
     "socket.io-client": "^4.7.4",
     "minecraft-protocol": "^1.47.0"
   }
+
 }
