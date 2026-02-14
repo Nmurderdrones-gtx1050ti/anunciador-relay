@@ -1,13 +1,15 @@
 {
   "name": "minecraft-announcer-database",
   "version": "4.0.0",
-  "main": "bot.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "mineflayer": "^4.20.1",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
     "socket.io-client": "^4.7.4",
+    "mineflayer": "^4.20.1",
     "minecraft-protocol": "^1.47.0"
   }
 }
