@@ -1,12 +1,13 @@
 {
-  "name": "anunciador-relay",
-  "version": "3.0.0",
-  "main": "server.js",
+  "name": "minecraft-announcer-database",
+  "version": "4.0.0",
+  "main": "bot.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node bot.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.7.4"
+    "mineflayer": "^4.20.1",
+    "socket.io-client": "^4.7.4",
+    "minecraft-protocol": "^1.47.0"
   }
 }

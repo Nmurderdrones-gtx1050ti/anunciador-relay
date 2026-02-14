@@ -4,39 +4,28 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-
 const io = new Server(server, {
-    cors: {
-        origin: '*',
-        methods: ['GET', 'POST'],
-    },
+    cors: { origin: '*', methods: ['GET', 'POST'] },
     pingTimeout: 60000,
     pingInterval: 25000,
 });
 
-// ===== CONFIGURAÇÃO =====
 const SECRET_KEY = 'MUDE_ESSA_CHAVE_SECRETA_123';
 
-// ===== ESTADO =====
 let botSocket = null;
 let botData = {
     stats: {
-        botsAtivos: 0,
-        totalBots: 0,
-        blacklistSize: 0,
-        blacklistItems: [],
-        mensagens: [],
-        intervalo: 180,
-        username: 'Anunciador',
+        botsAtivos: 0, totalBots: 0, blacklistSize: 0,
+        blacklistItems: [], mensagens: [], intervalo: 180, username: 'Anunciador',
     },
     bots: [],
     logs: [],
     chatDatabase: [],
-    servers: [], // Lista de servidores detectados
+    servers: [],
     analytics: {
-        playersOverTime: [], // {timestamp, total}
-        messagesPerHour: [], // {hour, count}
-        topServers: [], // {serverKey, messages, players}
+        playersOverTime: [],
+        messagesPerHour: [],
+        topServers: [],
     }
 };
 
@@ -53,21 +42,17 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => res.send('OK'));
 
-// ===== FUNÇÕES DE ANALYTICS =====
+// Analytics
 function updateAnalytics() {
-    // Atualiza contagem de jogadores ao longo do tempo
     const now = Date.now();
     let totalPlayers = 0;
     botData.servers.forEach(s => {
         if (s.status === 'online' && s.players) totalPlayers += s.players.length;
     });
-    
+
     botData.analytics.playersOverTime.push({ timestamp: now, total: totalPlayers });
-    if (botData.analytics.playersOverTime.length > 720) { // Últimas 12h (1 ponto/minuto)
-        botData.analytics.playersOverTime.shift();
-    }
-    
-    // Atualiza mensagens por hora
+    if (botData.analytics.playersOverTime.length > 720) botData.analytics.playersOverTime.shift();
+
     const currentHour = new Date().getHours();
     const hourData = botData.analytics.messagesPerHour.find(h => h.hour === currentHour);
     if (hourData) {
@@ -78,34 +63,24 @@ function updateAnalytics() {
     } else {
         botData.analytics.messagesPerHour.push({ hour: currentHour, count: 1 });
     }
-    
-    // Top servidores
+
     const serverStats = {};
     botData.chatDatabase.forEach(m => {
-        if (!serverStats[m.serverKey]) {
-            serverStats[m.serverKey] = { messages: 0, players: new Set() };
-        }
+        if (!serverStats[m.serverKey]) serverStats[m.serverKey] = { messages: 0, players: new Set() };
         serverStats[m.serverKey].messages++;
         serverStats[m.serverKey].players.add(m.username);
     });
-    
     botData.analytics.topServers = Object.entries(serverStats)
-        .map(([key, data]) => ({
-            serverKey: key,
-            messages: data.messages,
-            uniquePlayers: data.players.size
-        }))
+        .map(([key, data]) => ({ serverKey: key, messages: data.messages, uniquePlayers: data.players.size }))
         .sort((a, b) => b.messages - a.messages)
         .slice(0, 10);
 }
 
-// Atualiza analytics a cada minuto
 setInterval(updateAnalytics, 60000);
 
-// ===== SOCKET.IO =====
+// Socket.IO
 io.on('connection', (socket) => {
-
-    // --- BOT DO PC ---
+    // Bot do PC
     if (socket.handshake.auth?.key === SECRET_KEY && socket.handshake.auth?.type === 'bot') {
         console.log('🤖 Bot conectou!');
         if (botSocket) try { botSocket.disconnect(); } catch {}
@@ -140,34 +115,23 @@ io.on('connection', (socket) => {
 
         socket.on('serverUpdate', (serverData) => {
             const idx = botData.servers.findIndex(s => s.key === serverData.key);
-            if (idx >= 0) {
-                botData.servers[idx] = { ...botData.servers[idx], ...serverData };
-            } else {
-                botData.servers.push(serverData);
-            }
+            if (idx >= 0) botData.servers[idx] = { ...botData.servers[idx], ...serverData };
+            else botData.servers.push(serverData);
             io.emit('serverUpdate', botData.servers);
         });
 
-        socket.on('botsUpdate', (data) => {
-            botData.bots = data;
-            io.emit('botsUpdate', data);
-        });
-
-        socket.on('statsUpdate', (data) => {
-            botData.stats = data;
-            io.emit('statsUpdate', data);
-        });
+        socket.on('botsUpdate', (data) => { botData.bots = data; io.emit('botsUpdate', data); });
+        socket.on('statsUpdate', (data) => { botData.stats = data; io.emit('statsUpdate', data); });
 
         socket.on('disconnect', () => {
             console.log('🔌 Bot saiu');
             botSocket = null;
             io.emit('botStatus', false);
         });
-
         return;
     }
 
-    // --- USUÁRIO WEB ---
+    // Usuário web
     console.log('🌐 Web conectou');
     socket.emit('init', {
         stats: botData.stats,
@@ -179,7 +143,6 @@ io.on('connection', (socket) => {
     });
     socket.emit('botStatus', botSocket !== null);
 
-    // Comandos do frontend
     ['chat', 'command', 'announce', 'addMsg', 'delMsg', 'setIntervalo',
      'setUsername', 'connect_server', 'disconnect_server',
      'clearBlacklist', 'removeBlacklist', 'jump', 'refresh',
@@ -193,46 +156,38 @@ io.on('connection', (socket) => {
 
     socket.on('getChatMessages', (filter) => {
         let filtered = botData.chatDatabase;
-
-        if (filter.serverKey && filter.serverKey !== 'all') {
+        if (filter.serverKey && filter.serverKey !== 'all')
             filtered = filtered.filter(m => m.serverKey === filter.serverKey);
-        }
-
         if (filter.search) {
             const s = filter.search.toLowerCase();
-            filtered = filtered.filter(m =>
-                m.username.toLowerCase().includes(s) ||
-                m.message.toLowerCase().includes(s)
-            );
+            filtered = filtered.filter(m => m.username.toLowerCase().includes(s) || m.message.toLowerCase().includes(s));
         }
-
         socket.emit('chatMessages', filtered.slice(-500));
     });
 
     socket.on('getAnalytics', (timeRange) => {
         const now = Date.now();
-        let startTime = now;
-
+        let startTime = 0;
         switch (timeRange) {
-            case '1h': startTime = now - (60 * 60 * 1000); break;
-            case '24h': startTime = now - (24 * 60 * 60 * 1000); break;
-            case '7d': startTime = now - (7 * 24 * 60 * 60 * 1000); break;
-            default: startTime = 0;
+            case '1h': startTime = now - 3600000; break;
+            case '24h': startTime = now - 86400000; break;
+            case '7d': startTime = now - 604800000; break;
         }
-
-        const filteredPlayers = botData.analytics.playersOverTime.filter(p => p.timestamp >= startTime);
-        const filteredMessages = botData.chatDatabase.filter(m => m.timestamp >= startTime);
-
         socket.emit('analyticsData', {
-            playersOverTime: filteredPlayers,
+            playersOverTime: botData.analytics.playersOverTime.filter(p => p.timestamp >= startTime),
             messagesPerHour: botData.analytics.messagesPerHour,
             topServers: botData.analytics.topServers,
-            totalMessages: filteredMessages.length
+            totalMessages: botData.chatDatabase.filter(m => m.timestamp >= startTime).length
         });
+    });
+
+    // Buscar arquivos do GitHub
+    socket.on('getArchives', async () => {
+        // Dashboard vai buscar direto da API do GitHub (público)
+        socket.emit('archivesReady');
     });
 });
 
-// Atualiza clientes a cada 5s
 setInterval(() => {
     io.emit('botsUpdate', botData.bots);
     io.emit('serverUpdate', botData.servers);
@@ -240,4 +195,3 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`✅ Relay na porta ${PORT}`));
-
