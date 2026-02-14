@@ -59,7 +59,7 @@ function updateAnalytics() {
     const now = Date.now();
     let totalPlayers = 0;
     botData.servers.forEach(s => {
-        if (s.status === 'online') totalPlayers += s.players.length;
+        if (s.status === 'online' && s.players) totalPlayers += s.players.length;
     });
     
     botData.analytics.playersOverTime.push({ timestamp: now, total: totalPlayers });
@@ -240,3 +240,4 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`✅ Relay na porta ${PORT}`));
+
