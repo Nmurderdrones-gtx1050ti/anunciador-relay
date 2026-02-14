@@ -1,449 +1,2001 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Central Radmin VPN</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-:root {
---bg: #0B1120; --sidebar: #1C2333; --card: #1E293B; --card-hover: #2A3647;
---primary: #06B6D4; --primary-dark: #0891B2; --accent: #8B5CF6;
---text: #F1F5F9; --text2: #94A3B8; --text3: #64748B; --border: #334155;
---green: #10B981; --red: #EF4444; --yellow: #F59E0B;
-}
-body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-.app { display: flex; height: 100vh; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Radmin VPN - Painel de Controle</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* SIDEBAR MODERNA */
-.sidebar { width: 280px; background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid var(--border); transition: width 0.3s; }
-.sidebar.collapsed { width: 70px; }
-.sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.logo { display: flex; align-items: center; gap: 12px; }
-.logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1em; font-weight: 700; color: #000; }
-.logo-text { font-size: 1em; font-weight: 700; white-space: nowrap; }
-.sidebar.collapsed .logo-text, .sidebar.collapsed .nav-label, .sidebar.collapsed .nav-item span { display: none; }
-.toggle-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.2em; }
-.nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
-.nav-section { margin-bottom: 24px; }
-.nav-label { font-size: 0.7em; text-transform: uppercase; color: var(--text3); padding: 0 12px; margin-bottom: 8px; font-weight: 600; }
-.nav-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.9em; transition: all 0.2s; color: var(--text2); }
-.nav-item:hover { background: rgba(6,182,212,0.1); color: var(--text); }
-.nav-item.active { background: linear-gradient(90deg, rgba(6,182,212,0.2), rgba(139,92,246,0.1)); color: var(--text); font-weight: 600; border-left: 3px solid var(--primary); padding-left: 13px; }
-.nav-icon { font-size: 1.2em; min-width: 20px; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0e1a;
+            color: #e2e8f0;
+            overflow: hidden;
+            height: 100vh;
+        }
 
-/* MAIN */
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.topbar { background: var(--sidebar); padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.topbar-left { display: flex; gap: 12px; align-items: center; }
-.search-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px; display: flex; align-items: center; gap: 8px; width: 300px; }
-.search-box input { background: none; border: none; color: var(--text); outline: none; flex: 1; font-size: 0.85em; }
-.status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 600; }
-.status-online { background: rgba(16,185,129,0.15); color: var(--green); }
-.status-offline { background: rgba(239,68,68,0.15); color: var(--red); }
-.content { flex: 1; overflow-y: auto; padding: 24px; }
-.page { display: none; }
-.page.active { display: block; }
+        #app {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
 
-/* STATS GRID */
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-.stat-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
-.stat-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2em; }
-.stat-label { font-size: 0.8em; color: var(--text2); margin-bottom: 6px; }
-.stat-value { font-size: 1.8em; font-weight: 700; }
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            min-width: 260px;
+            background: #0f1322;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            transition: all 0.3s;
+        }
 
-/* SERVER CARDS */
-.servers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
-.server-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; }
-.server-card:hover { border-color: var(--primary); background: var(--card-hover); }
-.server-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
-.server-name { font-weight: 600; font-size: 1em; }
-.server-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.7em; font-weight: 600; }
-.badge-online { background: rgba(16,185,129,0.15); color: var(--green); }
-.badge-offline { background: rgba(239,68,68,0.15); color: var(--red); }
-.server-motd { font-size: 0.85em; color: var(--text2); margin-bottom: 12px; }
-.server-footer { display: flex; gap: 16px; font-size: 0.8em; color: var(--text3); }
-.server-info { display: flex; align-items: center; gap: 6px; }
+        .sidebar.collapsed {
+            width: 68px;
+            min-width: 68px;
+        }
 
-/* CHAT */
-.chat-container { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
-.chat-header { padding: 20px; border-bottom: 1px solid var(--border); }
-.chat-title { font-size: 1.1em; font-weight: 600; margin-bottom: 16px; }
-.chat-filters { display: flex; gap: 12px; flex-wrap: wrap; }
-.filter-input { flex: 1; min-width: 200px; background: var(--sidebar); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; font-size: 0.85em; }
-.filter-input:focus { outline: none; border-color: var(--primary); }
-.chat-tabs { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--border); }
-.chat-tab { padding: 10px 20px; cursor: pointer; font-size: 0.85em; color: var(--text3); border-bottom: 2px solid transparent; transition: all 0.2s; }
-.chat-tab:hover { color: var(--text); }
-.chat-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
-.chat-body { padding: 20px; max-height: 500px; overflow-y: auto; }
-.chat-msg { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85em; }
-.chat-msg:hover { background: var(--card-hover); }
-.chat-meta { font-size: 0.75em; color: var(--text3); margin-bottom: 4px; }
-.chat-user { color: var(--primary); font-weight: 600; }
-.chat-text { color: var(--text); }
-.chat-empty { text-align: center; padding: 60px; color: var(--text3); }
+        .sidebar-header {
+            padding: 20px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
 
-/* MODAL */
-.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
-.modal.active { display: flex; }
-.modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 14px; width: 90%; max-width: 900px; max-height: 85vh; overflow-y: auto; }
-.modal-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.modal-title { font-size: 1.3em; font-weight: 700; }
-.close-btn { background: none; border: none; color: var(--text3); font-size: 1.5em; cursor: pointer; }
-.modal-body { padding: 24px; }
-.modal-section { margin-bottom: 24px; }
-.modal-section-title { font-size: 0.9em; color: var(--text2); margin-bottom: 12px; font-weight: 600; }
-.info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-.info-item { background: var(--sidebar); padding: 12px; border-radius: 8px; }
-.info-label { font-size: 0.75em; color: var(--text3); margin-bottom: 4px; }
-.info-value { font-size: 0.9em; color: var(--text); font-weight: 500; }
-.players-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.player-item { background: var(--sidebar); padding: 8px 12px; border-radius: 8px; font-size: 0.85em; display: flex; justify-content: space-between; }
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            color: white;
+            flex-shrink: 0;
+        }
 
-/* BUTTONS */
-.btn { padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: all 0.2s; }
-.btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(6,182,212,0.3); }
-.btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-.btn-sm { padding: 6px 12px; font-size: 0.75em; }
-.toast { position: fixed; bottom: 24px; right: 24px; background: var(--card); border: 1px solid var(--primary); padding: 16px 24px; border-radius: 12px; z-index: 3000; animation: slideIn 0.3s; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-.empty { text-align: center; padding: 60px 20px; color: var(--text3); }
-@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .servers-grid { grid-template-columns: 1fr; } }
-@media (max-width: 768px) { .sidebar { width: 70px; } .sidebar.collapsed { width: 70px; } .stats-grid { grid-template-columns: 1fr; } }
-</style>
+        .sidebar-brand {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f1f5f9;
+            white-space: nowrap;
+        }
+
+        .sidebar-brand-sub {
+            font-size: 10px;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .sidebar-brand,
+        .sidebar.collapsed .nav-label,
+        .sidebar.collapsed .nav-item-text,
+        .sidebar.collapsed .connection-section,
+        .sidebar.collapsed .sidebar-footer-text {
+            display: none;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 12px 8px;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 8px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 8px 12px 6px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+        }
+
+        .nav-item.active {
+            background: rgba(99, 102, 241, 0.12);
+            color: #818cf8;
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 20px;
+            background: #6366f1;
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: #6366f1;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
+        .connection-section {
+            padding: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-dot.online {
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .status-text strong {
+            color: #e2e8f0;
+        }
+
+        .relay-input-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .relay-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 11px;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .relay-input:focus {
+            border-color: #6366f1;
+        }
+
+        .relay-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .relay-btn:hover {
+            background: #5558e6;
+        }
+
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .sidebar-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 12px;
+            transition: all 0.15s;
+            background: none;
+            border: none;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: #94a3b8;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #0a0e1a;
+        }
+
+        .topbar {
+            height: 56px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            background: rgba(15, 19, 34, 0.8);
+            backdrop-filter: blur(10px);
+            flex-shrink: 0;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #f1f5f9;
+        }
+
+        .stat-value.online {
+            color: #22c55e;
+        }
+
+        /* Server Cards Grid */
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .server-card {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .server-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .server-card-header {
+            padding: 18px 20px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .server-card-info h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 4px;
+        }
+
+        .server-motd {
+            font-size: 12px;
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        .server-status-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .server-status-badge.online {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .server-status-badge.offline {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .server-card-body {
+            padding: 0 20px 14px;
+        }
+
+        .server-detail-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .server-detail-row svg {
+            width: 14px;
+            height: 14px;
+            color: #64748b;
+        }
+
+        .server-card-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+        }
+
+        .server-card-action {
+            flex: 1;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: none;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .server-card-action:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: #94a3b8;
+        }
+
+        .server-card-action+.server-card-action {
+            border-left: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .server-card-action svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Modal / Popup */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s;
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .modal-info-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .modal-info-item label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .modal-info-item span {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .modal-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .players-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .player-tag {
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .modal-chat {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .modal-chat-msg {
+            margin-bottom: 6px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .modal-chat-msg .chat-time {
+            color: #475569;
+            margin-right: 6px;
+        }
+
+        .modal-chat-msg .chat-user {
+            color: #6366f1;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .modal-chat-msg .chat-text {
+            color: #cbd5e1;
+        }
+
+        /* Chat Page */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px;
+            border-radius: 10px;
+            width: fit-content;
+        }
+
+        .chat-tab {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: none;
+            border: none;
+            color: #64748b;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-tab.active {
+            background: #6366f1;
+            color: white;
+        }
+
+        .chat-tab:hover:not(.active) {
+            color: #94a3b8;
+        }
+
+        .chat-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .chat-search {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 9px 14px 9px 36px;
+            font-size: 13px;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 12px center;
+        }
+
+        .chat-search:focus {
+            border-color: #6366f1;
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 13px;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            cursor: pointer;
+            min-width: 180px;
+            transition: border-color 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: calc(100% - 12px) center;
+            padding-right: 32px;
+        }
+
+        .filter-select:focus {
+            border-color: #6366f1;
+        }
+
+        .filter-select option {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        .export-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 9px 16px;
+            font-size: 13px;
+            color: #94a3b8;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.15s;
+            font-weight: 500;
+        }
+
+        .export-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #e2e8f0;
+        }
+
+        .export-btn svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .chat-msg-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            transition: background 0.1s;
+        }
+
+        .chat-msg-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .chat-msg-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 12px;
+            font-weight: 700;
+            color: #818cf8;
+        }
+
+        .chat-msg-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-msg-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+
+        .chat-msg-user {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .chat-msg-server-tag {
+            font-size: 10px;
+            padding: 1px 7px;
+            border-radius: 4px;
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            font-weight: 500;
+        }
+
+        .chat-msg-time {
+            font-size: 11px;
+            color: #475569;
+            margin-left: auto;
+        }
+
+        .chat-msg-text {
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        .chat-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 300px;
+            color: #475569;
+        }
+
+        .chat-empty svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .chat-empty p {
+            font-size: 14px;
+        }
+
+        /* Dashboard sections */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Bots section */
+        .bots-list {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .bot-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            gap: 12px;
+        }
+
+        .bot-item:last-child {
+            border-bottom: none;
+        }
+
+        .bot-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bot-icon svg {
+            width: 18px;
+            height: 18px;
+            color: #22c55e;
+        }
+
+        .bot-info {
+            flex: 1;
+        }
+
+        .bot-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .bot-server {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .bot-status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .bots-empty {
+            padding: 40px;
+            text-align: center;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        /* Dashboard chat & commands */
+        .dash-section {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .dash-section h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #f1f5f9;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 13px;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #6366f1;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-primary:hover {
+            background: #5558e6;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #e2e8f0;
+        }
+
+        .btn-warn {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-warn:hover {
+            background: rgba(245, 158, 11, 0.25);
+        }
+
+        /* Logs */
+        .logs-container {
+            background: #0a0e1a;
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            color: #64748b;
+        }
+
+        .log-entry {
+            padding: 2px 0;
+        }
+
+        .log-entry .log-time {
+            color: #475569;
+        }
+
+        .log-entry.info {
+            color: #38bdf8;
+        }
+
+        .log-entry.success {
+            color: #22c55e;
+        }
+
+        .log-entry.error {
+            color: #ef4444;
+        }
+
+        .log-entry.warn {
+            color: #f59e0b;
+        }
+
+        /* Settings */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .setting-group {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .setting-group h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setting-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .setting-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-row label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Blacklist items */
+        .blacklist-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .blacklist-tag {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .blacklist-tag button {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0;
+            opacity: 0.6;
+        }
+
+        .blacklist-tag button:hover {
+            opacity: 1;
+        }
+
+        /* Messages list */
+        .messages-list {
+            margin-top: 10px;
+        }
+
+        .message-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .message-item button {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.6;
+        }
+
+        .message-item button:hover {
+            opacity: 1;
+        }
+
+        /* Two column layout for dashboard */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dashboard-full {
+            grid-column: 1 / -1;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Highlight for search */
+        .highlight {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+    </style>
 </head>
 <body>
-<div class="app">
-<div class="sidebar" id="sidebar">
-<div class="sidebar-header">
-<div class="logo">
-<div class="logo-icon">CRV</div>
-<div class="logo-text">Central Radmin VPN</div>
-</div>
-<button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-</div>
-<div class="nav">
-<div class="nav-section">
-<div class="nav-label">Menu</div>
-<div class="nav-item active" onclick="switchPage('dashboard')">
-<span class="nav-icon">📊</span><span>Dashboard</span>
-</div>
-<div class="nav-item" onclick="switchPage('servers')">
-<span class="nav-icon">🌐</span><span>Servidores</span>
-</div>
-<div class="nav-item" onclick="switchPage('chat-live')">
-<span class="nav-icon">💬</span><span>Chat Ao Vivo</span>
-</div>
-<div class="nav-item" onclick="switchPage('chat-archive')">
-<span class="nav-icon">📦</span><span>Chat Arquivado</span>
-</div>
-</div>
-</div>
-</div>
-<div class="main">
-<div class="topbar">
-<div class="topbar-left">
-<div class="search-box">
-<span>🔍</span>
-<input type="text" placeholder="Buscar..." id="global-search">
-</div>
-</div>
-<div style="display:flex;gap:12px;align-items:center;">
-<div class="status-badge status-offline" id="status-badge">⚠️ Offline</div>
-<button class="btn btn-primary" onclick="document.getElementById('connect-modal').style.display='flex'">Conectar</button>
-</div>
-</div>
-<div class="content">
+    <div id="app"></div>
 
-<!-- DASHBOARD -->
-<div class="page active" id="page-dashboard">
-<div class="stats-grid">
-<div class="stat-card">
-<div class="stat-header">
-<div class="stat-icon">📊</div>
-</div>
-<div class="stat-label">Bots Ativos</div>
-<div class="stat-value" id="stat-bots">0</div>
-</div>
-<div class="stat-card">
-<div class="stat-header">
-<div class="stat-icon">🌐</div>
-</div>
-<div class="stat-label">Servidores</div>
-<div class="stat-value" id="stat-servers">0</div>
-</div>
-<div class="stat-card">
-<div class="stat-header">
-<div class="stat-icon">💬</div>
-</div>
-<div class="stat-label">Mensagens</div>
-<div class="stat-value" id="stat-msgs">0</div>
-</div>
-<div class="stat-card">
-<div class="stat-header">
-<div class="stat-icon">🚫</div>
-</div>
-<div class="stat-label">Blacklist</div>
-<div class="stat-value" id="stat-bl">0</div>
-</div>
-</div>
-</div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-<!-- SERVIDORES -->
-<div class="page" id="page-servers">
-<h2 style="margin-bottom:20px;">Servidores Detectados</h2>
-<div class="servers-grid" id="servers-list">
-<div class="empty">Nenhum servidor detectado</div>
-</div>
-</div>
+        // Mock data
+        const MOCK_SERVERS = [
+            {
+                id: 1, ip: '26.159.230.96:60513', motd: '§aSurvival Brasil §7- §eBem-vindo!',
+                motdClean: 'Survival Brasil - Bem-vindo!', players: 12, maxPlayers: 20, status: 'online',
+                playersList: ['Steve', 'Alex', 'Notch', 'Dream', 'Technoblade', 'Ph1LzA', 'TommyInnit', 'Wilbur', 'Tubbo', 'Ranboo', 'BadBoyHalo', 'Skeppy'],
+                version: '1.20.4'
+            },
+            {
+                id: 2, ip: '26.42.115.200:25565', motd: '§bMinigames §6Server §c[1.20]',
+                motdClean: 'Minigames Server [1.20]', players: 45, maxPlayers: 100, status: 'online',
+                playersList: ['Jogador1', 'Jogador2', 'Jogador3', 'xXProPlayerXx', 'MinecraftKing'],
+                version: '1.20.1'
+            },
+            {
+                id: 3, ip: '26.78.90.155:19132', motd: '§dCreative §aFree Build',
+                motdClean: 'Creative Free Build', players: 3, maxPlayers: 50, status: 'online',
+                playersList: ['Builder1', 'Architect', 'CraftMaster'],
+                version: '1.20.4'
+            },
+            {
+                id: 4, ip: '26.200.50.30:25565', motd: '§4§lPVP §cArena §7| §eSeason 5',
+                motdClean: 'PVP Arena | Season 5', players: 0, maxPlayers: 30, status: 'offline',
+                playersList: [],
+                version: '1.19.4'
+            },
+            {
+                id: 5, ip: '26.10.180.77:60000', motd: '§2SkyBlock §aParadise',
+                motdClean: 'SkyBlock Paradise', players: 8, maxPlayers: 40, status: 'online',
+                playersList: ['SkyFarmer', 'IslandKing', 'BlockMiner', 'CloudWalker', 'NetherHero', 'EnderMan99', 'CreeperSlayer', 'DiamondHunter'],
+                version: '1.20.2'
+            },
+            {
+                id: 6, ip: '26.55.120.88:25577', motd: '§5Factions §dWar §7- §cMapa Novo!',
+                motdClean: 'Factions War - Mapa Novo!', players: 22, maxPlayers: 60, status: 'online',
+                playersList: ['Warrior1', 'FactionLeader', 'Raider'],
+                version: '1.20.4'
+            }
+        ];
 
-<!-- CHAT AO VIVO -->
-<div class="page" id="page-chat-live">
-<div class="chat-container">
-<div class="chat-header">
-<div class="chat-title">💬 Database de Chat (Ao Vivo)</div>
-<div class="chat-filters">
-<select class="filter-input" id="filter-server-live">
-<option value="">Todos os servidores</option>
-</select>
-<input class="filter-input" placeholder="Buscar por jogador ou mensagem..." id="filter-search-live">
-<button class="btn btn-secondary btn-sm" onclick="filterChat('live')">Buscar</button>
-<button class="btn btn-primary btn-sm" onclick="emit('saveChat')">💾 Salvar</button>
-</div>
-</div>
-<div class="chat-body" id="chat-live-body">
-<div class="chat-empty">Sem mensagens</div>
-</div>
-</div>
-</div>
+        const generateChatMessages = () => {
+            const users = ['Steve', 'Alex', 'Notch', 'Dream', 'Jogador1', 'Builder1', 'SkyFarmer', 'Warrior1', 'CraftMaster', 'Ph1LzA'];
+            const texts = [
+                'alguém quer trocar diamantes?', 'onde fica a base?', 'gg pessoal!',
+                'vamos fazer uma farm de iron golem', 'cuidado com o creeper!',
+                'achei netherite finalmente!', 'quem tá online no discord?',
+                'preciso de ajuda na build', 'enchanting table pronta na base',
+                'alguém tem blaze rod?', 'o nether tá perigoso demais', 'bora raid?',
+                'acabei de morrer com tudo no inventário...', 'vou construir uma casa no spawn',
+                'tem alguém no end?'
+            ];
+            const messages = [];
+            for (let i = 0; i < 40; i++) {
+                const server = MOCK_SERVERS[Math.floor(Math.random() * MOCK_SERVERS.length)];
+                const user = users[Math.floor(Math.random() * users.length)];
+                const text = texts[Math.floor(Math.random() * texts.length)];
+                const hoursAgo = Math.floor(Math.random() * 24);
+                const minsAgo = Math.floor(Math.random() * 60);
+                const d = new Date();
+                d.setHours(d.getHours() - hoursAgo);
+                d.setMinutes(d.getMinutes() - minsAgo);
+                messages.push({
+                    id: i, user, text, serverIp: server.ip,
+                    serverMotd: server.motdClean, timestamp: d,
+                    isLive: i < 15
+                });
+            }
+            return messages.sort((a, b) => b.timestamp - a.timestamp);
+        };
 
-<!-- CHAT ARQUIVADO -->
-<div class="page" id="page-chat-archive">
-<div class="chat-container">
-<div class="chat-header">
-<div class="chat-title">📦 Chat Arquivado</div>
-<div class="chat-filters">
-<select class="filter-input" id="filter-server-archive">
-<option value="">Todos os servidores</option>
-</select>
-<input class="filter-input" placeholder="Buscar por jogador ou mensagem..." id="filter-search-archive">
-<button class="btn btn-secondary btn-sm" onclick="filterChat('archive')">Buscar</button>
-<button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 CSV</button>
-</div>
-</div>
-<div class="chat-body" id="chat-archive-body">
-<div class="chat-empty">Sem mensagens arquivadas</div>
-</div>
-</div>
-</div>
+        const ALL_MESSAGES = generateChatMessages();
 
-</div>
-</div>
-</div>
+        // SVG Icons as components
+        const Icons = {
+            Dashboard: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+            ),
+            Server: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="8" rx="2" /><rect x="2" y="14" width="20" height="8" rx="2" /><circle cx="6" cy="6" r="1" /><circle cx="6" cy="18" r="1" />
+                </svg>
+            ),
+            Chat: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+            ),
+            Archive: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" />
+                </svg>
+            ),
+            Settings: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+            ),
+            Bot: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /><line x1="8" y1="16" x2="8" y2="16" /><line x1="16" y1="16" x2="16" y2="16" />
+                </svg>
+            ),
+            Users: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+            ),
+            Eye: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                </svg>
+            ),
+            Terminal: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
+                </svg>
+            ),
+            Download: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+            ),
+            ChevronLeft: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6" />
+                </svg>
+            ),
+            ChevronRight: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                </svg>
+            ),
+            Globe: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+            ),
+            Shield: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+            ),
+            Wifi: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" />
+                </svg>
+            ),
+            X: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            ),
+            Gamepad: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="6" y1="12" x2="10" y2="12" /><line x1="8" y1="10" x2="8" y2="14" /><line x1="15" y1="13" x2="15.01" y2="13" /><line x1="18" y1="11" x2="18.01" y2="11" /><rect x="2" y="6" width="20" height="12" rx="2" />
+                </svg>
+            ),
+            MessageEmpty: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <line x1="9" y1="10" x2="15" y2="10" />
+                </svg>
+            ),
+            Logs: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+                </svg>
+            ),
+        };
 
-<!-- MODAL SERVIDOR -->
-<div class="modal" id="server-modal">
-<div class="modal-content">
-<div class="modal-header">
-<div class="modal-title" id="modal-server-title">Servidor</div>
-<button class="close-btn" onclick="closeModal()">&times;</button>
-</div>
-<div class="modal-body">
-<div class="modal-section">
-<div class="modal-section-title">Informações</div>
-<div class="info-grid">
-<div class="info-item">
-<div class="info-label">IP:Porta</div>
-<div class="info-value" id="modal-ip">-</div>
-</div>
-<div class="info-item">
-<div class="info-label">MOTD</div>
-<div class="info-value" id="modal-motd">-</div>
-</div>
-<div class="info-item">
-<div class="info-label">Status</div>
-<div class="info-value" id="modal-status">-</div>
-</div>
-<div class="info-item">
-<div class="info-label">Jogadores Online</div>
-<div class="info-value" id="modal-players-count">0</div>
-</div>
-</div>
-</div>
-<div class="modal-section">
-<div class="modal-section-title">Jogadores Online</div>
-<div class="players-list" id="modal-players-list">
-<div class="chat-empty">Nenhum jogador</div>
-</div>
-</div>
-<div class="modal-section">
-<div class="modal-section-title">Chat em Tempo Real</div>
-<div class="chat-body" style="max-height:300px;" id="modal-chat">
-<div class="chat-empty">Sem mensagens recentes</div>
-</div>
-</div>
-</div>
-</div>
-</div>
+        // ServerPopup Component
+        function ServerPopup({ server, onClose, messages }) {
+            const serverMessages = messages.filter(m => m.serverIp === server.ip).slice(0, 20);
 
-<!-- MODAL CONECTAR -->
-<div class="modal" id="connect-modal">
-<div class="modal-content" style="max-width:500px;">
-<div class="modal-header">
-<div class="modal-title">Conectar ao Relay</div>
-<button class="close-btn" onclick="closeModal()">&times;</button>
-</div>
-<div class="modal-body">
-<input class="filter-input" style="width:100%;margin-bottom:20px;" id="relay-url" placeholder="https://seu-relay.onrender.com" value="https://anunciador-relay.onrender.com">
-<div style="display:flex;gap:12px;">
-<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-<button class="btn btn-primary" onclick="conectar();closeModal()">Conectar</button>
-</div>
-</div>
-</div>
-</div>
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>{server.motdClean}</h2>
+                            <button className="modal-close" onClick={onClose}>×</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="modal-info-grid">
+                                <div className="modal-info-item">
+                                    <label>Endereço IP</label>
+                                    <span>{server.ip}</span>
+                                </div>
+                                <div className="modal-info-item">
+                                    <label>Versão</label>
+                                    <span>{server.version}</span>
+                                </div>
+                                <div className="modal-info-item">
+                                    <label>Jogadores</label>
+                                    <span>{server.players}/{server.maxPlayers}</span>
+                                </div>
+                                <div className="modal-info-item">
+                                    <label>Status</label>
+                                    <span style={{ color: server.status === 'online' ? '#22c55e' : '#ef4444' }}>
+                                        {server.status === 'online' ? '● Online' : '● Offline'}
+                                    </span>
+                                </div>
+                                <div className="modal-info-item" style={{ gridColumn: '1 / -1' }}>
+                                    <label>MOTD</label>
+                                    <span>{server.motdClean}</span>
+                                </div>
+                            </div>
 
-<script>
-let socket=null,pcOn=false,servers=[],chatLive=[],chatArchive=[],currentServerKey=null;
+                            <div className="modal-section-title">
+                                <Icons.Users /> Jogadores Online ({server.playersList.length})
+                            </div>
+                            <div className="players-list">
+                                {server.playersList.length > 0 ? server.playersList.map((p, i) => (
+                                    <span key={i} className="player-tag">{p}</span>
+                                )) : <span style={{ color: '#475569', fontSize: 13 }}>Nenhum jogador online</span>}
+                            </div>
 
-function conectar(){
-const url=document.getElementById('relay-url').value.trim();
-if(!url){toast('Cole URL!');return;}
-localStorage.setItem('relayUrl',url);
-if(socket){socket.disconnect();socket=null;}
-socket=io(url,{reconnection:true});
-socket.on('connect',()=>{
-document.getElementById('status-badge').className='status-badge status-online';
-document.getElementById('status-badge').textContent='✅ Online';
-});
-socket.on('disconnect',()=>{
-document.getElementById('status-badge').className='status-badge status-offline';
-document.getElementById('status-badge').textContent='⚠️ Offline';
-pcOn=false;
-});
-socket.on('botStatus',on=>{pcOn=on;});
-socket.on('init',d=>{
-updateStats(d.stats||{});
-if(d.servers)servers=d.servers;
-if(d.chatDatabase)chatLive=d.chatDatabase;
-renderServers();renderChatLive();updateServerFilters();
-});
-socket.on('serverUpdate',s=>{servers=s;renderServers();});
-socket.on('chatMessage',m=>{chatLive.push(m);if(chatLive.length>5000)chatLive.shift();renderChatLive();});
-socket.on('toast',toast);
-}
+                            <div className="modal-section-title">
+                                <Icons.Chat /> Chat em Tempo Real
+                            </div>
+                            <div className="modal-chat">
+                                {serverMessages.length > 0 ? serverMessages.map((msg, i) => (
+                                    <div key={i} className="modal-chat-msg">
+                                        <span className="chat-time">[{msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}]</span>
+                                        <span className="chat-user">{msg.user}:</span>
+                                        <span className="chat-text">{msg.text}</span>
+                                    </div>
+                                )) : <div style={{ color: '#475569', textAlign: 'center', padding: 20, fontSize: 13 }}>Sem mensagens recentes</div>}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
-function updateStats(s){
-document.getElementById('stat-bots').textContent=s.botsAtivos||0;
-document.getElementById('stat-msgs').textContent=(s.mensagens||[]).length;
-document.getElementById('stat-bl').textContent=s.blacklistSize||0;
-document.getElementById('stat-servers').textContent=servers.length;
-}
+        // Pages
+        function DashboardPage({ relayUrl, setRelayUrl, isConnected, setIsConnected, logs, setLogs }) {
+            const [bots] = useState([]);
+            const [chatFilter, setChatFilter] = useState('Todos');
+            const [chatMsg, setChatMsg] = useState('');
+            const [cmdMsg, setCmdMsg] = useState('');
+            const [connectIp, setConnectIp] = useState('');
 
-function renderServers(){
-const c=document.getElementById('servers-list');
-if(!servers.length){c.innerHTML='<div class="empty">Nenhum servidor detectado</div>';return;}
-c.innerHTML=servers.map(s=>`
-<div class="server-card" onclick="openServerModal('${s.key}')">
-<div class="server-header">
-<div class="server-name">${s.key}</div>
-<div class="server-badge ${s.status==='online'?'badge-online':'badge-offline'}">${s.status==='online'?'ONLINE':'OFFLINE'}</div>
-</div>
-<div class="server-motd">${esc(s.motd||'???')}</div>
-<div class="server-footer">
-<div class="server-info">👥 ${(s.players||[]).length} jogadores</div>
-<div class="server-info">📡 ${s.ping||'?'}ms</div>
-<div class="server-info">📍 v${s.version||'?'}</div>
-</div>
-</div>
-`).join('');
-}
+            const addLog = (text, type = 'info') => {
+                const time = new Date().toLocaleTimeString('pt-BR');
+                setLogs(prev => [...prev, { text: `[${time}] ${text}`, type, id: Date.now() + Math.random() }]);
+            };
 
-function renderChatLive(){
-const c=document.getElementById('chat-live-body');
-if(!chatLive.length){c.innerHTML='<div class="chat-empty">Sem mensagens</div>';return;}
-c.innerHTML=chatLive.slice(-100).reverse().map(m=>`
-<div class="chat-msg">
-<div class="chat-meta">[${m.time}] [${m.serverKey}]</div>
-<div><span class="chat-user">${esc(m.username)}</span>: <span class="chat-text">${esc(m.message)}</span></div>
-</div>
-`).join('');
-}
+            return (
+                <div>
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="stat-label">Status</div>
+                            <div className="stat-value" style={{ color: isConnected ? '#22c55e' : '#ef4444', fontSize: 20 }}>
+                                {isConnected ? '● Conectado' : '● Offline'}
+                            </div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-label">Bots Ativos</div>
+                            <div className="stat-value online">{bots.length}</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-label">Blacklist</div>
+                            <div className="stat-value">0</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-label">Mensagens</div>
+                            <div className="stat-value">{ALL_MESSAGES.length}</div>
+                        </div>
+                    </div>
 
-function filterChat(type){
-const serverFilter=document.getElementById(`filter-server-${type}`).value;
-const searchText=document.getElementById(`filter-search-${type}`).value.toLowerCase();
-let data=type==='live'?chatLive:chatArchive;
-if(serverFilter)data=data.filter(m=>m.serverKey.includes(serverFilter));
-if(searchText)data=data.filter(m=>m.username.toLowerCase().includes(searchText)||m.message.toLowerCase().includes(searchText)||m.serverKey.toLowerCase().includes(searchText));
-const c=document.getElementById(`chat-${type}-body`);
-if(!data.length){c.innerHTML='<div class="chat-empty">Nenhuma mensagem encontrada</div>';return;}
-c.innerHTML=data.slice(-500).reverse().map(m=>`
-<div class="chat-msg">
-<div class="chat-meta">[${m.time}] [${m.serverKey}]</div>
-<div><span class="chat-user">${esc(m.username)}</span>: <span class="chat-text">${esc(m.message)}</span></div>
-</div>
-`).join('');
-}
+                    <div className="dashboard-grid">
+                        <div>
+                            <div className="section-header">
+                                <span className="section-title">Bots Conectados</span>
+                                <div className="section-actions">
+                                    <button className="btn-danger" onClick={() => addLog('Todos os bots desconectados', 'warn')}>Desconectar Todos</button>
+                                    <button className="btn-secondary" onClick={() => addLog('Restart enviado', 'info')}>Restart</button>
+                                </div>
+                            </div>
+                            <div className="bots-list">
+                                {bots.length === 0 ? (
+                                    <div className="bots-empty">Aguardando bots...</div>
+                                ) : bots.map((b, i) => (
+                                    <div key={i} className="bot-item">
+                                        <div className="bot-icon"><Icons.Bot /></div>
+                                        <div className="bot-info">
+                                            <div className="bot-name">{b.name}</div>
+                                            <div className="bot-server">{b.server}</div>
+                                        </div>
+                                        <div className="bot-status-indicator" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-function openServerModal(key){
-currentServerKey=key;
-const s=servers.find(x=>x.key===key);
-if(!s)return;
-document.getElementById('modal-server-title').textContent=key;
-document.getElementById('modal-ip').textContent=key;
-document.getElementById('modal-motd').textContent=s.motd||'???';
-document.getElementById('modal-status').textContent=s.status||'unknown';
-document.getElementById('modal-players-count').textContent=(s.players||[]).length;
-const pl=document.getElementById('modal-players-list');
-if(!s.players||!s.players.length){pl.innerHTML='<div class="chat-empty">Nenhum jogador</div>';}
-else{pl.innerHTML=s.players.map(p=>`<div class="player-item"><span>${esc(p.name)}</span><span>${p.ping}ms</span></div>`).join('');}
-const msgs=chatLive.filter(m=>m.serverKey===key).slice(-30);
-const ch=document.getElementById('modal-chat');
-if(!msgs.length){ch.innerHTML='<div class="chat-empty">Sem mensagens</div>';}
-else{ch.innerHTML=msgs.map(m=>`<div class="chat-msg"><div class="chat-meta">[${m.time}]</div><div><span class="chat-user">${esc(m.username)}</span>: <span class="chat-text">${esc(m.message)}</span></div></div>`).join('');}
-document.getElementById('server-modal').classList.add('active');
-}
+                        <div>
+                            <div className="dash-section">
+                                <h3>Chat & Comandos</h3>
+                                <div style={{ marginBottom: 10 }}>
+                                    <select className="filter-select" value={chatFilter} onChange={e => setChatFilter(e.target.value)} style={{ width: '100%', marginBottom: 10 }}>
+                                        <option value="Todos">Todos</option>
+                                        {MOCK_SERVERS.map(s => <option key={s.id} value={s.ip}>{s.ip}</option>)}
+                                    </select>
+                                </div>
+                                <div className="input-row">
+                                    <input className="input-field" placeholder="Mensagem..." value={chatMsg} onChange={e => setChatMsg(e.target.value)} />
+                                    <button className="btn-primary" onClick={() => { if (chatMsg) { addLog(`Chat enviado: ${chatMsg}`, 'success'); setChatMsg(''); } }}>Enviar</button>
+                                </div>
+                                <div className="input-row">
+                                    <input className="input-field" placeholder="/comando" value={cmdMsg} onChange={e => setCmdMsg(e.target.value)} />
+                                    <button className="btn-secondary" onClick={() => { if (cmdMsg) { addLog(`Comando: ${cmdMsg}`, 'info'); setCmdMsg(''); } }}>Executar</button>
+                                </div>
+                                <button className="btn-warn" style={{ width: '100%', marginTop: 6 }} onClick={() => addLog('Anúncio forçado!', 'warn')}>⚡ Forçar Anúncio</button>
+                            </div>
 
-function updateServerFilters(){
-const opts=servers.map(s=>`<option value="${s.key}">${s.key}</option>`).join('');
-document.getElementById('filter-server-live').innerHTML='<option value="">Todos os servidores</option>'+opts;
-document.getElementById('filter-server-archive').innerHTML='<option value="">Todos os servidores</option>'+opts;
-}
+                            <div className="dash-section">
+                                <h3>Conectar Bot</h3>
+                                <div className="input-row">
+                                    <input className="input-field" placeholder="IP:Porta" value={connectIp} onChange={e => setConnectIp(e.target.value)} />
+                                    <button className="btn-primary" onClick={() => { if (connectIp) { addLog(`Conectando bot a ${connectIp}...`, 'info'); setConnectIp(''); } }}>Conectar</button>
+                                </div>
+                            </div>
+                        </div>
 
-function exportCSV(){
-let csv='Data,Hora,Servidor,Jogador,Mensagem\n';
-chatArchive.forEach(m=>{csv+=`${m.date},${m.time},${m.serverKey},${m.username},"${m.message.replace(/"/g,'""')}"\n`;});
-const blob=new Blob([csv],{type:'text/csv'});
-const link=document.createElement('a');
-link.download=`chat-${Date.now()}.csv`;
-link.href=URL.createObjectURL(blob);
-link.click();
-toast('CSV exportado!');
-}
+                        <div className="dashboard-full">
+                            <div className="dash-section">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                                    <h3 style={{ marginBottom: 0 }}>Logs</h3>
+                                    <button className="btn-secondary" style={{ padding: '5px 12px', fontSize: 11 }} onClick={() => setLogs([])}>Limpar</button>
+                                </div>
+                                <div className="logs-container">
+                                    {logs.length === 0 ? (
+                                        <div style={{ color: '#475569', textAlign: 'center', padding: 20 }}>Sem logs</div>
+                                    ) : logs.map(log => (
+                                        <div key={log.id} className={`log-entry ${log.type}`}>{log.text}</div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
-function switchPage(p){
-document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-document.getElementById(`page-${p}`).classList.add('active');
-document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-event.target.closest('.nav-item').classList.add('active');
-}
+        function ServersPage({ messages }) {
+            const [selectedServer, setSelectedServer] = useState(null);
 
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
-function closeModal(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active'));}
-function emit(ev,data){if(!socket?.connected){toast('Conecte!');return;}if(!pcOn){toast('Bot offline!');return;}socket.emit(ev,data);}
-function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+            return (
+                <div>
+                    <div className="section-header">
+                        <span className="section-title">Servidores ({MOCK_SERVERS.length})</span>
+                    </div>
+                    <div className="servers-grid">
+                        {MOCK_SERVERS.map(server => (
+                            <div key={server.id} className="server-card" onClick={() => setSelectedServer(server)}>
+                                <div className="server-card-header">
+                                    <div className="server-card-info">
+                                        <h3>{server.motdClean}</h3>
+                                        <div className="server-motd">{server.ip}</div>
+                                    </div>
+                                    <span className={`server-status-badge ${server.status}`}>
+                                        {server.status === 'online' ? 'Online' : 'Offline'}
+                                    </span>
+                                </div>
+                                <div className="server-card-body">
+                                    <div className="server-detail-row">
+                                        <Icons.Globe />
+                                        <span>IP: {server.ip}</span>
+                                    </div>
+                                    <div className="server-detail-row">
+                                        <Icons.Users />
+                                        <span>Jogadores: {server.players}/{server.maxPlayers}</span>
+                                    </div>
+                                    <div className="server-detail-row">
+                                        <Icons.Gamepad />
+                                        <span>Versão: {server.version}</span>
+                                    </div>
+                                </div>
+                                <div className="server-card-footer">
+                                    <button className="server-card-action" onClick={(e) => { e.stopPropagation(); setSelectedServer(server); }}>
+                                        <Icons.Eye /> Detalhes
+                                    </button>
+                                    <button className="server-card-action" onClick={(e) => { e.stopPropagation(); setSelectedServer(server); }}>
+                                        <Icons.Chat /> Chat
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
 
-const savedUrl=localStorage.getItem('relayUrl')||'https://anunciador-relay.onrender.com';
-document.getElementById('relay-url').value=savedUrl;
-setTimeout(conectar,500);
-</script>
+                    {selectedServer && (
+                        <ServerPopup
+                            server={selectedServer}
+                            onClose={() => setSelectedServer(null)}
+                            messages={messages}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        function ChatPage({ chatType, messages }) {
+            const [search, setSearch] = useState('');
+            const [motdFilter, setMotdFilter] = useState('Todos');
+
+            const filteredMessages = useMemo(() => {
+                let filtered = messages;
+
+                if (chatType === 'live') {
+                    filtered = filtered.filter(m => m.isLive);
+                } else if (chatType === 'archived') {
+                    filtered = filtered.filter(m => !m.isLive);
+                }
+
+                if (motdFilter !== 'Todos') {
+                    filtered = filtered.filter(m => m.serverMotd === motdFilter);
+                }
+
+                if (search.trim()) {
+                    const s = search.toLowerCase();
+                    const allFiltered = messages.filter(m => {
+                        const matchesMotd = motdFilter === 'Todos' || m.serverMotd === motdFilter;
+                        const matchesSearch = m.user.toLowerCase().includes(s) ||
+                            m.text.toLowerCase().includes(s) ||
+                            m.serverIp.toLowerCase().includes(s) ||
+                            m.serverMotd.toLowerCase().includes(s);
+                        return matchesMotd && matchesSearch;
+                    });
+                    return allFiltered;
+                }
+
+                return filtered;
+            }, [messages, chatType, search, motdFilter]);
+
+            const uniqueMotds = useMemo(() => {
+                const motds = [...new Set(messages.map(m => m.serverMotd))];
+                return motds;
+            }, [messages]);
+
+            const exportCSV = () => {
+                const header = 'Hora,Usuário,Mensagem,Servidor IP,MOTD\n';
+                const rows = filteredMessages.map(m =>
+                    `"${m.timestamp.toLocaleString('pt-BR')}","${m.user}","${m.text}","${m.serverIp}","${m.serverMotd}"`
+                ).join('\n');
+                const blob = new Blob([header + rows], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat_${chatType}_${Date.now()}.csv`;
+                a.click();
+            };
+
+            const highlightText = (text, query) => {
+                if (!query.trim()) return text;
+                const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                const parts = text.split(regex);
+                return parts.map((part, i) =>
+                    regex.test(part) ? <span key={i} className="highlight">{part}</span> : part
+                );
+            };
+
+            const title = chatType === 'live' ? 'Chat Ao Vivo' : 'Chat Arquivado';
+
+            return (
+                <div className="chat-container" style={{ height: 'calc(100vh - 104px)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                        <span className="section-title">{title}</span>
+                        {search.trim() && (
+                            <span style={{ fontSize: 12, color: '#6366f1' }}>
+                                🔍 Buscando em todos os chats ({filteredMessages.length} resultados)
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="chat-toolbar">
+                        <input
+                            className="chat-search"
+                            placeholder="Buscar mensagens (ao vivo + arquivado)..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                        <select className="filter-select" value={motdFilter} onChange={e => setMotdFilter(e.target.value)}>
+                            <option value="Todos">Filtrar por MOTD</option>
+                            {uniqueMotds.map(motd => (
+                                <option key={motd} value={motd}>{motd}</option>
+                            ))}
+                        </select>
+                        <button className="export-btn" onClick={exportCSV}>
+                            <Icons.Download /> CSV
+                        </button>
+                    </div>
+
+                    <div className="chat-messages">
+                        {filteredMessages.length === 0 ? (
+                            <div className="chat-empty">
+                                <Icons.MessageEmpty />
+                                <p>Sem mensagens{search ? ' para esta busca' : ''}</p>
+                            </div>
+                        ) : filteredMessages.map(msg => (
+                            <div key={msg.id} className="chat-msg-item">
+                                <div className="chat-msg-avatar">
+                                    {msg.user.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div className="chat-msg-content">
+                                    <div className="chat-msg-header">
+                                        <span className="chat-msg-user">{highlightText(msg.user, search)}</span>
+                                        <span className="chat-msg-server-tag">{msg.serverMotd}</span>
+                                        {search.trim() && (
+                                            <span style={{
+                                                fontSize: 10, padding: '1px 6px', borderRadius: 4,
+                                                background: msg.isLive ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)',
+                                                color: msg.isLive ? '#22c55e' : '#f59e0b', fontWeight: 500
+                                            }}>
+                                                {msg.isLive ? 'Ao Vivo' : 'Arquivado'}
+                                            </span>
+                                        )}
+                                        <span className="chat-msg-time">
+                                            {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <div className="chat-msg-text">{highlightText(msg.text, search)}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function SettingsPage({ username, setUsername, interval, setInterval, blacklist, setBlacklist, announceMessages, setAnnounceMessages }) {
+            const [newBlacklist, setNewBlacklist] = useState('');
+            const [newMessage, setNewMessage] = useState('');
+
+            return (
+                <div>
+                    <div className="section-header">
+                        <span className="section-title">Configurações</span>
+                    </div>
+                    <div className="settings-grid">
+                        <div className="setting-group">
+                            <h3><Icons.Settings /> Geral</h3>
+                            <div className="setting-row">
+                                <label>Username do Bot</label>
+                                <input className="input-field" value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" />
+                            </div>
+                            <div className="setting-row">
+                                <label>Intervalo de Anúncio (segundos)</label>
+                                <input className="input-field" type="number" value={interval} onChange={e => setInterval(e.target.value)} placeholder="60" />
+                            </div>
+                        </div>
+
+                        <div className="setting-group">
+                            <h3><Icons.Shield /> Blacklist</h3>
+                            <div className="input-row">
+                                <input className="input-field" placeholder="IP:Porta" value={newBlacklist} onChange={e => setNewBlacklist(e.target.value)} />
+                                <button className="btn-primary" onClick={() => {
+                                    if (newBlacklist.trim()) {
+                                        setBlacklist(prev => [...prev, newBlacklist.trim()]);
+                                        setNewBlacklist('');
+                                    }
+                                }}>+ Adicionar</button>
+                            </div>
+                            <div className="blacklist-items">
+                                {blacklist.map((item, i) => (
+                                    <span key={i} className="blacklist-tag">
+                                        {item}
+                                        <button onClick={() => setBlacklist(prev => prev.filter((_, idx) => idx !== i))}>×</button>
+                                    </span>
+                                ))}
+                                {blacklist.length === 0 && <span style={{ fontSize: 12, color: '#475569' }}>Nenhum IP na blacklist</span>}
+                            </div>
+                            {blacklist.length > 0 && (
+                                <button className="btn-danger" style={{ marginTop: 10, padding: '6px 14px', fontSize: 12 }} onClick={() => setBlacklist([])}>Limpar Tudo</button>
+                            )}
+                        </div>
+
+                        <div className="setting-group" style={{ gridColumn: '1 / -1' }}>
+                            <h3><Icons.Chat /> Mensagens de Anúncio</h3>
+                            <div className="input-row">
+                                <input className="input-field" placeholder="Nova mensagem..." value={newMessage} onChange={e => setNewMessage(e.target.value)} />
+                                <button className="btn-primary" onClick={() => {
+                                    if (newMessage.trim()) {
+                                        setAnnounceMessages(prev => [...prev, newMessage.trim()]);
+                                        setNewMessage('');
+                                    }
+                                }}>Adicionar</button>
+                            </div>
+                            <div className="messages-list">
+                                {announceMessages.map((msg, i) => (
+                                    <div key={i} className="message-item">
+                                        <span>{msg}</span>
+                                        <button onClick={() => setAnnounceMessages(prev => prev.filter((_, idx) => idx !== i))}>×</button>
+                                    </div>
+                                ))}
+                                {announceMessages.length === 0 && <span style={{ fontSize: 12, color: '#475569', padding: 8 }}>Nenhuma mensagem configurada</span>}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main App
+        function App() {
+            const [activePage, setActivePage] = useState('dashboard');
+            const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+            const [relayUrl, setRelayUrl] = useState('https://anunciador-relay.onrender.com');
+            const [isConnected, setIsConnected] = useState(false);
+            const [logs, setLogs] = useState([]);
+            const [username, setUsername] = useState('');
+            const [interval, setIntervalVal] = useState('60');
+            const [blacklist, setBlacklist] = useState([]);
+            const [announceMessages, setAnnounceMessages] = useState([]);
+            const [messages] = useState(ALL_MESSAGES);
+
+            const pageTitles = {
+                dashboard: 'Dashboard',
+                servers: 'Servidores',
+                chatLive: 'Chat Ao Vivo',
+                chatArchived: 'Chat Arquivado',
+                settings: 'Configurações'
+            };
+
+            const navItems = [
+                { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
+                { id: 'servers', label: 'Servidores', icon: Icons.Server, badge: MOCK_SERVERS.filter(s => s.status === 'online').length },
+                { id: 'chatLive', label: 'Chat Ao Vivo', icon: Icons.Chat, badge: messages.filter(m => m.isLive).length },
+                { id: 'chatArchived', label: 'Chat Arquivado', icon: Icons.Archive },
+                { id: 'settings', label: 'Configurações', icon: Icons.Settings },
+            ];
+
+            const handleConnect = () => {
+                if (isConnected) {
+                    setIsConnected(false);
+                    const time = new Date().toLocaleTimeString('pt-BR');
+                    setLogs(prev => [...prev, { text: `[${time}] Desconectado do relay`, type: 'warn', id: Date.now() }]);
+                } else {
+                    setIsConnected(true);
+                    const time = new Date().toLocaleTimeString('pt-BR');
+                    setLogs(prev => [...prev, { text: `[${time}] Conectado a ${relayUrl}`, type: 'success', id: Date.now() }]);
+                }
+            };
+
+            return (
+                <>
+                    <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+                        <div className="sidebar-header">
+                            <div className="sidebar-logo">CRV</div>
+                            <div className="sidebar-brand">
+                                <span className="sidebar-brand-name">Central Radmin VPN</span>
+                                <span className="sidebar-brand-sub">Painel de Controle</span>
+                            </div>
+                        </div>
+
+                        <div className="sidebar-nav">
+                            <div className="nav-section">
+                                <div className="nav-label">Menu</div>
+                                {navItems.map(item => (
+                                    <div
+                                        key={item.id}
+                                        className={`nav-item ${activePage === item.id ? 'active' : ''}`}
+                                        onClick={() => setActivePage(item.id)}
+                                    >
+                                        <item.icon />
+                                        <span className="nav-item-text">{item.label}</span>
+                                        {item.badge !== undefined && !sidebarCollapsed && (
+                                            <span className="nav-badge">{item.badge}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="connection-section">
+                            <div className="connection-status">
+                                <div className={`status-dot ${isConnected ? 'online' : 'offline'}`} />
+                                <span className="status-text">
+                                    <strong>{isConnected ? 'Online' : 'Offline'}</strong>
+                                </span>
+                            </div>
+                            <div className="relay-input-group">
+                                <input
+                                    className="relay-input"
+                                    value={relayUrl}
+                                    onChange={e => setRelayUrl(e.target.value)}
+                                    placeholder="URL do Relay"
+                                />
+                                <button className="relay-btn" onClick={handleConnect}>
+                                    {isConnected ? 'Sair' : 'Conectar'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="sidebar-footer">
+                            <button className="sidebar-toggle" onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
+                                {sidebarCollapsed ? <Icons.ChevronRight /> : <Icons.ChevronLeft />}
+                                <span className="sidebar-footer-text">Recolher</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="main-content">
+                        <div className="topbar">
+                            <div className="topbar-left">
+                                <span className="topbar-title">{pageTitles[activePage]}</span>
+                            </div>
+                            <div className="topbar-right">
+                                <div className="connection-status" style={{ margin: 0, background: 'transparent', padding: '6px 12px' }}>
+                                    <div className={`status-dot ${isConnected ? 'online' : 'offline'}`} />
+                                    <span className="status-text" style={{ fontSize: 12 }}>
+                                        {isConnected ? 'Relay Conectado' : 'Relay Desconectado'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="page-content">
+                            {activePage === 'dashboard' && (
+                                <DashboardPage
+                                    relayUrl={relayUrl}
+                                    setRelayUrl={setRelayUrl}
+                                    isConnected={isConnected}
+                                    setIsConnected={setIsConnected}
+                                    logs={logs}
+                                    setLogs={setLogs}
+                                />
+                            )}
+                            {activePage === 'servers' && (
+                                <ServersPage messages={messages} />
+                            )}
+                            {activePage === 'chatLive' && (
+                                <ChatPage chatType="live" messages={messages} />
+                            )}
+                            {activePage === 'chatArchived' && (
+                                <ChatPage chatType="archived" messages={messages} />
+                            )}
+                            {activePage === 'settings' && (
+                                <SettingsPage
+                                    username={username}
+                                    setUsername={setUsername}
+                                    interval={interval}
+                                    setInterval={setIntervalVal}
+                                    blacklist={blacklist}
+                                    setBlacklist={setBlacklist}
+                                    announceMessages={announceMessages}
+                                    setAnnounceMessages={setAnnounceMessages}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
 </body>
 </html>
