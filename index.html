@@ -3,396 +3,236 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🤖 Bot Anunciador</title>
+<title>🤖 Bot Anunciador Analytics</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
---bg: #0a0a0f; --card: #12122a; --card2: #1a1a3e;
---green: #00d474; --red: #ff4757; --yellow: #ffa502;
---blue: #1e90ff; --purple: #a855f7; --text: #e4e4e4;
---text2: #7a82a0; --border: #2a2a4a;
+--bg: #0f1729; --sidebar: #1a2332; --card: #1e2936; --card2: #253345;
+--green: #10b981; --red: #ef4444; --yellow: #f59e0b; --blue: #3b82f6;
+--purple: #a855f7; --text: #f3f4f6; --text2: #9ca3af; --border: #374151;
 }
-body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
-.header {
-background: linear-gradient(135deg, #12122a, #1a1a5e);
-padding: 16px 24px; display: flex; justify-content: space-between;
-align-items: center; border-bottom: 2px solid var(--green);
-flex-wrap: wrap; gap: 10px;
-}
-.header h1 { font-size: 1.3em; }
-.header h1 span { color: var(--green); }
-.badges { display: flex; gap: 10px; flex-wrap: wrap; }
-.badge {
-background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 16px;
-font-size: 0.8em; display: flex; align-items: center; gap: 5px;
-}
-.dot { width: 7px; height: 7px; border-radius: 50%; }
-.d-green { background: var(--green); }
-.d-red { background: var(--red); }
-.d-yellow { background: var(--yellow); }
-.banner {
-padding: 8px 24px; text-align: center; font-weight: 600; font-size: 0.85em;
-}
-.b-on { background: rgba(0,212,116,0.12); color: var(--green); }
-.b-off { background: rgba(255,71,87,0.12); color: var(--red); }
-.connect-bar {
-background: var(--card); border-bottom: 1px solid var(--border);
-padding: 10px 24px; display: flex; gap: 8px; align-items: center;
-flex-wrap: wrap;
-}
-.connect-bar label { font-size: 0.8em; color: var(--text2); }
-.connect-bar input {
-background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-color: var(--text); padding: 6px 10px; border-radius: 6px;
-font-size: 0.8em; outline: none; width: 280px;
-}
-.connect-bar input:focus { border-color: var(--green); }
-.grid {
-display: grid; grid-template-columns: 1fr 1fr;
-gap: 12px; padding: 12px 16px; max-width: 1600px; margin: 0 auto;
-}
-@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.card-h {
-background: var(--card2); padding: 9px 14px; font-weight: 600; font-size: 0.9em;
-display: flex; justify-content: space-between; align-items: center;
-border-bottom: 1px solid var(--border);
-}
-.card-b { padding: 12px; }
-.bot-item {
-background: rgba(0,0,0,0.25); border: 1px solid var(--border);
-border-radius: 8px; padding: 10px; margin-bottom: 6px;
-display: flex; justify-content: space-between; align-items: center;
-flex-wrap: wrap; gap: 6px;
-}
-.b-name { font-weight: 600; color: var(--green); font-size: 0.9em; }
-.b-det { font-size: 0.75em; color: var(--text2); margin-top: 2px; }
-.b-acts { display: flex; gap: 4px; }
-.btn {
-padding: 5px 11px; border: none; border-radius: 6px; cursor: pointer;
-font-size: 0.78em; font-weight: 500; transition: all 0.15s; color: white;
-}
-.btn:hover { filter: brightness(1.2); }
-.btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.btn-g { background: var(--green); color: #000; }
-.btn-r { background: var(--red); }
-.btn-b { background: var(--blue); }
-.btn-p { background: var(--purple); }
-.btn-y { background: var(--yellow); color: #000; }
-.btn-s { padding: 3px 7px; font-size: 0.7em; }
-.btn-f { width: 100%; padding: 8px; margin-top: 6px; }
-.ig { display: flex; gap: 6px; margin-bottom: 7px; }
-.ig input, .ig select {
-flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-color: var(--text); padding: 6px 9px; border-radius: 6px;
-font-size: 0.82em; outline: none;
-}
-.ig input:focus { border-color: var(--green); }
-.logs {
-height: 320px; overflow-y: auto; font-family: 'Consolas', monospace;
-font-size: 0.75em; padding: 6px; background: rgba(0,0,0,0.3); border-radius: 6px;
-}
-.log-e { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.02); word-break: break-all; }
-.log-t { color: var(--text2); }
-.msg-i {
-display: flex; justify-content: space-between; align-items: center;
-padding: 5px 7px; background: rgba(0,0,0,0.2); border-radius: 5px;
-margin-bottom: 4px; gap: 5px;
-}
-.msg-tx { flex: 1; font-size: 0.8em; word-break: break-all; }
-.msg-n { color: var(--text2); font-size: 0.7em; min-width: 16px; }
-.bl-i {
-display: flex; justify-content: space-between; align-items: center;
-padding: 4px 7px; background: rgba(255,71,87,0.08); border: 1px solid rgba(255,71,87,0.15);
-border-radius: 5px; margin-bottom: 3px; font-size: 0.8em;
-}
-.chat-entry {
-padding: 5px 8px; background: rgba(0,0,0,0.2); border-radius: 5px;
-margin-bottom: 4px; font-size: 0.8em;
-}
-.chat-time { color: var(--text2); font-size: 0.7em; }
+body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+.app { display: flex; height: 100vh; }
+.sidebar { width: 240px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.logo { padding: 20px; font-size: 1.2em; font-weight: 700; color: var(--green); border-bottom: 1px solid var(--border); }
+.nav { flex: 1; padding: 12px; }
+.nav-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9em; transition: all 0.2s; }
+.nav-item:hover { background: rgba(255,255,255,0.05); }
+.nav-item.active { background: var(--card2); color: var(--green); font-weight: 600; }
+.main { flex: 1; overflow-y: auto; }
+.header { background: var(--sidebar); padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+.status-on { background: rgba(16,185,129,0.15); color: var(--green); }
+.status-off { background: rgba(239,68,68,0.15); color: var(--red); }
+.content { padding: 24px; }
+.page { display: none; }
+.page.active { display: block; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.card-title { font-size: 0.9em; color: var(--text2); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.card-value { font-size: 2em; font-weight: 700; color: var(--text); }
+.card-change { font-size: 0.8em; margin-top: 4px; }
+.change-up { color: var(--green); }
+.change-down { color: var(--red); }
+.chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+.chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.chart-title { font-size: 1.1em; font-weight: 600; }
+.chart-filters { display: flex; gap: 8px; }
+.filter-btn { padding: 6px 12px; border: 1px solid var(--border); background: transparent; color: var(--text2); border-radius: 6px; cursor: pointer; font-size: 0.8em; transition: all 0.2s; }
+.filter-btn:hover, .filter-btn.active { background: var(--card2); color: var(--green); border-color: var(--green); }
+.btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: all 0.2s; }
+.btn:hover { filter: brightness(1.1); }
+.btn-primary { background: var(--green); color: #000; }
+.btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-sm { padding: 4px 10px; font-size: 0.75em; }
+.server-list { display: grid; gap: 12px; }
+.server-item { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: all 0.2s; }
+.server-item:hover { border-color: var(--green); }
+.server-item.offline { opacity: 0.6; }
+.server-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
+.server-name { font-weight: 600; font-size: 0.95em; }
+.server-status { padding: 4px 8px; border-radius: 6px; font-size: 0.7em; font-weight: 600; }
+.status-online { background: rgba(16,185,129,0.2); color: var(--green); }
+.status-offline { background: rgba(239,68,68,0.2); color: var(--red); }
+.server-details { font-size: 0.8em; color: var(--text2); display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.server-detail { display: flex; align-items: center; gap: 6px; }
+.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-title { font-size: 1.3em; font-weight: 700; }
+.close-btn { background: none; border: none; color: var(--text2); font-size: 1.5em; cursor: pointer; }
+.chat-list { max-height: 400px; overflow-y: auto; background: var(--sidebar); border-radius: 8px; padding: 12px; }
+.chat-msg { padding: 8px; border-bottom: 1px solid var(--border); font-size: 0.85em; }
+.chat-time { color: var(--text2); font-size: 0.75em; }
 .chat-user { color: var(--green); font-weight: 600; }
-.chat-msg { color: var(--text); word-break: break-all; }
-.empty { text-align: center; color: var(--text2); padding: 16px; font-size: 0.82em; }
-.toast {
-position: fixed; bottom: 16px; right: 16px; background: var(--card2);
-border: 1px solid var(--green); color: var(--text); padding: 8px 16px;
-border-radius: 8px; font-size: 0.82em; z-index: 999;
-animation: si 0.3s ease;
-}
-@keyframes si { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.fw { grid-column: 1 / -1; }
-.cfg-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-@media (max-width: 600px) { .cfg-g { grid-template-columns: 1fr; } }
-.cfg-i label { display: block; font-size: 0.72em; color: var(--text2); margin-bottom: 2px; }
-.cfg-i input {
-width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-color: var(--text); padding: 6px 9px; border-radius: 6px; outline: none; font-size: 0.82em;
-}
-.tabs {
-display: flex; gap: 4px; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px;
-}
-.tab {
-padding: 6px 12px; background: rgba(0,0,0,0.2); border: 1px solid transparent;
-border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.8em;
-transition: all 0.2s;
-}
-.tab:hover { background: rgba(0,0,0,0.4); }
-.tab.active { background: var(--card2); border-color: var(--border); border-bottom-color: var(--card); }
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.tab { padding: 10px 20px; cursor: pointer; font-size: 0.9em; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab:hover { color: var(--green); }
+.tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 600; }
+.input-group { display: flex; gap: 8px; margin-bottom: 16px; }
+.input { flex: 1; background: var(--sidebar); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 0.9em; }
+.input:focus { outline: none; border-color: var(--green); }
+select.input { cursor: pointer; }
+.bot-item { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.bot-name { font-weight: 600; color: var(--green); }
+.bot-details { font-size: 0.75em; color: var(--text2); margin-top: 4px; }
+.bot-actions { display: flex; gap: 6px; }
+.empty { text-align: center; padding: 40px; color: var(--text2); font-size: 0.9em; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--card); border: 1px solid var(--green); padding: 12px 20px; border-radius: 8px; font-size: 0.9em; z-index: 1001; animation: slideIn 0.3s; }
+@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.log-container { background: var(--sidebar); border-radius: 8px; padding: 12px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.8em; }
+.log-entry { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.log-time { color: var(--text2); }
+@media (max-width: 768px) { .sidebar { width: 60px; } .sidebar .logo, .sidebar .nav-item span { display: none; } .grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
+<div class="app">
+<div class="sidebar">
+<div class="logo">🤖 Bot Anunciador</div>
+<div class="nav">
+<div class="nav-item active" onclick="switchPage('dashboard')">
+<span>📊</span><span>Dashboard</span>
+</div>
+<div class="nav-item" onclick="switchPage('analytics')">
+<span>📈</span><span>Analytics</span>
+</div>
+</div>
+</div>
+<div class="main">
 <div class="header">
-<h1>🤖 Bot <span>Anunciador</span></h1>
-<div class="badges">
-<div class="badge"><span class="dot d-green"></span><span id="s-bots">0 bots</span></div>
-<div class="badge"><span class="dot d-red"></span><span id="s-bl">0 bl</span></div>
-<div class="badge"><span class="dot d-yellow"></span><span id="s-msgs">0 msgs</span></div>
+<div><input type="text" class="input" id="relay-url" placeholder="Relay URL" value="https://anunciador-relay.onrender.com" style="width:300px"><button class="btn btn-primary" onclick="conectar()" style="margin-left:8px">Conectar</button></div>
+<div class="status-badge status-off" id="status-badge">⚠️ Offline</div>
 </div>
+<div class="content">
+<!-- DASHBOARD PAGE -->
+<div class="page active" id="page-dashboard">
+<div class="grid">
+<div class="card"><div class="card-title">🤖 Bots Ativos</div><div class="card-value" id="stat-bots">0</div></div>
+<div class="card"><div class="card-title">🚫 Blacklist</div><div class="card-value" id="stat-bl">0</div></div>
+<div class="card"><div class="card-title">📨 Mensagens</div><div class="card-value" id="stat-msgs">0</div></div>
 </div>
-<div class="banner b-off" id="banner">⏳ Conectando ao servidor...</div>
-<div class="connect-bar">
-<label>🔌 Relay URL:</label>
-<input type="text" id="relay-url" placeholder="https://seu-relay.onrender.com" value="https://anunciador-relay.onrender.com">
-<button class="btn btn-g" onclick="conectar()">Conectar</button>
-<span id="relay-status" style="font-size:0.75em;color:var(--text2)"></span>
+<div class="chart-container">
+<div class="chart-header">
+<div class="chart-title">🟢 Bots Conectados</div>
+<button class="btn btn-sm btn-danger" onclick="emit('disconnect_server','all')">Desconectar Todos</button>
+<button class="btn btn-sm btn-secondary" onclick="emit('restartBots')">🔄 Restart</button>
+</div>
+<div id="bots-list" class="server-list"><div class="empty">Aguardando bots...</div></div>
 </div>
 <div class="grid">
-<div class="card">
-<div class="card-h">🟢 Bots
-<div style="display:flex;gap:4px;">
-<button class="btn btn-s btn-y" onclick="emit('restartBots')">🔄 Restart</button>
-<button class="btn btn-s btn-r" onclick="emit('disconnect_server','all')">Desc. Todos</button>
+<div class="chart-container">
+<div class="chart-title">💬 Chat & Comandos</div>
+<div class="input-group"><select class="input" id="chat-target"><option value="all">Todos</option></select></div>
+<div class="input-group"><input class="input" id="chat-msg" placeholder="Mensagem..."><button class="btn btn-primary" onclick="sendChat()">Enviar</button></div>
+<div class="input-group"><input class="input" id="chat-cmd" placeholder="/comando"><button class="btn btn-secondary" onclick="sendCmd()">Executar</button></div>
+<button class="btn btn-primary" onclick="emit('announce')" style="width:100%;margin-top:8px">📣 Forçar Anúncio</button>
+<div class="input-group" style="margin-top:16px"><input class="input" id="connect-ip" placeholder="IP:Porta"><button class="btn btn-secondary" onclick="connectServer()">Conectar</button></div>
+</div>
+<div class="chart-container">
+<div class="chart-header"><div class="chart-title">📋 Mensagens</div><button class="btn btn-sm btn-secondary" onclick="document.getElementById('new-msg').value='';document.getElementById('new-msg').focus()">+ Nova</button></div>
+<div id="msgs-list" style="margin-bottom:12px"></div>
+<div class="input-group"><input class="input" id="new-msg" placeholder="Nova mensagem..."><button class="btn btn-primary" onclick="addMsg()">Adicionar</button></div>
 </div>
 </div>
-<div class="card-b" id="bots-list"><div class="empty">Aguardando...</div></div>
+<div class="chart-container">
+<div class="chart-header"><div class="chart-title">⚙️ Configurações</div></div>
+<div class="grid">
+<div><label style="font-size:0.8em;color:var(--text2);display:block;margin-bottom:4px">Username</label><input class="input" id="cfg-username" onchange="emit('setUsername',this.value)"></div>
+<div><label style="font-size:0.8em;color:var(--text2);display:block;margin-bottom:4px">Intervalo (seg)</label><input class="input" type="number" id="cfg-intervalo" min="10" onchange="emit('setIntervalo',this.value)"></div>
 </div>
-<div class="card">
-<div class="card-h">💬 Chat & Comandos</div>
-<div class="card-b">
-<div class="ig"><select id="ct"><option value="all">Todos</option></select></div>
-<div class="ig">
-<input type="text" id="ci" placeholder="Mensagem..." onkeydown="if(event.key==='Enter')sChat()">
-<button class="btn btn-g" onclick="sChat()">Enviar</button>
+<div style="margin-top:16px"><div class="chart-header"><div class="chart-title">🚫 Blacklist</div><button class="btn btn-sm btn-danger" onclick="emit('clearBlacklist')">Limpar Tudo</button></div>
+<div class="input-group"><input class="input" id="bl-input" placeholder="IP:Porta"><button class="btn btn-danger" onclick="addBlacklist()">+ Adicionar</button></div>
+<div id="bl-list"></div></div>
 </div>
-<div class="ig">
-<input type="text" id="cmi" placeholder="/comando" onkeydown="if(event.key==='Enter')sCmd()">
-<button class="btn btn-b" onclick="sCmd()">Cmd</button>
-</div>
-<button class="btn btn-p btn-f" onclick="emit('announce')">📣 Forçar Anúncio</button>
-<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;">
-<div class="ig">
-<input type="text" id="cni" placeholder="IP:Porta" onkeydown="if(event.key==='Enter')mConn()">
-<button class="btn btn-y" onclick="mConn()">Conectar</button>
+<div class="chart-container">
+<div class="chart-header"><div class="chart-title">📜 Logs</div><button class="btn btn-sm btn-secondary" onclick="document.getElementById('logs').innerHTML=''">Limpar</button></div>
+<div class="log-container" id="logs"></div>
 </div>
 </div>
+<!-- ANALYTICS PAGE -->
+<div class="page" id="page-analytics">
+<div class="grid">
+<div class="card"><div class="card-title">💬 Total Mensagens</div><div class="card-value" id="stat-total-msgs">0</div></div>
+<div class="card"><div class="card-title">🌐 Servidores</div><div class="card-value" id="stat-servers">0</div></div>
+<div class="card"><div class="card-title">👥 Pico de Jogadores</div><div class="card-value" id="stat-peak">0</div></div>
+</div>
+<div class="chart-container">
+<div class="chart-header">
+<div class="chart-title">📈 Jogadores ao Longo do Tempo</div>
+<div class="chart-filters">
+<button class="filter-btn active" onclick="filterChart('players','1h')">1h</button>
+<button class="filter-btn" onclick="filterChart('players','24h')">24h</button>
+<button class="filter-btn" onclick="filterChart('players','7d')">7d</button>
+<button class="btn btn-sm btn-secondary" onclick="exportChart('players')">📥 PNG</button>
 </div>
 </div>
-<div class="card">
-<div class="card-h">📋 Mensagens</div>
-<div class="card-b">
-<div id="msgs-list"></div>
-<div class="ig" style="margin-top:6px;">
-<input type="text" id="nm" placeholder="Nova msg..." onkeydown="if(event.key==='Enter')aMsg()">
-<button class="btn btn-g" onclick="aMsg()">+ Add</button>
+<canvas id="chart-players" style="max-height:300px"></canvas>
 </div>
+<div class="chart-container">
+<div class="chart-header">
+<div class="chart-title">💬 Mensagens por Hora</div>
+<button class="btn btn-sm btn-secondary" onclick="exportChart('messages')">📥 PNG</button>
 </div>
+<canvas id="chart-messages" style="max-height:300px"></canvas>
 </div>
-<div class="card">
-<div class="card-h">⚙️ Config</div>
-<div class="card-b">
-<div class="cfg-g">
-<div class="cfg-i"><label>👤 Username</label><input type="text" id="cu" onchange="emit('setUsername',this.value)"></div>
-<div class="cfg-i"><label>⏱️ Intervalo (seg)</label><input type="number" id="cv" min="10" onchange="emit('setIntervalo',this.value)"></div>
+<div class="chart-container">
+<div class="chart-header"><div class="chart-title">🏆 Top Servidores</div></div>
+<canvas id="chart-top" style="max-height:300px"></canvas>
 </div>
-<div style="margin-top:12px;">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-<span style="font-weight:600;font-size:0.82em;">🚫 Blacklist</span>
-<button class="btn btn-s btn-r" onclick="emit('clearBlacklist')">Limpar</button>
+<div class="chart-container">
+<div class="chart-header"><div class="chart-title">🌐 Servidores Detectados</div><div class="tabs"><div class="tab active" onclick="filterServers('online')">Online</div><div class="tab" onclick="filterServers('offline')">Offline</div><div class="tab" onclick="filterServers('all')">Todos</div></div></div>
+<div class="server-list" id="servers-list"><div class="empty">Nenhum servidor detectado</div></div>
 </div>
-<div class="ig" style="margin-bottom:8px;">
-<input type="text" id="bl-add" placeholder="IP:Porta" onkeydown="if(event.key==='Enter')addBl()">
-<button class="btn btn-s btn-r" onclick="addBl()">+ Add</button>
-</div>
-<div id="bl-list"><div class="empty" style="padding:6px">Vazia</div></div>
-</div>
-</div>
-</div>
-<div class="card fw">
-<div class="card-h">💾 Database de Chat
-<button class="btn btn-s btn-r" onclick="if(confirm('Limpar todo o histórico?'))emit('clearChatDatabase')">Limpar</button>
-</div>
-<div class="card-b">
-<div class="tabs">
-<div class="tab active" onclick="changeTab(0)">📜 Todas</div>
-<div class="tab" onclick="changeTab(1)">🔍 Filtrar</div>
-</div>
-<div id="tab-0" style="display:block;">
-<div class="logs" id="chat-db" style="height:250px;"></div>
-</div>
-<div id="tab-1" style="display:none;">
-<div class="ig">
-<select id="filter-server"><option value="all">Todos os servidores</option></select>
-<input type="text" id="filter-search" placeholder="Buscar..." onkeydown="if(event.key==='Enter')filterChat()">
-<button class="btn btn-b" onclick="filterChat()">Buscar</button>
-</div>
-<div class="logs" id="chat-filtered" style="height:200px;"></div>
+<div class="chart-container">
+<div class="chart-header"><div class="chart-title">💾 Database de Chat</div><button class="btn btn-sm btn-secondary" onclick="exportChatCSV()">📥 CSV</button><button class="btn btn-sm btn-danger" onclick="if(confirm('Limpar histórico?'))emit('clearChatDatabase')">Limpar</button></div>
+<div class="input-group"><select class="input" id="filter-server"><option value="all">Todos</option></select><input class="input" id="filter-search" placeholder="Buscar..."><button class="btn btn-secondary" onclick="filterChatDB()">Buscar</button></div>
+<div class="chat-list" id="chat-db"></div>
 </div>
 </div>
 </div>
-<div class="card fw">
-<div class="card-h">📜 Logs<button class="btn btn-s btn-b" onclick="document.getElementById('lc').innerHTML=''">Limpar</button></div>
-<div class="card-b"><div class="logs" id="lc"></div></div>
 </div>
 </div>
-<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<!-- MODAL SERVIDOR -->
+<div class="modal" id="modal-server">
+<div class="modal-content">
+<div class="modal-header"><div class="modal-title" id="modal-server-title">Servidor</div><button class="close-btn" onclick="closeModal()">&times;</button></div>
+<div id="modal-server-body"></div>
+</div>
+</div>
 <script>
-let socket = null;
-let pcOn = false;
-let currentTab = 0;
-let chatMessages = [];
-const savedUrl = localStorage.getItem('relayUrl') || 'https://anunciador-relay.onrender.com';
-document.getElementById('relay-url').value = savedUrl;
-if (savedUrl) setTimeout(() => conectar(), 500);
-function conectar() {
-const url = document.getElementById('relay-url').value.trim();
-if (!url) { toast('Cole a URL do Render!'); return; }
-localStorage.setItem('relayUrl', url);
-document.getElementById('relay-status').textContent = 'Conectando...';
-if (socket) { socket.disconnect(); socket = null; }
-socket = io(url, { reconnection: true, reconnectionDelay: 3000, timeout: 15000 });
-socket.on('connect', () => {
-document.getElementById('relay-status').textContent = '✅ Conectado!';
-document.getElementById('relay-status').style.color = 'var(--green)';
-});
-socket.on('disconnect', () => {
-document.getElementById('relay-status').textContent = '🔌 Desconectado';
-document.getElementById('relay-status').style.color = 'var(--red)';
-setBanner(false);
-});
-socket.on('connect_error', () => {
-document.getElementById('relay-status').textContent = '❌ Erro';
-document.getElementById('relay-status').style.color = 'var(--red)';
-});
-socket.on('init', (d) => { 
-uStats(d.stats); 
-uBots(d.bots); 
-d.logs.forEach(aLog); 
-if (d.chatDatabase) {
-chatMessages = d.chatDatabase;
-renderChatDatabase();
-}
-});
-socket.on('log', aLog);
-socket.on('botsUpdate', uBots);
-socket.on('statsUpdate', uStats);
-socket.on('toast', toast);
-socket.on('botStatus', setBanner);
-socket.on('chatMessage', (msg) => {
-chatMessages.push(msg);
-if (chatMessages.length > 5000) chatMessages.shift();
-renderChatDatabase();
-});
-socket.on('chatMessages', (msgs) => {
-const filtered = document.getElementById('chat-filtered');
-if (!msgs.length) {
-filtered.innerHTML = '<div class="empty" style="padding:16px">Nenhuma mensagem encontrada</div>';
-return;
-}
-filtered.innerHTML = msgs.map(m => 
-`<div class="chat-entry"><span class="chat-time">[${m.time}]</span> <span class="chat-user">${esc(m.username)}</span>: <span class="chat-msg">${esc(m.message)}</span></div>`
-).join('');
-filtered.scrollTop = filtered.scrollHeight;
-});
-}
-function setBanner(online) {
-pcOn = online;
-const b = document.getElementById('banner');
-b.className = online ? 'banner b-on' : 'banner b-off';
-b.textContent = online ? '✅ Bot ONLINE — PC conectado' : '⚠️ Bot OFFLINE — Ligue o bot no PC';
-}
-function emit(ev, data) {
-if (!socket?.connected) { toast('Conecte ao relay primeiro!'); return; }
-if (!pcOn && ev !== 'refresh') { toast('⚠️ Bot offline!'); return; }
-socket.emit(ev, data);
-}
-function uStats(s) {
-document.getElementById('s-bots').textContent = `${s.botsAtivos} bots`;
-document.getElementById('s-bl').textContent = `${s.blacklistSize} bl`;
-document.getElementById('s-msgs').textContent = `${s.mensagens.length} msgs`;
-document.getElementById('cu').value = s.username;
-document.getElementById('cv').value = s.intervalo;
-const ml = document.getElementById('msgs-list');
-ml.innerHTML = s.mensagens.length ? s.mensagens.map((m,i) =>
-`<div class="msg-i"><span class="msg-n">#${i+1}</span><span class="msg-tx">${esc(m)}</span><button class="btn btn-s btn-r" onclick="emit('delMsg',${i})">✕</button></div>`
-).join('') : '<div class="empty" style="padding:6px">Sem msgs</div>';
-const bl = document.getElementById('bl-list');
-bl.innerHTML = s.blacklistItems.length ? s.blacklistItems.map(x =>
-`<div class="bl-i"><span>${x}</span><button class="btn btn-s btn-g" onclick="emit('removeBlacklist','${x}')">✓</button></div>`
-).join('') : '<div class="empty" style="padding:6px">Vazia</div>';
-}
-function uBots(b) {
-const c = document.getElementById('bots-list');
-const sel = document.getElementById('ct');
-const selF = document.getElementById('filter-server');
-const cur = sel.value;
-const curF = selF.value;
-if (!b.length) { 
-c.innerHTML = '<div class="empty">Aguardando servidores...</div>'; 
-sel.innerHTML = '<option value="all">Todos</option>'; 
-selF.innerHTML = '<option value="all">Todos os servidores</option>'; 
-return; 
-}
-c.innerHTML = b.map(x => `<div class="bot-item"><div><div class="b-name">${esc(x.username)}</div><div class="b-det">${x.key} • v${x.versao}${x.hp!=null?' • ❤️'+x.hp.toFixed(0)+' 🍖'+x.food:''}${x.pos?' • 📍'+x.pos.x+','+x.pos.y+','+x.pos.z:''}${x.players?' • 👥'+x.players.length:''}</div></div><div class="b-acts"><button class="btn btn-s btn-b" onclick="emit('jump','${x.key}')">🦘</button><button class="btn btn-s btn-r" onclick="emit('disconnect_server','${x.key}')">✕</button></div></div>`).join('');
-sel.innerHTML = '<option value="all">Todos</option>' + b.map(x => `<option value="${x.key}">${x.username}</option>`).join('');
-sel.value = cur;
-selF.innerHTML = '<option value="all">Todos os servidores</option>' + b.map(x => `<option value="${x.key}">${x.key}</option>`).join('');
-selF.value = curF;
-}
-function aLog(e) {
-const c = document.getElementById('lc');
-const d = document.createElement('div');
-d.className = 'log-e';
-d.innerHTML = `<span class="log-t">[${e.time}]</span> ${e.emoji} ${esc(e.msg)}`;
-c.appendChild(d);
-c.scrollTop = c.scrollHeight;
-while (c.children.length > 200) c.removeChild(c.firstChild);
-}
-function renderChatDatabase() {
-if (currentTab !== 0) return;
-const c = document.getElementById('chat-db');
-if (!chatMessages.length) {
-c.innerHTML = '<div class="empty" style="padding:16px">Nenhuma mensagem ainda</div>';
-return;
-}
-c.innerHTML = chatMessages.slice(-200).map(m => 
-`<div class="chat-entry"><span class="chat-time">[${m.time}] [${m.serverKey}]</span> <span class="chat-user">${esc(m.username)}</span>: <span class="chat-msg">${esc(m.message)}</span></div>`
-).join('');
-c.scrollTop = c.scrollHeight;
-}
-function filterChat() {
-const serverKey = document.getElementById('filter-server').value;
-const search = document.getElementById('filter-search').value.trim();
-if (!socket?.connected) { toast('Conecte ao relay!'); return; }
-socket.emit('getChatMessages', { serverKey, search });
-}
-function changeTab(idx) {
-currentTab = idx;
-document.querySelectorAll('.tab').forEach((t, i) => {
-t.classList.toggle('active', i === idx);
-document.getElementById(`tab-${i}`).style.display = i === idx ? 'block' : 'none';
-});
-if (idx === 0) renderChatDatabase();
-}
-function sChat() { const i=document.getElementById('ci'); if(i.value.trim()){emit('chat',{serverKey:document.getElementById('ct').value,message:i.value.trim()});i.value='';} }
-function sCmd() { const i=document.getElementById('cmi'),t=document.getElementById('ct').value; if(t==='all'){toast('Selecione servidor');return;} if(i.value.trim()){emit('command',{serverKey:t,command:i.value.trim()});i.value='';} }
-function aMsg() { const i=document.getElementById('nm'); if(i.value.trim()){emit('addMsg',i.value.trim());i.value='';} }
-function mConn() { const i=document.getElementById('cni'); if(i.value.trim()){emit('connect_server',i.value.trim());i.value='';} }
-function addBl() { const i=document.getElementById('bl-add'); if(i.value.trim()){emit('addBlacklist',i.value.trim());i.value='';} }
-function toast(m) { const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
-function esc(s) { const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+let socket=null,pcOn=false,currentFilter='online',charts={},analyticsData={},chatMessages=[],servers=[],bots=[];
+const savedUrl=localStorage.getItem('relayUrl')||'https://anunciador-relay.onrender.com';
+document.getElementById('relay-url').value=savedUrl;
+setTimeout(conectar,500);
+function conectar(){const url=document.getElementById('relay-url').value.trim();if(!url){toast('Cole URL!');return;}localStorage.setItem('relayUrl',url);if(socket){socket.disconnect();socket=null;}socket=io(url,{reconnection:true,reconnectionDelay:3000});socket.on('connect',()=>{document.getElementById('status-badge').className='status-badge status-on';document.getElementById('status-badge').textContent='✅ Online';});socket.on('disconnect',()=>{document.getElementById('status-badge').className='status-badge status-off';document.getElementById('status-badge').textContent='⚠️ Offline';pcOn=false;});socket.on('botStatus',on=>{pcOn=on;});socket.on('init',d=>{updateStats(d.stats);updateBots(d.bots);servers=d.servers||[];bots=d.bots||[];chatMessages=d.chatDatabase||[];analyticsData=d.analytics||{};d.logs?.forEach(addLog);renderServers();updateAnalytics();});socket.on('log',addLog);socket.on('botsUpdate',updateBots);socket.on('statsUpdate',updateStats);socket.on('serverUpdate',srvs=>{servers=srvs;renderServers();});socket.on('chatMessage',msg=>{chatMessages.push(msg);if(chatMessages.length>5000)chatMessages.shift();renderChatDB();});socket.on('analyticsData',data=>{analyticsData=data;updateAnalytics();});}
+function emit(ev,data){if(!socket?.connected){toast('Conecte ao relay!');return;}if(!pcOn&&ev!=='refresh'){toast('Bot offline!');return;}socket.emit(ev,data);}
+function updateStats(s){document.getElementById('stat-bots').textContent=s.botsAtivos;document.getElementById('stat-bl').textContent=s.blacklistSize;document.getElementById('stat-msgs').textContent=s.mensagens.length;document.getElementById('cfg-username').value=s.username;document.getElementById('cfg-intervalo').value=s.intervalo;const ml=document.getElementById('msgs-list');ml.innerHTML=s.mensagens.length?s.mensagens.map((m,i)=>`<div style="padding:8px;background:var(--sidebar);border-radius:6px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.85em">${esc(m)}</span><button class="btn btn-sm btn-danger" onclick="emit('delMsg',${i})">✕</button></div>`).join(''):'<div class="empty" style="padding:20px">Sem mensagens</div>';const bl=document.getElementById('bl-list');bl.innerHTML=s.blacklistItems.length?s.blacklistItems.map(x=>`<div style="padding:8px;background:var(--sidebar);border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.85em">${x}</span><button class="btn btn-sm btn-secondary" onclick="emit('removeBlacklist','${x}')">✓</button></div>`).join(''):'<div class="empty" style="padding:20px">Vazia</div>';}
+function updateBots(b){bots=b;const c=document.getElementById('bots-list'),sel=document.getElementById('chat-target'),selF=document.getElementById('filter-server'),cur=sel.value,curF=selF.value;if(!b.length){c.innerHTML='<div class="empty">Aguardando bots...</div>';sel.innerHTML='<option value="all">Todos</option>';selF.innerHTML='<option value="all">Todos</option>';return;}c.innerHTML=b.map(x=>`<div class="bot-item"><div><div class="bot-name">${esc(x.username)}</div><div class="bot-details">${x.key} • v${x.versao}${x.hp!=null?' • ❤️'+x.hp.toFixed(0)+' 🍖'+x.food:''}${x.pos?' • 📍'+x.pos.x+','+x.pos.y+','+x.pos.z:''}${x.players?' • 👥'+x.players.length:''}</div></div><div class="bot-actions"><button class="btn btn-sm btn-secondary" onclick="emit('jump','${x.key}')">🦘</button><button class="btn btn-sm btn-danger" onclick="emit('disconnect_server','${x.key}')">✕</button></div></div>`).join('');sel.innerHTML='<option value="all">Todos</option>'+b.map(x=>`<option value="${x.key}">${x.username}</option>`).join('');sel.value=cur;selF.innerHTML='<option value="all">Todos</option>'+b.map(x=>`<option value="${x.key}">${x.key}</option>`).join('');selF.value=curF;}
+function addLog(e){const c=document.getElementById('logs'),d=document.createElement('div');d.className='log-entry';d.innerHTML=`<span class="log-time">[${e.time}]</span> ${e.emoji} ${esc(e.msg)}`;c.appendChild(d);c.scrollTop=c.scrollHeight;while(c.children.length>200)c.removeChild(c.firstChild);}
+function renderServers(){const filtered=servers.filter(s=>{if(currentFilter==='online')return s.status==='online';if(currentFilter==='offline')return s.status==='offline'||s.status==='kicked';return true;});const c=document.getElementById('servers-list');if(!filtered.length){c.innerHTML='<div class="empty">Nenhum servidor</div>';return;}c.innerHTML=filtered.map(s=>`<div class="server-item ${s.status!=='online'?'offline':''}" onclick="showServerModal('${s.key}')"><div class="server-header"><div class="server-name">${s.key}</div><div class="server-status status-${s.status==='online'?'online':'offline'}">${s.status==='online'?'ONLINE':'OFFLINE'}</div></div><div class="server-details"><div class="server-detail">📝 ${esc(s.motd||'???')}</div><div class="server-detail">👥 ${s.onlinePlayers||s.players?.length||0}/${s.maxPlayers||'?'}</div><div class="server-detail">📡 ${s.ping||'?'}ms</div><div class="server-detail">⏰ ${s.lastSeen?new Date(s.lastSeen).toLocaleTimeString('pt-BR'):'?'}</div></div></div>`).join('');document.getElementById('stat-servers').textContent=servers.length;}
+function filterServers(type){currentFilter=type;document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));event.target.classList.add('active');renderServers();}
+function showServerModal(key){const s=servers.find(x=>x.key===key);if(!s)return;document.getElementById('modal-server-title').textContent=s.key;let body=`<div style="margin-bottom:16px"><strong>MOTD:</strong> ${esc(s.motd||'???')}</div><div style="margin-bottom:16px"><strong>Status:</strong> ${s.status}</div><div style="margin-bottom:16px"><strong>Versão:</strong> ${s.version||'?'}</div><div style="margin-bottom:16px"><strong>Jogadores:</strong> ${s.onlinePlayers||0}/${s.maxPlayers||'?'}</div>`;if(s.players?.length){body+=`<div style="margin-bottom:16px"><strong>Lista:</strong><div style="margin-top:8px;max-height:200px;overflow-y:auto">${s.players.map(p=>`<div style="padding:6px;background:var(--sidebar);border-radius:4px;margin-bottom:4px;display:flex;justify-content:space-between"><span>${esc(p.name)}</span><span style="color:var(--text2)">${p.ping}ms</span></div>`).join('')}</div></div>`;}const msgs=chatMessages.filter(m=>m.serverKey===key).slice(-50);if(msgs.length){body+=`<div><strong>Chat Recente:</strong><div class="chat-list" style="margin-top:8px">${msgs.map(m=>`<div class="chat-msg"><span class="chat-time">[${m.time}]</span> <span class="chat-user">${esc(m.username)}</span>: ${esc(m.message)}</div>`).join('')}</div></div>`;}document.getElementById('modal-server-body').innerHTML=body;document.getElementById('modal-server').classList.add('active');}
+function closeModal(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active'));}
+function updateAnalytics(){if(!analyticsData.playersOverTime)return;if(charts.players){charts.players.data.labels=analyticsData.playersOverTime.map(p=>new Date(p.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));charts.players.data.datasets[0].data=analyticsData.playersOverTime.map(p=>p.total);charts.players.update();}else{const ctx=document.getElementById('chart-players').getContext('2d');charts.players=new Chart(ctx,{type:'line',data:{labels:analyticsData.playersOverTime?.map(p=>new Date(p.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}))||[],datasets:[{label:'Jogadores',data:analyticsData.playersOverTime?.map(p=>p.total)||[],borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.05)'}},x:{grid:{display:false}}}}});}if(charts.messages){const hours=Array.from({length:24},(_,i)=>i);const counts=hours.map(h=>{const found=analyticsData.messagesPerHour?.find(m=>m.hour===h);return found?found.count:0;});charts.messages.data.labels=hours.map(h=>`${h}h`);charts.messages.data.datasets[0].data=counts;charts.messages.update();}else{const ctx2=document.getElementById('chart-messages').getContext('2d');const hours=Array.from({length:24},(_,i)=>i);const counts=hours.map(h=>{const found=analyticsData.messagesPerHour?.find(m=>m.hour===h);return found?found.count:0;});charts.messages=new Chart(ctx2,{type:'bar',data:{labels:hours.map(h=>`${h}h`),datasets:[{label:'Mensagens',data:counts,backgroundColor:'#3b82f6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.05)'}},x:{grid:{display:false}}}}});}if(charts.top){charts.top.data.labels=analyticsData.topServers?.slice(0,5).map(s=>s.serverKey)||[];charts.top.data.datasets[0].data=analyticsData.topServers?.slice(0,5).map(s=>s.messages)||[];charts.top.update();}else{const ctx3=document.getElementById('chart-top').getContext('2d');charts.top=new Chart(ctx3,{type:'bar',data:{labels:analyticsData.topServers?.slice(0,5).map(s=>s.serverKey)||[],datasets:[{label:'Mensagens',data:analyticsData.topServers?.slice(0,5).map(s=>s.messages)||[],backgroundColor:'#a855f7'}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.05)'}},y:{grid:{display:false}}}}});}document.getElementById('stat-total-msgs').textContent=chatMessages.length;const peak=Math.max(...(analyticsData.playersOverTime?.map(p=>p.total)||[0]));document.getElementById('stat-peak').textContent=peak;}
+function filterChart(type,range){document.querySelectorAll('.chart-filters .filter-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');if(socket?.connected)socket.emit('getAnalytics',range);}
+function exportChart(type){const canvas=document.getElementById(`chart-${type}`);html2canvas(canvas).then(c=>{const link=document.createElement('a');link.download=`chart-${type}-${Date.now()}.png`;link.href=c.toDataURL();link.click();toast('Chart exportado!');});}
+function renderChatDB(){const c=document.getElementById('chat-db');if(!chatMessages.length){c.innerHTML='<div class="empty">Sem mensagens</div>';return;}c.innerHTML=chatMessages.slice(-100).map(m=>`<div class="chat-msg"><span class="chat-time">[${m.time}] [${m.serverKey}]</span> <span class="chat-user">${esc(m.username)}</span>: ${esc(m.message)}</div>`).join('');c.scrollTop=c.scrollHeight;}
+function filterChatDB(){const serverKey=document.getElementById('filter-server').value,search=document.getElementById('filter-search').value.trim();if(!socket?.connected){toast('Conecte!');return;}socket.emit('getChatMessages',{serverKey,search});}
+function exportChatCSV(){let csv='Data,Hora,Servidor,Jogador,Mensagem\n';chatMessages.forEach(m=>{csv+=`${m.date},${m.time},${m.serverKey},${m.username},"${m.message.replace(/"/g,'""')}"\n`;});const blob=new Blob([csv],{type:'text/csv'});const link=document.createElement('a');link.download=`chat-${Date.now()}.csv`;link.href=URL.createObjectURL(blob);link.click();toast('CSV exportado!');}
+function switchPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(`page-${page}`).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));event.target.closest('.nav-item').classList.add('active');if(page==='analytics')updateAnalytics();}
+function sendChat(){const i=document.getElementById('chat-msg');if(i.value.trim()){emit('chat',{serverKey:document.getElementById('chat-target').value,message:i.value.trim()});i.value='';}}
+function sendCmd(){const i=document.getElementById('chat-cmd'),t=document.getElementById('chat-target').value;if(t==='all'){toast('Selecione servidor');return;}if(i.value.trim()){emit('command',{serverKey:t,command:i.value.trim()});i.value='';}}
+function addMsg(){const i=document.getElementById('new-msg');if(i.value.trim()){emit('addMsg',i.value.trim());i.value='';}}
+function connectServer(){const i=document.getElementById('connect-ip');if(i.value.trim()){emit('connect_server',i.value.trim());i.value='';}}
+function addBlacklist(){const i=document.getElementById('bl-input');if(i.value.trim()){emit('addBlacklist',i.value.trim());i.value='';}}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 </script>
 </body>
 </html>
