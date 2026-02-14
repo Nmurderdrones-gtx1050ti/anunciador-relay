@@ -1,391 +1,449 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 Bot Anunciador</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --bg: #0f1729; --sidebar: #1a2332; --card: #1e2936; --card2: #253345; --green: #10b981; --red: #ef4444; --yellow: #f59e0b; --blue: #3b82f6; --purple: #a855f7; --text: #f3f4f6; --text2: #9ca3af; --border: #374151; }
-        body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        .app { display: flex; height: 100vh; }
-        .sidebar { width: 240px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .logo { padding: 20px; font-size: 1.2em; font-weight: 700; color: var(--green); border-bottom: 1px solid var(--border); }
-        .nav { flex: 1; padding: 12px; }
-        .nav-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9em; transition: all 0.2s; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); }
-        .nav-item.active { background: var(--card2); color: var(--green); font-weight: 600; }
-        .main { flex: 1; overflow-y: auto; }
-        .header { background: var(--sidebar); padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
-        .status-on { background: rgba(16,185,129,0.15); color: var(--green); }
-        .status-off { background: rgba(239,68,68,0.15); color: var(--red); }
-        .content { padding: 24px; }
-        .page { display: none; }
-        .page.active { display: block; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-        .card-title { font-size: 0.9em; color: var(--text2); margin-bottom: 8px; }
-        .card-value { font-size: 2em; font-weight: 700; }
-        .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .chart-title { font-size: 1.1em; font-weight: 600; }
-        .chart-filters { display: flex; gap: 8px; }
-        .filter-btn { padding: 6px 12px; border: 1px solid var(--border); background: transparent; color: var(--text2); border-radius: 6px; cursor: pointer; font-size: 0.8em; }
-        .filter-btn:hover, .filter-btn.active { background: var(--card2); color: var(--green); border-color: var(--green); }
-        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: all 0.2s; }
-        .btn:hover { filter: brightness(1.1); }
-        .btn-primary { background: var(--green); color: #000; }
-        .btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
-        .btn-danger { background: var(--red); color: #fff; }
-        .btn-sm { padding: 4px 10px; font-size: 0.75em; }
-        .input-group { display: flex; gap: 8px; margin-bottom: 16px; }
-        .input { flex: 1; background: var(--sidebar); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 0.9em; }
-        .input:focus { outline: none; border-color: var(--green); }
-        select.input { cursor: pointer; }
-        .server-list { display: grid; gap: 12px; }
-        .server-item { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: all 0.2s; }
-        .server-item:hover { border-color: var(--green); }
-        .bot-item { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .bot-name { font-weight: 600; color: var(--green); }
-        .bot-details { font-size: 0.75em; color: var(--text2); margin-top: 4px; }
-        .empty { text-align: center; padding: 40px; color: var(--text2); }
-        .toast { position: fixed; bottom: 24px; right: 24px; background: var(--card); border: 1px solid var(--green); padding: 12px 20px; border-radius: 8px; z-index: 1001; animation: slideIn 0.3s; }
-        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .log-container { background: var(--sidebar); border-radius: 8px; padding: 12px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.8em; }
-        .log-entry { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .log-time { color: var(--text2); }
-        .chat-list { max-height: 400px; overflow-y: auto; background: var(--sidebar); border-radius: 8px; padding: 12px; }
-        .chat-msg { padding: 8px; border-bottom: 1px solid var(--border); font-size: 0.85em; }
-        .chat-time { color: var(--text2); font-size: 0.75em; }
-        .chat-user { color: var(--green); font-weight: 600; }
-        .archive-item { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
-        .archive-item:hover { border-color: var(--purple); }
-        .archive-meta { display: flex; gap: 16px; font-size: 0.8em; color: var(--text2); margin-top: 8px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 900px; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-title { font-size: 1.3em; font-weight: 700; }
-        .close-btn { background: none; border: none; color: var(--text2); font-size: 1.5em; cursor: pointer; }
-        @media (max-width: 768px) { .sidebar { width: 60px; } .sidebar .logo, .sidebar .nav-item span { display: none; } .grid { grid-template-columns: 1fr; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central Radmin VPN</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root {
+--bg: #0B1120; --sidebar: #1C2333; --card: #1E293B; --card-hover: #2A3647;
+--primary: #06B6D4; --primary-dark: #0891B2; --accent: #8B5CF6;
+--text: #F1F5F9; --text2: #94A3B8; --text3: #64748B; --border: #334155;
+--green: #10B981; --red: #EF4444; --yellow: #F59E0B;
+}
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+.app { display: flex; height: 100vh; }
+
+/* SIDEBAR MODERNA */
+.sidebar { width: 280px; background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid var(--border); transition: width 0.3s; }
+.sidebar.collapsed { width: 70px; }
+.sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1em; font-weight: 700; color: #000; }
+.logo-text { font-size: 1em; font-weight: 700; white-space: nowrap; }
+.sidebar.collapsed .logo-text, .sidebar.collapsed .nav-label, .sidebar.collapsed .nav-item span { display: none; }
+.toggle-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.2em; }
+.nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+.nav-section { margin-bottom: 24px; }
+.nav-label { font-size: 0.7em; text-transform: uppercase; color: var(--text3); padding: 0 12px; margin-bottom: 8px; font-weight: 600; }
+.nav-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.9em; transition: all 0.2s; color: var(--text2); }
+.nav-item:hover { background: rgba(6,182,212,0.1); color: var(--text); }
+.nav-item.active { background: linear-gradient(90deg, rgba(6,182,212,0.2), rgba(139,92,246,0.1)); color: var(--text); font-weight: 600; border-left: 3px solid var(--primary); padding-left: 13px; }
+.nav-icon { font-size: 1.2em; min-width: 20px; }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: var(--sidebar); padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.topbar-left { display: flex; gap: 12px; align-items: center; }
+.search-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px; display: flex; align-items: center; gap: 8px; width: 300px; }
+.search-box input { background: none; border: none; color: var(--text); outline: none; flex: 1; font-size: 0.85em; }
+.status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 600; }
+.status-online { background: rgba(16,185,129,0.15); color: var(--green); }
+.status-offline { background: rgba(239,68,68,0.15); color: var(--red); }
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.stat-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+.stat-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2em; }
+.stat-label { font-size: 0.8em; color: var(--text2); margin-bottom: 6px; }
+.stat-value { font-size: 1.8em; font-weight: 700; }
+
+/* SERVER CARDS */
+.servers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+.server-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; }
+.server-card:hover { border-color: var(--primary); background: var(--card-hover); }
+.server-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+.server-name { font-weight: 600; font-size: 1em; }
+.server-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.7em; font-weight: 600; }
+.badge-online { background: rgba(16,185,129,0.15); color: var(--green); }
+.badge-offline { background: rgba(239,68,68,0.15); color: var(--red); }
+.server-motd { font-size: 0.85em; color: var(--text2); margin-bottom: 12px; }
+.server-footer { display: flex; gap: 16px; font-size: 0.8em; color: var(--text3); }
+.server-info { display: flex; align-items: center; gap: 6px; }
+
+/* CHAT */
+.chat-container { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+.chat-header { padding: 20px; border-bottom: 1px solid var(--border); }
+.chat-title { font-size: 1.1em; font-weight: 600; margin-bottom: 16px; }
+.chat-filters { display: flex; gap: 12px; flex-wrap: wrap; }
+.filter-input { flex: 1; min-width: 200px; background: var(--sidebar); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; font-size: 0.85em; }
+.filter-input:focus { outline: none; border-color: var(--primary); }
+.chat-tabs { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--border); }
+.chat-tab { padding: 10px 20px; cursor: pointer; font-size: 0.85em; color: var(--text3); border-bottom: 2px solid transparent; transition: all 0.2s; }
+.chat-tab:hover { color: var(--text); }
+.chat-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.chat-body { padding: 20px; max-height: 500px; overflow-y: auto; }
+.chat-msg { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85em; }
+.chat-msg:hover { background: var(--card-hover); }
+.chat-meta { font-size: 0.75em; color: var(--text3); margin-bottom: 4px; }
+.chat-user { color: var(--primary); font-weight: 600; }
+.chat-text { color: var(--text); }
+.chat-empty { text-align: center; padding: 60px; color: var(--text3); }
+
+/* MODAL */
+.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 14px; width: 90%; max-width: 900px; max-height: 85vh; overflow-y: auto; }
+.modal-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 1.3em; font-weight: 700; }
+.close-btn { background: none; border: none; color: var(--text3); font-size: 1.5em; cursor: pointer; }
+.modal-body { padding: 24px; }
+.modal-section { margin-bottom: 24px; }
+.modal-section-title { font-size: 0.9em; color: var(--text2); margin-bottom: 12px; font-weight: 600; }
+.info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.info-item { background: var(--sidebar); padding: 12px; border-radius: 8px; }
+.info-label { font-size: 0.75em; color: var(--text3); margin-bottom: 4px; }
+.info-value { font-size: 0.9em; color: var(--text); font-weight: 500; }
+.players-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.player-item { background: var(--sidebar); padding: 8px 12px; border-radius: 8px; font-size: 0.85em; display: flex; justify-content: space-between; }
+
+/* BUTTONS */
+.btn { padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: all 0.2s; }
+.btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(6,182,212,0.3); }
+.btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn-sm { padding: 6px 12px; font-size: 0.75em; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--card); border: 1px solid var(--primary); padding: 16px 24px; border-radius: 12px; z-index: 3000; animation: slideIn 0.3s; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .servers-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .sidebar { width: 70px; } .sidebar.collapsed { width: 70px; } .stats-grid { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
 <div class="app">
-    <div class="sidebar">
-        <div class="logo">🤖 Bot Anunciador</div>
-        <div class="nav">
-            <div class="nav-item active" onclick="switchPage('dashboard')"><span>📊</span><span>Dashboard</span></div>
-            <div class="nav-item" onclick="switchPage('analytics')"><span>📈</span><span>Analytics</span></div>
-            <div class="nav-item" onclick="switchPage('archive')"><span>📦</span><span>Arquivo</span></div>
-        </div>
-    </div>
-    <div class="main">
-        <div class="header">
-            <div>
-                <input type="text" class="input" id="relay-url" placeholder="Relay URL" value="https://anunciador-relay.onrender.com" style="width:300px">
-                <button class="btn btn-primary" onclick="conectar()" style="margin-left:8px">Conectar</button>
-            </div>
-            <div class="status-badge status-off" id="status-badge">⚠️ Offline</div>
-        </div>
-        <div class="content">
+<div class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<div class="logo">
+<div class="logo-icon">CRV</div>
+<div class="logo-text">Central Radmin VPN</div>
+</div>
+<button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+</div>
+<div class="nav">
+<div class="nav-section">
+<div class="nav-label">Menu</div>
+<div class="nav-item active" onclick="switchPage('dashboard')">
+<span class="nav-icon">📊</span><span>Dashboard</span>
+</div>
+<div class="nav-item" onclick="switchPage('servers')">
+<span class="nav-icon">🌐</span><span>Servidores</span>
+</div>
+<div class="nav-item" onclick="switchPage('chat-live')">
+<span class="nav-icon">💬</span><span>Chat Ao Vivo</span>
+</div>
+<div class="nav-item" onclick="switchPage('chat-archive')">
+<span class="nav-icon">📦</span><span>Chat Arquivado</span>
+</div>
+</div>
+</div>
+</div>
+<div class="main">
+<div class="topbar">
+<div class="topbar-left">
+<div class="search-box">
+<span>🔍</span>
+<input type="text" placeholder="Buscar..." id="global-search">
+</div>
+</div>
+<div style="display:flex;gap:12px;align-items:center;">
+<div class="status-badge status-offline" id="status-badge">⚠️ Offline</div>
+<button class="btn btn-primary" onclick="document.getElementById('connect-modal').style.display='flex'">Conectar</button>
+</div>
+</div>
+<div class="content">
 
-            <!-- DASHBOARD -->
-            <div class="page active" id="page-dashboard">
-                <div class="grid">
-                    <div class="card"><div class="card-title">🤖 Bots Ativos</div><div class="card-value" id="stat-bots">0</div></div>
-                    <div class="card"><div class="card-title">🚫 Blacklist</div><div class="card-value" id="stat-bl">0</div></div>
-                    <div class="card"><div class="card-title">📨 Mensagens</div><div class="card-value" id="stat-msgs">0</div></div>
-                </div>
-
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <div class="chart-title">🤖 Bots Conectados</div>
-                        <div>
-                            <button class="btn btn-sm btn-danger" onclick="emit('disconnect_server','all')">Desconectar Todos</button>
-                            <button class="btn btn-sm btn-secondary" onclick="emit('restartBots')">🔄 Restart</button>
-                        </div>
-                    </div>
-                    <div id="bots-list" class="server-list"><div class="empty">Aguardando bots...</div></div>
-                </div>
-
-                <div class="grid">
-                    <div class="chart-container">
-                        <div class="chart-title">💬 Chat & Comandos</div>
-                        <div class="input-group"><select class="input" id="chat-target"><option value="all">Todos</option></select></div>
-                        <div class="input-group"><input class="input" id="chat-msg" placeholder="Mensagem..."><button class="btn btn-primary" onclick="sendChat()">Enviar</button></div>
-                        <div class="input-group"><input class="input" id="chat-cmd" placeholder="/comando"><button class="btn btn-secondary" onclick="sendCmd()">Executar</button></div>
-                        <button class="btn btn-primary" onclick="emit('announce')" style="width:100%;margin-top:8px">📣 Forçar Anúncio</button>
-                        <div class="input-group" style="margin-top:16px"><input class="input" id="connect-ip" placeholder="IP:Porta"><button class="btn btn-secondary" onclick="connectServer()">Conectar</button></div>
-                    </div>
-                    <div class="chart-container">
-                        <div class="chart-header"><div class="chart-title">📋 Mensagens</div></div>
-                        <div id="msgs-list" style="margin-bottom:12px"></div>
-                        <div class="input-group"><input class="input" id="new-msg" placeholder="Nova mensagem..."><button class="btn btn-primary" onclick="addMsg()">Adicionar</button></div>
-                    </div>
-                </div>
-
-                <div class="chart-container">
-                    <div class="chart-header"><div class="chart-title">⚙️ Configurações</div></div>
-                    <div class="grid">
-                        <div><label style="font-size:0.8em;color:var(--text2)">Username</label><input class="input" id="cfg-username" onchange="emit('setUsername',this.value)"></div>
-                        <div><label style="font-size:0.8em;color:var(--text2)">Intervalo (seg)</label><input class="input" type="number" id="cfg-intervalo" min="10" onchange="emit('setIntervalo',this.value)"></div>
-                    </div>
-                    <div style="margin-top:16px">
-                        <div class="chart-header"><div class="chart-title">🚫 Blacklist</div><button class="btn btn-sm btn-danger" onclick="emit('clearBlacklist')">Limpar</button></div>
-                        <div class="input-group"><input class="input" id="bl-input" placeholder="IP:Porta"><button class="btn btn-danger" onclick="addBlacklist()">+ Adicionar</button></div>
-                        <div id="bl-list"></div>
-                    </div>
-                </div>
-
-                <div class="chart-container">
-                    <div class="chart-header"><div class="chart-title">📜 Logs</div><button class="btn btn-sm btn-secondary" onclick="document.getElementById('logs').innerHTML=''">Limpar</button></div>
-                    <div class="log-container" id="logs"></div>
-                </div>
-            </div>
-
-            <!-- ANALYTICS -->
-            <div class="page" id="page-analytics">
-                <div class="grid">
-                    <div class="card"><div class="card-title">💬 Total Mensagens</div><div class="card-value" id="stat-total-msgs">0</div></div>
-                    <div class="card"><div class="card-title">🌐 Servidores</div><div class="card-value" id="stat-servers">0</div></div>
-                    <div class="card"><div class="card-title">👥 Pico Jogadores</div><div class="card-value" id="stat-peak">0</div></div>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <div class="chart-title">📈 Jogadores ao Longo do Tempo</div>
-                        <div class="chart-filters">
-                            <button class="filter-btn active" onclick="filterChart('players','1h')">1h</button>
-                            <button class="filter-btn" onclick="filterChart('players','24h')">24h</button>
-                            <button class="filter-btn" onclick="filterChart('players','7d')">7d</button>
-                            <button class="btn btn-sm btn-secondary" onclick="exportChart('players')">📥 PNG</button>
-                        </div>
-                    </div>
-                    <canvas id="chart-players" style="max-height:300px"></canvas>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header"><div class="chart-title">💬 Mensagens por Hora</div><button class="btn btn-sm btn-secondary" onclick="exportChart('messages')">📥 PNG</button></div>
-                    <canvas id="chart-messages" style="max-height:300px"></canvas>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header"><div class="chart-title">🏆 Top Servidores</div></div>
-                    <canvas id="chart-top" style="max-height:300px"></canvas>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header"><div class="chart-title">🌐 Servidores Detectados</div></div>
-                    <div class="server-list" id="servers-list"><div class="empty">Nenhum servidor</div></div>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header"><div class="chart-title">💾 Database de Chat (Ao Vivo)</div><button class="btn btn-sm btn-secondary" onclick="exportChatCSV()">📥 CSV</button></div>
-                    <div class="input-group"><select class="input" id="filter-server"><option value="all">Todos</option></select><input class="input" id="filter-search" placeholder="Buscar..."><button class="btn btn-secondary" onclick="filterChatDB()">Buscar</button></div>
-                    <div class="chat-list" id="chat-db"></div>
-                </div>
-            </div>
-
-            <!-- ARCHIVE -->
-            <div class="page" id="page-archive">
-                <div class="grid">
-                    <div class="card"><div class="card-title">📦 Total Arquivos</div><div class="card-value" id="stat-archives">0</div></div>
-                    <div class="card"><div class="card-title">💬 Mensagens Arquivadas</div><div class="card-value" id="stat-archived-msgs">0</div></div>
-                    <div class="card"><div class="card-title">📅 Último Arquivo</div><div class="card-value" id="stat-last-archive" style="font-size:1em">-</div></div>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <div class="chart-title">📦 Sessões Arquivadas</div>
-                        <button class="btn btn-primary" onclick="loadArchives()">🔄 Atualizar</button>
-                    </div>
-                    <div class="input-group"><input class="input" id="archive-search" placeholder="Buscar por data, servidor..."><button class="btn btn-secondary" onclick="searchArchives()">Buscar</button></div>
-                    <div id="archives-list"><div class="empty">Clique em "Atualizar" para carregar</div></div>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+<div class="stats-grid">
+<div class="stat-card">
+<div class="stat-header">
+<div class="stat-icon">📊</div>
+</div>
+<div class="stat-label">Bots Ativos</div>
+<div class="stat-value" id="stat-bots">0</div>
+</div>
+<div class="stat-card">
+<div class="stat-header">
+<div class="stat-icon">🌐</div>
+</div>
+<div class="stat-label">Servidores</div>
+<div class="stat-value" id="stat-servers">0</div>
+</div>
+<div class="stat-card">
+<div class="stat-header">
+<div class="stat-icon">💬</div>
+</div>
+<div class="stat-label">Mensagens</div>
+<div class="stat-value" id="stat-msgs">0</div>
+</div>
+<div class="stat-card">
+<div class="stat-header">
+<div class="stat-icon">🚫</div>
+</div>
+<div class="stat-label">Blacklist</div>
+<div class="stat-value" id="stat-bl">0</div>
+</div>
+</div>
 </div>
 
-<!-- MODAL -->
-<div class="modal" id="modal-archive">
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="modal-title" id="modal-archive-title">Arquivo</div>
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-        </div>
-        <div id="modal-archive-body"></div>
-    </div>
+<!-- SERVIDORES -->
+<div class="page" id="page-servers">
+<h2 style="margin-bottom:20px;">Servidores Detectados</h2>
+<div class="servers-grid" id="servers-list">
+<div class="empty">Nenhum servidor detectado</div>
+</div>
+</div>
+
+<!-- CHAT AO VIVO -->
+<div class="page" id="page-chat-live">
+<div class="chat-container">
+<div class="chat-header">
+<div class="chat-title">💬 Database de Chat (Ao Vivo)</div>
+<div class="chat-filters">
+<select class="filter-input" id="filter-server-live">
+<option value="">Todos os servidores</option>
+</select>
+<input class="filter-input" placeholder="Buscar por jogador ou mensagem..." id="filter-search-live">
+<button class="btn btn-secondary btn-sm" onclick="filterChat('live')">Buscar</button>
+<button class="btn btn-primary btn-sm" onclick="emit('saveChat')">💾 Salvar</button>
+</div>
+</div>
+<div class="chat-body" id="chat-live-body">
+<div class="chat-empty">Sem mensagens</div>
+</div>
+</div>
+</div>
+
+<!-- CHAT ARQUIVADO -->
+<div class="page" id="page-chat-archive">
+<div class="chat-container">
+<div class="chat-header">
+<div class="chat-title">📦 Chat Arquivado</div>
+<div class="chat-filters">
+<select class="filter-input" id="filter-server-archive">
+<option value="">Todos os servidores</option>
+</select>
+<input class="filter-input" placeholder="Buscar por jogador ou mensagem..." id="filter-search-archive">
+<button class="btn btn-secondary btn-sm" onclick="filterChat('archive')">Buscar</button>
+<button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 CSV</button>
+</div>
+</div>
+<div class="chat-body" id="chat-archive-body">
+<div class="chat-empty">Sem mensagens arquivadas</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- MODAL SERVIDOR -->
+<div class="modal" id="server-modal">
+<div class="modal-content">
+<div class="modal-header">
+<div class="modal-title" id="modal-server-title">Servidor</div>
+<button class="close-btn" onclick="closeModal()">&times;</button>
+</div>
+<div class="modal-body">
+<div class="modal-section">
+<div class="modal-section-title">Informações</div>
+<div class="info-grid">
+<div class="info-item">
+<div class="info-label">IP:Porta</div>
+<div class="info-value" id="modal-ip">-</div>
+</div>
+<div class="info-item">
+<div class="info-label">MOTD</div>
+<div class="info-value" id="modal-motd">-</div>
+</div>
+<div class="info-item">
+<div class="info-label">Status</div>
+<div class="info-value" id="modal-status">-</div>
+</div>
+<div class="info-item">
+<div class="info-label">Jogadores Online</div>
+<div class="info-value" id="modal-players-count">0</div>
+</div>
+</div>
+</div>
+<div class="modal-section">
+<div class="modal-section-title">Jogadores Online</div>
+<div class="players-list" id="modal-players-list">
+<div class="chat-empty">Nenhum jogador</div>
+</div>
+</div>
+<div class="modal-section">
+<div class="modal-section-title">Chat em Tempo Real</div>
+<div class="chat-body" style="max-height:300px;" id="modal-chat">
+<div class="chat-empty">Sem mensagens recentes</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- MODAL CONECTAR -->
+<div class="modal" id="connect-modal">
+<div class="modal-content" style="max-width:500px;">
+<div class="modal-header">
+<div class="modal-title">Conectar ao Relay</div>
+<button class="close-btn" onclick="closeModal()">&times;</button>
+</div>
+<div class="modal-body">
+<input class="filter-input" style="width:100%;margin-bottom:20px;" id="relay-url" placeholder="https://seu-relay.onrender.com" value="https://anunciador-relay.onrender.com">
+<div style="display:flex;gap:12px;">
+<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+<button class="btn btn-primary" onclick="conectar();closeModal()">Conectar</button>
+</div>
+</div>
+</div>
 </div>
 
 <script>
-const GITHUB_REPO = 'Nmurderdrones-gtx1050ti/chat-archive';
-let socket=null,pcOn=false,charts={},analyticsData={},chatMessages=[],servers=[],bots=[],archiveIndex=null;
+let socket=null,pcOn=false,servers=[],chatLive=[],chatArchive=[],currentServerKey=null;
+
+function conectar(){
+const url=document.getElementById('relay-url').value.trim();
+if(!url){toast('Cole URL!');return;}
+localStorage.setItem('relayUrl',url);
+if(socket){socket.disconnect();socket=null;}
+socket=io(url,{reconnection:true});
+socket.on('connect',()=>{
+document.getElementById('status-badge').className='status-badge status-online';
+document.getElementById('status-badge').textContent='✅ Online';
+});
+socket.on('disconnect',()=>{
+document.getElementById('status-badge').className='status-badge status-offline';
+document.getElementById('status-badge').textContent='⚠️ Offline';
+pcOn=false;
+});
+socket.on('botStatus',on=>{pcOn=on;});
+socket.on('init',d=>{
+updateStats(d.stats||{});
+if(d.servers)servers=d.servers;
+if(d.chatDatabase)chatLive=d.chatDatabase;
+renderServers();renderChatLive();updateServerFilters();
+});
+socket.on('serverUpdate',s=>{servers=s;renderServers();});
+socket.on('chatMessage',m=>{chatLive.push(m);if(chatLive.length>5000)chatLive.shift();renderChatLive();});
+socket.on('toast',toast);
+}
+
+function updateStats(s){
+document.getElementById('stat-bots').textContent=s.botsAtivos||0;
+document.getElementById('stat-msgs').textContent=(s.mensagens||[]).length;
+document.getElementById('stat-bl').textContent=s.blacklistSize||0;
+document.getElementById('stat-servers').textContent=servers.length;
+}
+
+function renderServers(){
+const c=document.getElementById('servers-list');
+if(!servers.length){c.innerHTML='<div class="empty">Nenhum servidor detectado</div>';return;}
+c.innerHTML=servers.map(s=>`
+<div class="server-card" onclick="openServerModal('${s.key}')">
+<div class="server-header">
+<div class="server-name">${s.key}</div>
+<div class="server-badge ${s.status==='online'?'badge-online':'badge-offline'}">${s.status==='online'?'ONLINE':'OFFLINE'}</div>
+</div>
+<div class="server-motd">${esc(s.motd||'???')}</div>
+<div class="server-footer">
+<div class="server-info">👥 ${(s.players||[]).length} jogadores</div>
+<div class="server-info">📡 ${s.ping||'?'}ms</div>
+<div class="server-info">📍 v${s.version||'?'}</div>
+</div>
+</div>
+`).join('');
+}
+
+function renderChatLive(){
+const c=document.getElementById('chat-live-body');
+if(!chatLive.length){c.innerHTML='<div class="chat-empty">Sem mensagens</div>';return;}
+c.innerHTML=chatLive.slice(-100).reverse().map(m=>`
+<div class="chat-msg">
+<div class="chat-meta">[${m.time}] [${m.serverKey}]</div>
+<div><span class="chat-user">${esc(m.username)}</span>: <span class="chat-text">${esc(m.message)}</span></div>
+</div>
+`).join('');
+}
+
+function filterChat(type){
+const serverFilter=document.getElementById(`filter-server-${type}`).value;
+const searchText=document.getElementById(`filter-search-${type}`).value.toLowerCase();
+let data=type==='live'?chatLive:chatArchive;
+if(serverFilter)data=data.filter(m=>m.serverKey.includes(serverFilter));
+if(searchText)data=data.filter(m=>m.username.toLowerCase().includes(searchText)||m.message.toLowerCase().includes(searchText)||m.serverKey.toLowerCase().includes(searchText));
+const c=document.getElementById(`chat-${type}-body`);
+if(!data.length){c.innerHTML='<div class="chat-empty">Nenhuma mensagem encontrada</div>';return;}
+c.innerHTML=data.slice(-500).reverse().map(m=>`
+<div class="chat-msg">
+<div class="chat-meta">[${m.time}] [${m.serverKey}]</div>
+<div><span class="chat-user">${esc(m.username)}</span>: <span class="chat-text">${esc(m.message)}</span></div>
+</div>
+`).join('');
+}
+
+function openServerModal(key){
+currentServerKey=key;
+const s=servers.find(x=>x.key===key);
+if(!s)return;
+document.getElementById('modal-server-title').textContent=key;
+document.getElementById('modal-ip').textContent=key;
+document.getElementById('modal-motd').textContent=s.motd||'???';
+document.getElementById('modal-status').textContent=s.status||'unknown';
+document.getElementById('modal-players-count').textContent=(s.players||[]).length;
+const pl=document.getElementById('modal-players-list');
+if(!s.players||!s.players.length){pl.innerHTML='<div class="chat-empty">Nenhum jogador</div>';}
+else{pl.innerHTML=s.players.map(p=>`<div class="player-item"><span>${esc(p.name)}</span><span>${p.ping}ms</span></div>`).join('');}
+const msgs=chatLive.filter(m=>m.serverKey===key).slice(-30);
+const ch=document.getElementById('modal-chat');
+if(!msgs.length){ch.innerHTML='<div class="chat-empty">Sem mensagens</div>';}
+else{ch.innerHTML=msgs.map(m=>`<div class="chat-msg"><div class="chat-meta">[${m.time}]</div><div><span class="chat-user">${esc(m.username)}</span>: <span class="chat-text">${esc(m.message)}</span></div></div>`).join('');}
+document.getElementById('server-modal').classList.add('active');
+}
+
+function updateServerFilters(){
+const opts=servers.map(s=>`<option value="${s.key}">${s.key}</option>`).join('');
+document.getElementById('filter-server-live').innerHTML='<option value="">Todos os servidores</option>'+opts;
+document.getElementById('filter-server-archive').innerHTML='<option value="">Todos os servidores</option>'+opts;
+}
+
+function exportCSV(){
+let csv='Data,Hora,Servidor,Jogador,Mensagem\n';
+chatArchive.forEach(m=>{csv+=`${m.date},${m.time},${m.serverKey},${m.username},"${m.message.replace(/"/g,'""')}"\n`;});
+const blob=new Blob([csv],{type:'text/csv'});
+const link=document.createElement('a');
+link.download=`chat-${Date.now()}.csv`;
+link.href=URL.createObjectURL(blob);
+link.click();
+toast('CSV exportado!');
+}
+
+function switchPage(p){
+document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+document.getElementById(`page-${p}`).classList.add('active');
+document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+event.target.closest('.nav-item').classList.add('active');
+}
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
+function closeModal(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active'));}
+function emit(ev,data){if(!socket?.connected){toast('Conecte!');return;}if(!pcOn){toast('Bot offline!');return;}socket.emit(ev,data);}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
 const savedUrl=localStorage.getItem('relayUrl')||'https://anunciador-relay.onrender.com';
 document.getElementById('relay-url').value=savedUrl;
 setTimeout(conectar,500);
-
-function conectar(){
-    const url=document.getElementById('relay-url').value.trim();
-    if(!url){toast('Cole URL!');return;}
-    localStorage.setItem('relayUrl',url);
-    if(socket){socket.disconnect();socket=null;}
-    socket=io(url,{reconnection:true,reconnectionDelay:3000});
-    socket.on('connect',()=>{document.getElementById('status-badge').className='status-badge status-on';document.getElementById('status-badge').textContent='✅ Online';});
-    socket.on('disconnect',()=>{document.getElementById('status-badge').className='status-badge status-off';document.getElementById('status-badge').textContent='⚠️ Offline';pcOn=false;});
-    socket.on('botStatus',on=>{pcOn=on;});
-    socket.on('init',d=>{updateStats(d.stats);updateBots(d.bots);servers=d.servers||[];chatMessages=d.chatDatabase||[];analyticsData=d.analytics||{};d.logs?.forEach(addLog);renderServers();updateAnalytics();renderChatDB();});
-    socket.on('log',addLog);
-    socket.on('botsUpdate',updateBots);
-    socket.on('statsUpdate',updateStats);
-    socket.on('serverUpdate',srvs=>{servers=srvs;renderServers();});
-    socket.on('chatMessage',msg=>{chatMessages.push(msg);if(chatMessages.length>5000)chatMessages.shift();renderChatDB();});
-    socket.on('analyticsData',data=>{analyticsData=data;updateAnalytics();});
-}
-
-function emit(ev,data){if(!socket?.connected){toast('Conecte!');return;}if(!pcOn&&ev!=='refresh'){toast('Bot offline!');return;}socket.emit(ev,data);}
-
-function updateStats(s){
-    document.getElementById('stat-bots').textContent=s.botsAtivos;
-    document.getElementById('stat-bl').textContent=s.blacklistSize;
-    document.getElementById('stat-msgs').textContent=s.mensagens.length;
-    document.getElementById('cfg-username').value=s.username;
-    document.getElementById('cfg-intervalo').value=s.intervalo;
-    const ml=document.getElementById('msgs-list');
-    ml.innerHTML=s.mensagens.length?s.mensagens.map((m,i)=>`<div style="padding:8px;background:var(--sidebar);border-radius:6px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.85em">${esc(m)}</span><button class="btn btn-sm btn-danger" onclick="emit('delMsg',${i})">✕</button></div>`).join(''):'<div class="empty">Sem mensagens</div>';
-    const bl=document.getElementById('bl-list');
-    bl.innerHTML=s.blacklistItems.length?s.blacklistItems.map(x=>`<div style="padding:8px;background:var(--sidebar);border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center"><span>${x}</span><button class="btn btn-sm btn-secondary" onclick="emit('removeBlacklist','${x}')">✓</button></div>`).join(''):'<div class="empty">Vazia</div>';
-}
-
-function updateBots(b){
-    bots=b;const c=document.getElementById('bots-list'),sel=document.getElementById('chat-target'),selF=document.getElementById('filter-server');
-    if(!b.length){c.innerHTML='<div class="empty">Aguardando bots...</div>';return;}
-    c.innerHTML=b.map(x=>`<div class="bot-item"><div><div class="bot-name">${esc(x.username)}</div><div class="bot-details">${x.key} • v${x.versao}${x.hp!=null?' • ❤️'+x.hp.toFixed(0)+' 🍖'+x.food:''}${x.pos?' • 📍'+x.pos.x+','+x.pos.y+','+x.pos.z:''}${x.players?' • 👥'+x.players.length:''}</div></div><div><button class="btn btn-sm btn-secondary" onclick="emit('jump','${x.key}')">🤖</button> <button class="btn btn-sm btn-danger" onclick="emit('disconnect_server','${x.key}')">✕</button></div></div>`).join('');
-    const cur=sel.value;sel.innerHTML='<option value="all">Todos</option>'+b.map(x=>`<option value="${x.key}">${x.username}</option>`).join('');sel.value=cur;
-    if(selF){const curF=selF.value;selF.innerHTML='<option value="all">Todos</option>'+b.map(x=>`<option value="${x.key}">${x.key}</option>`).join('');selF.value=curF;}
-}
-
-function addLog(e){const c=document.getElementById('logs'),d=document.createElement('div');d.className='log-entry';d.innerHTML=`<span class="log-time">[${e.time}]</span> ${e.emoji} ${esc(e.msg)}`;c.appendChild(d);c.scrollTop=c.scrollHeight;while(c.children.length>200)c.removeChild(c.firstChild);}
-
-function renderServers(){
-    const c=document.getElementById('servers-list');
-    if(!servers.length){c.innerHTML='<div class="empty">Nenhum servidor</div>';return;}
-    c.innerHTML=servers.map(s=>`<div class="server-item"><div style="display:flex;justify-content:space-between"><strong>${s.key}</strong><span style="color:${s.status==='online'?'var(--green)':'var(--red)'}">●${s.status||'?'}</span></div><div style="font-size:0.8em;color:var(--text2);margin-top:4px">📝${esc(s.motd||'?')} • 👥${s.onlinePlayers||0}/${s.maxPlayers||'?'} • 📡${s.ping||'?'}ms</div></div>`).join('');
-    document.getElementById('stat-servers').textContent=servers.length;
-}
-
-function updateAnalytics(){
-    if(!analyticsData.playersOverTime)return;
-    document.getElementById('stat-total-msgs').textContent=chatMessages.length;
-    const peak=Math.max(...(analyticsData.playersOverTime?.map(p=>p.total)||[0]));
-    document.getElementById('stat-peak').textContent=peak;
-
-    // Players chart
-    const pLabels=analyticsData.playersOverTime?.map(p=>new Date(p.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}))||[];
-    const pData=analyticsData.playersOverTime?.map(p=>p.total)||[];
-    if(charts.players){charts.players.data.labels=pLabels;charts.players.data.datasets[0].data=pData;charts.players.update();}
-    else{charts.players=new Chart(document.getElementById('chart-players').getContext('2d'),{type:'line',data:{labels:pLabels,datasets:[{label:'Jogadores',data:pData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.05)'}},x:{grid:{display:false}}}}});}
-
-    // Messages chart
-    const hours=Array.from({length:24},(_,i)=>i);
-    const mCounts=hours.map(h=>{const f=analyticsData.messagesPerHour?.find(m=>m.hour===h);return f?f.count:0;});
-    if(charts.messages){charts.messages.data.datasets[0].data=mCounts;charts.messages.update();}
-    else{charts.messages=new Chart(document.getElementById('chart-messages').getContext('2d'),{type:'bar',data:{labels:hours.map(h=>`${h}h`),datasets:[{label:'Mensagens',data:mCounts,backgroundColor:'#3b82f6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.05)'}},x:{grid:{display:false}}}}});}
-
-    // Top servers chart
-    const tLabels=analyticsData.topServers?.slice(0,5).map(s=>s.serverKey)||[];
-    const tData=analyticsData.topServers?.slice(0,5).map(s=>s.messages)||[];
-    if(charts.top){charts.top.data.labels=tLabels;charts.top.data.datasets[0].data=tData;charts.top.update();}
-    else{charts.top=new Chart(document.getElementById('chart-top').getContext('2d'),{type:'bar',data:{labels:tLabels,datasets:[{label:'Mensagens',data:tData,backgroundColor:'#a855f7'}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.05)'}},y:{grid:{display:false}}}}});}
-}
-
-function renderChatDB(){
-    const c=document.getElementById('chat-db');
-    if(!chatMessages.length){c.innerHTML='<div class="empty">Sem mensagens</div>';return;}
-    c.innerHTML=chatMessages.slice(-100).map(m=>`<div class="chat-msg"><span class="chat-time">[${m.time}] [${m.serverKey}]</span> <span class="chat-user">${esc(m.username)}</span>: ${esc(m.message)}</div>`).join('');
-    c.scrollTop=c.scrollHeight;
-}
-
-// ========== ARCHIVE ==========
-async function loadArchives(){
-    const el=document.getElementById('archives-list');
-    el.innerHTML='<div class="empty">⏳ Carregando...</div>';
-    try{
-        const res=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/index.json`);
-        if(!res.ok){el.innerHTML='<div class="empty">Nenhum arquivo ainda</div>';return;}
-        const data=await res.json();
-        archiveIndex=JSON.parse(atob(data.content));
-        renderArchives(archiveIndex.arquivos||[]);
-    }catch(err){el.innerHTML=`<div class="empty">Erro: ${err.message}</div>`;}
-}
-
-function renderArchives(arquivos){
-    const el=document.getElementById('archives-list');
-    document.getElementById('stat-archives').textContent=arquivos.length;
-    let totalMsgs=0;
-    arquivos.forEach(a=>totalMsgs+=a.total_mensagens||0);
-    document.getElementById('stat-archived-msgs').textContent=totalMsgs;
-    document.getElementById('stat-last-archive').textContent=arquivos.length?arquivos[arquivos.length-1].inicio:'-';
-
-    if(!arquivos.length){el.innerHTML='<div class="empty">Nenhum arquivo</div>';return;}
-    el.innerHTML=arquivos.reverse().map(a=>`<div class="archive-item" onclick="viewArchive('${a.arquivo}')">
-        <div style="font-weight:600;color:var(--purple)">📦 ${a.arquivo}</div>
-        <div class="archive-meta">
-            <span>🕐 ${a.inicio} → ${a.fim}</span>
-            <span>⏱️ ${a.duracao}</span>
-            <span>💬 ${a.total_mensagens} msgs</span>
-            <span>🌐 ${a.servidores} servers</span>
-            <span>👥 ${a.jogadores} jogadores</span>
-        </div>
-    </div>`).join('');
-}
-
-function searchArchives(){
-    if(!archiveIndex)return loadArchives();
-    const q=document.getElementById('archive-search').value.toLowerCase();
-    const filtered=archiveIndex.arquivos.filter(a=>a.arquivo.toLowerCase().includes(q)||a.inicio?.toLowerCase().includes(q));
-    renderArchives(filtered);
-}
-
-async function viewArchive(filename){
-    document.getElementById('modal-archive-title').textContent=filename;
-    document.getElementById('modal-archive-body').innerHTML='<div class="empty">⏳ Carregando...</div>';
-    document.getElementById('modal-archive').classList.add('active');
-    try{
-        const res=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${filename}`);
-        if(!res.ok)throw new Error('Arquivo não encontrado');
-        const data=await res.json();
-        const archive=JSON.parse(atob(data.content));
-        let html=`<div class="grid" style="margin-bottom:16px">
-            <div class="card"><div class="card-title">🕐 Início</div><div style="font-weight:600">${archive.inicio}</div></div>
-            <div class="card"><div class="card-title">🕐 Fim</div><div style="font-weight:600">${archive.fim}</div></div>
-            <div class="card"><div class="card-title">⏱️ Duração</div><div style="font-weight:600">${archive.duracao}</div></div>
-            <div class="card"><div class="card-title">💬 Mensagens</div><div style="font-weight:600">${archive.total_mensagens}</div></div>
-            <div class="card"><div class="card-title">🌐 Servidores</div><div style="font-weight:600">${archive.total_servidores}</div></div>
-            <div class="card"><div class="card-title">👥 Jogadores</div><div style="font-weight:600">${archive.jogadores_unicos}</div></div>
-        </div>`;
-        html+=`<div class="chart-container"><div class="chart-title">💬 Mensagens</div><div class="chat-list" style="max-height:500px">`;
-        html+=archive.mensagens.map(m=>`<div class="chat-msg"><span class="chat-time">[${m.hora}] [${m.servidor}]</span> <span class="chat-user">${esc(m.jogador)}</span>: ${esc(m.mensagem)}</div>`).join('');
-        html+=`</div></div>`;
-        document.getElementById('modal-archive-body').innerHTML=html;
-    }catch(err){document.getElementById('modal-archive-body').innerHTML=`<div class="empty">Erro: ${err.message}</div>`;}
-}
-
-function closeModal(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active'));}
-
-// ========== HELPERS ==========
-function filterChart(type,range){document.querySelectorAll('.chart-filters .filter-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');if(socket?.connected)socket.emit('getAnalytics',range);}
-function exportChart(type){html2canvas(document.getElementById(`chart-${type}`)).then(c=>{const l=document.createElement('a');l.download=`chart-${type}-${Date.now()}.png`;l.href=c.toDataURL();l.click();toast('Exportado!');});}
-function exportChatCSV(){let csv='Data,Hora,Servidor,Jogador,Mensagem\n';chatMessages.forEach(m=>{csv+=`${m.date},${m.time},${m.serverKey},${m.username},"${m.message.replace(/"/g,'""')}"\n`;});const b=new Blob([csv],{type:'text/csv'});const l=document.createElement('a');l.download=`chat-${Date.now()}.csv`;l.href=URL.createObjectURL(b);l.click();toast('CSV exportado!');}
-function filterChatDB(){const sk=document.getElementById('filter-server').value,s=document.getElementById('filter-search').value.trim();if(socket?.connected)socket.emit('getChatMessages',{serverKey:sk,search:s});}
-function switchPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(`page-${page}`).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));event.target.closest('.nav-item').classList.add('active');if(page==='analytics')updateAnalytics();if(page==='archive')loadArchives();}
-function sendChat(){const i=document.getElementById('chat-msg');if(i.value.trim()){emit('chat',{serverKey:document.getElementById('chat-target').value,message:i.value.trim()});i.value='';}}
-function sendCmd(){const i=document.getElementById('chat-cmd'),t=document.getElementById('chat-target').value;if(t==='all'){toast('Selecione servidor');return;}if(i.value.trim()){emit('command',{serverKey:t,command:i.value.trim()});i.value='';}}
-function addMsg(){const i=document.getElementById('new-msg');if(i.value.trim()){emit('addMsg',i.value.trim());i.value='';}}
-function connectServer(){const i=document.getElementById('connect-ip');if(i.value.trim()){emit('connect_server',i.value.trim());i.value='';}}
-function addBlacklist(){const i=document.getElementById('bl-input');if(i.value.trim()){emit('addBlacklist',i.value.trim());i.value='';}}
-function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 </script>
 </body>
 </html>
