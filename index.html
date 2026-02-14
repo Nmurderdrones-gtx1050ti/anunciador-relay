@@ -10,13 +10,9 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
             background: #0a0e1a;
@@ -24,1213 +20,386 @@
             overflow: hidden;
             height: 100vh;
         }
+        #app { display: flex; height: 100vh; width: 100vw; }
 
-        #app {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        /* Sidebar */
+        /* ===== SIDEBAR ===== */
         .sidebar {
-            width: 260px;
-            min-width: 260px;
-            background: #0f1322;
-            border-right: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            transition: all 0.3s;
+            width: 260px; min-width: 260px; background: #0f1322;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            display: flex; flex-direction: column; height: 100vh; transition: all 0.3s;
         }
-
-        .sidebar.collapsed {
-            width: 68px;
-            min-width: 68px;
-        }
-
+        .sidebar.collapsed { width: 68px; min-width: 68px; }
         .sidebar-header {
-            padding: 20px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 20px 16px; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
         }
-
         .sidebar-logo {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 14px;
-            color: white;
-            flex-shrink: 0;
+            width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 14px; color: white; flex-shrink: 0;
         }
-
-        .sidebar-brand {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar-brand-name {
-            font-size: 14px;
-            font-weight: 700;
-            color: #f1f5f9;
-            white-space: nowrap;
-        }
-
-        .sidebar-brand-sub {
-            font-size: 10px;
-            color: #64748b;
-            white-space: nowrap;
-        }
-
+        .sidebar-brand { display: flex; flex-direction: column; }
+        .sidebar-brand-name { font-size: 14px; font-weight: 700; color: #f1f5f9; white-space: nowrap; }
+        .sidebar-brand-sub { font-size: 10px; color: #64748b; white-space: nowrap; }
         .sidebar.collapsed .sidebar-brand,
         .sidebar.collapsed .nav-label,
         .sidebar.collapsed .nav-item-text,
         .sidebar.collapsed .connection-section,
-        .sidebar.collapsed .sidebar-footer-text {
-            display: none;
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            padding: 12px 8px;
-            overflow-y: auto;
-        }
-
-        .nav-section {
-            margin-bottom: 8px;
-        }
-
+        .sidebar.collapsed .sidebar-footer-text { display: none; }
+        .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+        .nav-section { margin-bottom: 8px; }
         .nav-label {
-            font-size: 10px;
-            font-weight: 600;
-            color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 8px 12px 6px;
+            font-size: 10px; font-weight: 600; color: #475569;
+            text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px 6px;
         }
-
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.15s;
-            color: #94a3b8;
-            font-size: 13px;
-            font-weight: 500;
-            position: relative;
+            display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+            border-radius: 8px; cursor: pointer; transition: all 0.15s;
+            color: #94a3b8; font-size: 13px; font-weight: 500; position: relative;
         }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.04);
-            color: #cbd5e1;
-        }
-
-        .nav-item.active {
-            background: rgba(99, 102, 241, 0.12);
-            color: #818cf8;
-        }
-
+        .nav-item:hover { background: rgba(255,255,255,0.04); color: #cbd5e1; }
+        .nav-item.active { background: rgba(99,102,241,0.12); color: #818cf8; }
         .nav-item.active::before {
-            content: '';
-            position: absolute;
-            left: -8px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 20px;
-            background: #6366f1;
-            border-radius: 0 3px 3px 0;
+            content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+            width: 3px; height: 20px; background: #6366f1; border-radius: 0 3px 3px 0;
         }
-
-        .nav-item svg {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-        }
-
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
         .nav-badge {
-            margin-left: auto;
-            background: #6366f1;
-            color: white;
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 7px;
-            border-radius: 10px;
+            margin-left: auto; background: #6366f1; color: white;
+            font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px;
         }
-
-        .connection-section {
-            padding: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
+        .connection-section { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
         .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+            background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px;
         }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .status-dot.online {
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
-        }
-
-        .status-dot.offline {
-            background: #ef4444;
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-        }
-
-        .status-text {
-            font-size: 12px;
-            color: #94a3b8;
-        }
-
-        .status-text strong {
-            color: #e2e8f0;
-        }
-
-        .relay-input-group {
-            display: flex;
-            gap: 6px;
-        }
-
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .status-dot.online { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+        .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+        .status-text { font-size: 12px; color: #94a3b8; }
+        .status-text strong { color: #e2e8f0; }
+        .relay-input-group { display: flex; gap: 6px; }
         .relay-input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 6px;
-            padding: 7px 10px;
-            font-size: 11px;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            transition: border-color 0.2s;
+            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px; padding: 7px 10px; font-size: 11px; color: #e2e8f0;
+            font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
         }
-
-        .relay-input:focus {
-            border-color: #6366f1;
-        }
-
+        .relay-input:focus { border-color: #6366f1; }
         .relay-btn {
-            background: #6366f1;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 7px 12px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: background 0.2s;
-            white-space: nowrap;
+            background: #6366f1; color: white; border: none; border-radius: 6px;
+            padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap;
         }
-
-        .relay-btn:hover {
-            background: #5558e6;
-        }
-
-        .sidebar-footer {
-            padding: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
+        .relay-btn:hover { background: #5558e6; }
+        .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
         .sidebar-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            color: #64748b;
-            font-size: 12px;
-            transition: all 0.15s;
-            background: none;
-            border: none;
-            width: 100%;
+            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+            border-radius: 8px; cursor: pointer; color: #64748b; font-size: 12px;
+            transition: all 0.15s; background: none; border: none; width: 100%;
             font-family: 'Inter', sans-serif;
         }
+        .sidebar-toggle:hover { background: rgba(255,255,255,0.04); color: #94a3b8; }
 
-        .sidebar-toggle:hover {
-            background: rgba(255, 255, 255, 0.04);
-            color: #94a3b8;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #0a0e1a;
-        }
-
+        /* ===== MAIN ===== */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #0a0e1a; }
         .topbar {
-            height: 56px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            background: rgba(15, 19, 34, 0.8);
-            backdrop-filter: blur(10px);
-            flex-shrink: 0;
+            height: 56px; border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; background: rgba(15,19,34,0.8); backdrop-filter: blur(10px); flex-shrink: 0;
         }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .topbar-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .page-content { flex: 1; overflow-y: auto; padding: 24px; }
 
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .topbar-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #f1f5f9;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .page-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-        }
-
-        /* Dashboard Stats */
+        /* ===== STATS ===== */
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 24px;
         }
-
         .stat-card {
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.2s;
+            background: #111827; border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px; padding: 20px; transition: all 0.2s;
         }
+        .stat-card:hover { border-color: rgba(99,102,241,0.3); }
+        .stat-label { font-size: 12px; color: #64748b; font-weight: 500; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 800; color: #f1f5f9; }
+        .stat-value.online { color: #22c55e; }
 
-        .stat-card:hover {
-            border-color: rgba(99, 102, 241, 0.3);
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #64748b;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 800;
-            color: #f1f5f9;
-        }
-
-        .stat-value.online {
-            color: #22c55e;
-        }
-
-        /* Server Cards Grid */
+        /* ===== SERVERS ===== */
         .servers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 16px;
-            margin-top: 16px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px; margin-top: 16px;
         }
-
         .server-card {
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 14px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.25s;
+            background: #111827; border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.25s;
         }
-
         .server-card:hover {
-            border-color: rgba(99, 102, 241, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(99,102,241,0.4); transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         }
-
         .server-card-header {
-            padding: 18px 20px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            padding: 18px 20px 14px; display: flex; justify-content: space-between; align-items: flex-start;
         }
-
-        .server-card-info h3 {
-            font-size: 15px;
-            font-weight: 700;
-            color: #f1f5f9;
-            margin-bottom: 4px;
-        }
-
-        .server-motd {
-            font-size: 12px;
-            color: #6366f1;
-            font-weight: 500;
-        }
-
-        .server-status-badge {
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .server-status-badge.online {
-            background: rgba(34, 197, 94, 0.15);
-            color: #22c55e;
-        }
-
-        .server-status-badge.offline {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-        }
-
-        .server-card-body {
-            padding: 0 20px 14px;
-        }
-
+        .server-card-info h3 { font-size: 15px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+        .server-motd { font-size: 12px; color: #6366f1; font-weight: 500; }
+        .server-status-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .server-status-badge.online { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .server-status-badge.offline { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .server-card-body { padding: 0 20px 14px; }
         .server-detail-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
-            font-size: 12px;
-            color: #94a3b8;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+            font-size: 12px; color: #94a3b8;
         }
-
-        .server-detail-row svg {
-            width: 14px;
-            height: 14px;
-            color: #64748b;
-        }
-
-        .server-card-footer {
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-        }
-
+        .server-detail-row svg { width: 14px; height: 14px; color: #64748b; }
+        .server-card-footer { border-top: 1px solid rgba(255,255,255,0.06); display: flex; }
         .server-card-action {
-            flex: 1;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            color: #64748b;
-            cursor: pointer;
-            transition: all 0.15s;
-            background: none;
-            border: none;
-            font-family: 'Inter', sans-serif;
+            flex: 1; padding: 12px; display: flex; align-items: center; justify-content: center;
+            gap: 6px; font-size: 12px; font-weight: 500; color: #64748b; cursor: pointer;
+            transition: all 0.15s; background: none; border: none; font-family: 'Inter', sans-serif;
         }
+        .server-card-action:hover { background: rgba(255,255,255,0.03); color: #94a3b8; }
+        .server-card-action + .server-card-action { border-left: 1px solid rgba(255,255,255,0.06); }
+        .server-card-action svg { width: 14px; height: 14px; }
 
-        .server-card-action:hover {
-            background: rgba(255, 255, 255, 0.03);
-            color: #94a3b8;
-        }
-
-        .server-card-action+.server-card-action {
-            border-left: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .server-card-action svg {
-            width: 14px;
-            height: 14px;
-        }
-
-        /* Modal / Popup */
+        /* ===== MODAL ===== */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
             animation: fadeIn 0.2s;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .modal {
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-            animation: slideUp 0.3s;
-            overflow: hidden;
+            background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+            width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column;
+            animation: slideUp 0.3s; overflow: hidden;
         }
-
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; justify-content: space-between; align-items: center;
         }
-
-        .modal-header h2 {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
+        .modal-header h2 { font-size: 18px; font-weight: 700; }
         .modal-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: all 0.15s;
-            font-family: 'Inter', sans-serif;
+            width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05);
+            border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 18px; transition: all 0.15s; font-family: 'Inter', sans-serif;
         }
-
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #e2e8f0;
-        }
-
-        .modal-body {
-            padding: 24px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .modal-info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .modal-info-item {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            padding: 14px 16px;
-        }
-
+        .modal-close:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .modal-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .modal-info-item { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px 16px; }
         .modal-info-item label {
-            font-size: 11px;
-            color: #64748b;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            display: block;
-            margin-bottom: 4px;
+            font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.03em; display: block; margin-bottom: 4px;
         }
-
-        .modal-info-item span {
-            font-size: 14px;
-            font-weight: 600;
-            color: #e2e8f0;
-        }
-
+        .modal-info-item span { font-size: 14px; font-weight: 600; color: #e2e8f0; }
         .modal-section-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #94a3b8;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
         }
-
-        .players-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 24px;
-        }
-
+        .players-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
         .player-tag {
-            background: rgba(99, 102, 241, 0.1);
-            color: #818cf8;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
+            background: rgba(99,102,241,0.1); color: #818cf8; padding: 5px 12px;
+            border-radius: 20px; font-size: 12px; font-weight: 500;
         }
-
         .modal-chat {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            height: 200px;
-            overflow-y: auto;
-            padding: 12px;
+            background: rgba(0,0,0,0.2); border-radius: 10px; height: 200px;
+            overflow-y: auto; padding: 12px;
         }
+        .modal-chat-msg { margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
+        .modal-chat-msg .chat-time { color: #475569; margin-right: 6px; }
+        .modal-chat-msg .chat-user { color: #6366f1; font-weight: 600; margin-right: 4px; }
+        .modal-chat-msg .chat-text { color: #cbd5e1; }
 
-        .modal-chat-msg {
-            margin-bottom: 6px;
-            font-size: 12px;
-            line-height: 1.5;
-        }
-
-        .modal-chat-msg .chat-time {
-            color: #475569;
-            margin-right: 6px;
-        }
-
-        .modal-chat-msg .chat-user {
-            color: #6366f1;
-            font-weight: 600;
-            margin-right: 4px;
-        }
-
-        .modal-chat-msg .chat-text {
-            color: #cbd5e1;
-        }
-
-        /* Chat Page */
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .chat-tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 16px;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 4px;
-            border-radius: 10px;
-            width: fit-content;
-        }
-
-        .chat-tab {
-            padding: 8px 20px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
-            background: none;
-            border: none;
-            color: #64748b;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .chat-tab.active {
-            background: #6366f1;
-            color: white;
-        }
-
-        .chat-tab:hover:not(.active) {
-            color: #94a3b8;
-        }
-
-        .chat-toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
+        /* ===== CHAT PAGE ===== */
+        .chat-container { display: flex; flex-direction: column; height: 100%; }
+        .chat-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
         .chat-search {
-            flex: 1;
-            min-width: 200px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 9px 14px 9px 36px;
-            font-size: 13px;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            transition: border-color 0.2s;
+            flex: 1; min-width: 200px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+            padding: 9px 14px 9px 36px; font-size: 13px; color: #e2e8f0;
+            font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: 12px center;
+            background-repeat: no-repeat; background-position: 12px center;
         }
-
-        .chat-search:focus {
-            border-color: #6366f1;
-        }
-
+        .chat-search:focus { border-color: #6366f1; }
         .filter-select {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 13px;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            cursor: pointer;
-            min-width: 180px;
-            transition: border-color 0.2s;
-            appearance: none;
-            -webkit-appearance: none;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0;
+            font-family: 'Inter', sans-serif; outline: none; cursor: pointer; min-width: 180px;
+            transition: border-color 0.2s; appearance: none; -webkit-appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: calc(100% - 12px) center;
-            padding-right: 32px;
+            background-repeat: no-repeat; background-position: calc(100% - 12px) center; padding-right: 32px;
         }
-
-        .filter-select:focus {
-            border-color: #6366f1;
-        }
-
-        .filter-select option {
-            background: #1e293b;
-            color: #e2e8f0;
-        }
-
+        .filter-select:focus { border-color: #6366f1; }
+        .filter-select option { background: #1e293b; color: #e2e8f0; }
         .export-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 9px 16px;
-            font-size: 13px;
-            color: #94a3b8;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.15s;
-            font-weight: 500;
+            display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 16px;
+            font-size: 13px; color: #94a3b8; cursor: pointer; font-family: 'Inter', sans-serif;
+            transition: all 0.15s; font-weight: 500;
         }
-
-        .export-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #e2e8f0;
-        }
-
-        .export-btn svg {
-            width: 15px;
-            height: 15px;
-        }
-
+        .export-btn:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+        .export-btn svg { width: 15px; height: 15px; }
         .chat-messages {
-            flex: 1;
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            overflow-y: auto;
-            padding: 4px;
+            flex: 1; background: #111827; border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px; overflow-y: auto; padding: 4px;
         }
-
         .chat-msg-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            transition: background 0.1s;
+            display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px;
+            border-radius: 8px; transition: background 0.1s;
         }
-
-        .chat-msg-item:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
+        .chat-msg-item:hover { background: rgba(255,255,255,0.02); }
         .chat-msg-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: rgba(99, 102, 241, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 12px;
-            font-weight: 700;
-            color: #818cf8;
+            width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.15);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            font-size: 12px; font-weight: 700; color: #818cf8;
         }
-
-        .chat-msg-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .chat-msg-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 2px;
-        }
-
-        .chat-msg-user {
-            font-size: 13px;
-            font-weight: 600;
-            color: #e2e8f0;
-        }
-
+        .chat-msg-content { flex: 1; min-width: 0; }
+        .chat-msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+        .chat-msg-user { font-size: 13px; font-weight: 600; color: #e2e8f0; }
         .chat-msg-server-tag {
-            font-size: 10px;
-            padding: 1px 7px;
-            border-radius: 4px;
-            background: rgba(99, 102, 241, 0.1);
-            color: #818cf8;
-            font-weight: 500;
+            font-size: 10px; padding: 1px 7px; border-radius: 4px;
+            background: rgba(99,102,241,0.1); color: #818cf8; font-weight: 500;
         }
-
-        .chat-msg-time {
-            font-size: 11px;
-            color: #475569;
-            margin-left: auto;
-        }
-
-        .chat-msg-text {
-            font-size: 13px;
-            color: #94a3b8;
-            line-height: 1.5;
-        }
-
+        .chat-msg-time { font-size: 11px; color: #475569; margin-left: auto; }
+        .chat-msg-text { font-size: 13px; color: #94a3b8; line-height: 1.5; }
         .chat-empty {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            min-height: 300px;
-            color: #475569;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; height: 100%; min-height: 300px; color: #475569;
         }
+        .chat-empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5; }
+        .chat-empty p { font-size: 14px; }
 
-        .chat-empty svg {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 12px;
-            opacity: 0.5;
-        }
-
-        .chat-empty p {
-            font-size: 14px;
-        }
-
-        /* Dashboard sections */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #f1f5f9;
-        }
-
-        .section-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        /* Bots section */
+        /* ===== DASHBOARD ===== */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+        .section-actions { display: flex; gap: 8px; }
         .bots-list {
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 24px;
+            background: #111827; border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px; overflow: hidden; margin-bottom: 24px;
         }
-
         .bot-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            gap: 12px;
+            display: flex; align-items: center; padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.04); gap: 12px;
         }
-
-        .bot-item:last-child {
-            border-bottom: none;
-        }
-
+        .bot-item:last-child { border-bottom: none; }
         .bot-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            background: rgba(34, 197, 94, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 36px; height: 36px; border-radius: 8px; background: rgba(34,197,94,0.1);
+            display: flex; align-items: center; justify-content: center;
         }
-
-        .bot-icon svg {
-            width: 18px;
-            height: 18px;
-            color: #22c55e;
-        }
-
-        .bot-info {
-            flex: 1;
-        }
-
-        .bot-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #e2e8f0;
-        }
-
-        .bot-server {
-            font-size: 11px;
-            color: #64748b;
-        }
-
-        .bot-status-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-        }
-
-        .bots-empty {
-            padding: 40px;
-            text-align: center;
-            color: #475569;
-            font-size: 13px;
-        }
-
-        /* Dashboard chat & commands */
+        .bot-icon svg { width: 18px; height: 18px; color: #22c55e; }
+        .bot-info { flex: 1; }
+        .bot-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+        .bot-server { font-size: 11px; color: #64748b; }
+        .bot-status-indicator { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+        .bots-empty { padding: 40px; text-align: center; color: #475569; font-size: 13px; }
         .dash-section {
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
+            background: #111827; border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px; padding: 20px; margin-bottom: 24px;
         }
-
-        .dash-section h3 {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 14px;
-            color: #f1f5f9;
-        }
-
-        .input-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
+        .dash-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: #f1f5f9; }
+        .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-field {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 13px;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            transition: border-color 0.2s;
+            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0;
+            font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
         }
-
-        .input-field:focus {
-            border-color: #6366f1;
-        }
-
+        .input-field:focus { border-color: #6366f1; }
         .btn-primary {
-            background: #6366f1;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 9px 18px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: background 0.2s;
-            white-space: nowrap;
+            background: #6366f1; color: white; border: none; border-radius: 8px;
+            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap;
         }
-
-        .btn-primary:hover {
-            background: #5558e6;
-        }
-
+        .btn-primary:hover { background: #5558e6; }
         .btn-danger {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-            border: none;
-            border-radius: 8px;
-            padding: 9px 18px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-            white-space: nowrap;
+            background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 8px;
+            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap;
         }
-
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.25);
-        }
-
+        .btn-danger:hover { background: rgba(239,68,68,0.25); }
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            color: #94a3b8;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 9px 18px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-            white-space: nowrap;
+            background: rgba(255,255,255,0.05); color: #94a3b8;
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap;
         }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #e2e8f0;
-        }
-
+        .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
         .btn-warn {
-            background: rgba(245, 158, 11, 0.15);
-            color: #f59e0b;
-            border: none;
-            border-radius: 8px;
-            padding: 9px 18px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-            white-space: nowrap;
+            background: rgba(245,158,11,0.15); color: #f59e0b; border: none; border-radius: 8px;
+            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap;
         }
-
-        .btn-warn:hover {
-            background: rgba(245, 158, 11, 0.25);
-        }
-
-        /* Logs */
+        .btn-warn:hover { background: rgba(245,158,11,0.25); }
         .logs-container {
-            background: #0a0e1a;
-            border-radius: 8px;
-            padding: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 11px;
-            line-height: 1.6;
-            color: #64748b;
+            background: #0a0e1a; border-radius: 8px; padding: 12px; max-height: 200px;
+            overflow-y: auto; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 11px; line-height: 1.6; color: #64748b;
         }
+        .log-entry { padding: 2px 0; }
+        .log-entry.info { color: #38bdf8; }
+        .log-entry.success { color: #22c55e; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.warn { color: #f59e0b; }
 
-        .log-entry {
-            padding: 2px 0;
-        }
-
-        .log-entry .log-time {
-            color: #475569;
-        }
-
-        .log-entry.info {
-            color: #38bdf8;
-        }
-
-        .log-entry.success {
-            color: #22c55e;
-        }
-
-        .log-entry.error {
-            color: #ef4444;
-        }
-
-        .log-entry.warn {
-            color: #f59e0b;
-        }
-
-        /* Settings */
+        /* ===== SETTINGS ===== */
         .settings-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;
         }
-
         .setting-group {
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 20px;
+            background: #111827; border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px; padding: 20px;
         }
-
         .setting-group h3 {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #f1f5f9;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 14px; font-weight: 700; margin-bottom: 16px; color: #f1f5f9;
+            display: flex; align-items: center; gap: 8px;
         }
-
-        .setting-row {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 14px;
-        }
-
-        .setting-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .setting-row label {
-            font-size: 12px;
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        /* Blacklist items */
-        .blacklist-items {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
+        .setting-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .setting-row:last-child { margin-bottom: 0; }
+        .setting-row label { font-size: 12px; color: #64748b; font-weight: 500; }
+        .blacklist-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .blacklist-tag {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            background: rgba(239,68,68,0.1); color: #ef4444; padding: 4px 10px;
+            border-radius: 6px; font-size: 12px; font-weight: 500;
+            display: flex; align-items: center; gap: 6px;
         }
-
         .blacklist-tag button {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            font-size: 14px;
-            line-height: 1;
-            padding: 0;
-            opacity: 0.6;
+            background: none; border: none; color: #ef4444; cursor: pointer;
+            font-size: 14px; line-height: 1; padding: 0; opacity: 0.6;
         }
-
-        .blacklist-tag button:hover {
-            opacity: 1;
-        }
-
-        /* Messages list */
-        .messages-list {
-            margin-top: 10px;
-        }
-
+        .blacklist-tag button:hover { opacity: 1; }
+        .messages-list { margin-top: 10px; }
         .message-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 6px;
-            margin-bottom: 4px;
-            font-size: 13px;
-            color: #94a3b8;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 6px;
+            margin-bottom: 4px; font-size: 13px; color: #94a3b8;
         }
-
         .message-item button {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            font-size: 14px;
-            opacity: 0.6;
+            background: none; border: none; color: #ef4444; cursor: pointer;
+            font-size: 14px; opacity: 0.6;
         }
+        .message-item button:hover { opacity: 1; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        .dashboard-full { grid-column: 1 / -1; }
 
-        .message-item button:hover {
-            opacity: 1;
+        /* ===== TOAST ===== */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+        .toast {
+            background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+            padding: 12px 20px; font-size: 13px; color: #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            animation: toastIn 0.3s; min-width: 250px;
         }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* Two column layout for dashboard */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        @media (max-width: 1200px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .dashboard-full {
-            grid-column: 1 / -1;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        /* Highlight for search */
-        .highlight {
-            background: rgba(99, 102, 241, 0.3);
-            border-radius: 2px;
-            padding: 0 1px;
-        }
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+        .highlight { background: rgba(99,102,241,0.3); border-radius: 2px; padding: 0 1px; }
     </style>
 </head>
 <body>
@@ -1239,235 +408,171 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-        // Mock data
-        const MOCK_SERVERS = [
-            {
-                id: 1, ip: '26.159.230.96:60513', motd: '§aSurvival Brasil §7- §eBem-vindo!',
-                motdClean: 'Survival Brasil - Bem-vindo!', players: 12, maxPlayers: 20, status: 'online',
-                playersList: ['Steve', 'Alex', 'Notch', 'Dream', 'Technoblade', 'Ph1LzA', 'TommyInnit', 'Wilbur', 'Tubbo', 'Ranboo', 'BadBoyHalo', 'Skeppy'],
-                version: '1.20.4'
-            },
-            {
-                id: 2, ip: '26.42.115.200:25565', motd: '§bMinigames §6Server §c[1.20]',
-                motdClean: 'Minigames Server [1.20]', players: 45, maxPlayers: 100, status: 'online',
-                playersList: ['Jogador1', 'Jogador2', 'Jogador3', 'xXProPlayerXx', 'MinecraftKing'],
-                version: '1.20.1'
-            },
-            {
-                id: 3, ip: '26.78.90.155:19132', motd: '§dCreative §aFree Build',
-                motdClean: 'Creative Free Build', players: 3, maxPlayers: 50, status: 'online',
-                playersList: ['Builder1', 'Architect', 'CraftMaster'],
-                version: '1.20.4'
-            },
-            {
-                id: 4, ip: '26.200.50.30:25565', motd: '§4§lPVP §cArena §7| §eSeason 5',
-                motdClean: 'PVP Arena | Season 5', players: 0, maxPlayers: 30, status: 'offline',
-                playersList: [],
-                version: '1.19.4'
-            },
-            {
-                id: 5, ip: '26.10.180.77:60000', motd: '§2SkyBlock §aParadise',
-                motdClean: 'SkyBlock Paradise', players: 8, maxPlayers: 40, status: 'online',
-                playersList: ['SkyFarmer', 'IslandKing', 'BlockMiner', 'CloudWalker', 'NetherHero', 'EnderMan99', 'CreeperSlayer', 'DiamondHunter'],
-                version: '1.20.2'
-            },
-            {
-                id: 6, ip: '26.55.120.88:25577', motd: '§5Factions §dWar §7- §cMapa Novo!',
-                motdClean: 'Factions War - Mapa Novo!', players: 22, maxPlayers: 60, status: 'online',
-                playersList: ['Warrior1', 'FactionLeader', 'Raider'],
-                version: '1.20.4'
-            }
-        ];
-
-        const generateChatMessages = () => {
-            const users = ['Steve', 'Alex', 'Notch', 'Dream', 'Jogador1', 'Builder1', 'SkyFarmer', 'Warrior1', 'CraftMaster', 'Ph1LzA'];
-            const texts = [
-                'alguém quer trocar diamantes?', 'onde fica a base?', 'gg pessoal!',
-                'vamos fazer uma farm de iron golem', 'cuidado com o creeper!',
-                'achei netherite finalmente!', 'quem tá online no discord?',
-                'preciso de ajuda na build', 'enchanting table pronta na base',
-                'alguém tem blaze rod?', 'o nether tá perigoso demais', 'bora raid?',
-                'acabei de morrer com tudo no inventário...', 'vou construir uma casa no spawn',
-                'tem alguém no end?'
-            ];
-            const messages = [];
-            for (let i = 0; i < 40; i++) {
-                const server = MOCK_SERVERS[Math.floor(Math.random() * MOCK_SERVERS.length)];
-                const user = users[Math.floor(Math.random() * users.length)];
-                const text = texts[Math.floor(Math.random() * texts.length)];
-                const hoursAgo = Math.floor(Math.random() * 24);
-                const minsAgo = Math.floor(Math.random() * 60);
-                const d = new Date();
-                d.setHours(d.getHours() - hoursAgo);
-                d.setMinutes(d.getMinutes() - minsAgo);
-                messages.push({
-                    id: i, user, text, serverIp: server.ip,
-                    serverMotd: server.motdClean, timestamp: d,
-                    isLive: i < 15
-                });
-            }
-            return messages.sort((a, b) => b.timestamp - a.timestamp);
-        };
-
-        const ALL_MESSAGES = generateChatMessages();
-
-        // SVG Icons as components
+        // ===== ICONS =====
         const Icons = {
             Dashboard: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
                 </svg>
             ),
             Server: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="8" rx="2" /><rect x="2" y="14" width="20" height="8" rx="2" /><circle cx="6" cy="6" r="1" /><circle cx="6" cy="18" r="1" />
+                    <rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/>
                 </svg>
             ),
             Chat: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
             ),
             Archive: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" />
+                    <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>
                 </svg>
             ),
             Settings: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
             ),
             Bot: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /><line x1="8" y1="16" x2="8" y2="16" /><line x1="16" y1="16" x2="16" y2="16" />
+                    <rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/>
                 </svg>
             ),
             Users: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
             ),
             Eye: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                </svg>
-            ),
-            Terminal: () => (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
             ),
             Download: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
             ),
             ChevronLeft: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 18 9 12 15 6" />
+                    <polyline points="15 18 9 12 15 6"/>
                 </svg>
             ),
             ChevronRight: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
+                    <polyline points="9 18 15 12 9 6"/>
                 </svg>
             ),
             Globe: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                 </svg>
             ),
             Shield: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-            ),
-            Wifi: () => (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" />
-                </svg>
-            ),
-            X: () => (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
             ),
             Gamepad: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="6" y1="12" x2="10" y2="12" /><line x1="8" y1="10" x2="8" y2="14" /><line x1="15" y1="13" x2="15.01" y2="13" /><line x1="18" y1="11" x2="18.01" y2="11" /><rect x="2" y="6" width="20" height="12" rx="2" />
+                    <line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/>
                 </svg>
             ),
             MessageEmpty: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    <line x1="9" y1="10" x2="15" y2="10" />
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/>
                 </svg>
             ),
-            Logs: () => (
+            Disconnect: () => (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            ),
+            Plug: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2v6"/><path d="M6 8h12"/><path d="M8 8v4a4 4 0 0 0 8 0V8"/><path d="M12 16v6"/>
                 </svg>
             ),
         };
 
-        // ServerPopup Component
-        function ServerPopup({ server, onClose, messages }) {
-            const serverMessages = messages.filter(m => m.serverIp === server.ip).slice(0, 20);
+        // ===== CLEAN MOTD (remove MC color codes) =====
+        function cleanMotd(motd) {
+            if (!motd) return '';
+            if (typeof motd === 'object') {
+                if (motd.text !== undefined) return cleanMotd(motd.text) + (motd.extra ? motd.extra.map(e => cleanMotd(e)).join('') : '');
+                return JSON.stringify(motd);
+            }
+            return String(motd).replace(/§[0-9a-fk-or]/gi, '');
+        }
+
+        // ===== SERVER POPUP =====
+        function ServerPopup({ server, onClose, chatMessages, socket }) {
+            const serverChat = chatMessages.filter(m => m.serverKey === server.key).slice(-30);
 
             return (
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>{server.motdClean}</h2>
+                            <h2>{cleanMotd(server.motd) || server.key}</h2>
                             <button className="modal-close" onClick={onClose}>×</button>
                         </div>
                         <div className="modal-body">
                             <div className="modal-info-grid">
                                 <div className="modal-info-item">
                                     <label>Endereço IP</label>
-                                    <span>{server.ip}</span>
+                                    <span>{server.key}</span>
                                 </div>
                                 <div className="modal-info-item">
                                     <label>Versão</label>
-                                    <span>{server.version}</span>
+                                    <span>{server.version || '?'}</span>
                                 </div>
                                 <div className="modal-info-item">
                                     <label>Jogadores</label>
-                                    <span>{server.players}/{server.maxPlayers}</span>
+                                    <span>{(server.players || []).length}/{server.maxPlayers || '?'}</span>
                                 </div>
                                 <div className="modal-info-item">
                                     <label>Status</label>
-                                    <span style={{ color: server.status === 'online' ? '#22c55e' : '#ef4444' }}>
+                                    <span style={{color: server.status === 'online' ? '#22c55e' : '#ef4444'}}>
                                         {server.status === 'online' ? '● Online' : '● Offline'}
                                     </span>
                                 </div>
-                                <div className="modal-info-item" style={{ gridColumn: '1 / -1' }}>
+                                <div className="modal-info-item" style={{gridColumn: '1 / -1'}}>
                                     <label>MOTD</label>
-                                    <span>{server.motdClean}</span>
+                                    <span>{cleanMotd(server.motd)}</span>
                                 </div>
                             </div>
 
                             <div className="modal-section-title">
-                                <Icons.Users /> Jogadores Online ({server.playersList.length})
+                                <Icons.Users /> Jogadores Online ({(server.players || []).length})
                             </div>
                             <div className="players-list">
-                                {server.playersList.length > 0 ? server.playersList.map((p, i) => (
-                                    <span key={i} className="player-tag">{p}</span>
-                                )) : <span style={{ color: '#475569', fontSize: 13 }}>Nenhum jogador online</span>}
+                                {(server.players || []).length > 0 ? (server.players || []).map((p, i) => (
+                                    <span key={i} className="player-tag">{typeof p === 'string' ? p : p.username || p.name || '?'}</span>
+                                )) : <span style={{color:'#475569',fontSize:13}}>Nenhum jogador</span>}
                             </div>
 
                             <div className="modal-section-title">
-                                <Icons.Chat /> Chat em Tempo Real
+                                <Icons.Chat /> Chat Recente
                             </div>
                             <div className="modal-chat">
-                                {serverMessages.length > 0 ? serverMessages.map((msg, i) => (
+                                {serverChat.length > 0 ? serverChat.map((msg, i) => (
                                     <div key={i} className="modal-chat-msg">
-                                        <span className="chat-time">[{msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}]</span>
-                                        <span className="chat-user">{msg.user}:</span>
-                                        <span className="chat-text">{msg.text}</span>
+                                        <span className="chat-time">[{new Date(msg.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}]</span>
+                                        <span className="chat-user">{msg.username}:</span>
+                                        <span className="chat-text">{msg.message}</span>
                                     </div>
-                                )) : <div style={{ color: '#475569', textAlign: 'center', padding: 20, fontSize: 13 }}>Sem mensagens recentes</div>}
+                                )) : <div style={{color:'#475569',textAlign:'center',padding:20,fontSize:13}}>Sem mensagens</div>}
+                            </div>
+
+                            <div style={{display:'flex',gap:8,marginTop:16}}>
+                                <button className="btn-primary" onClick={() => { if(socket) socket.emit('connect_server', server.key); onClose(); }}>
+                                    <Icons.Plug /> Conectar Bot
+                                </button>
+                                <button className="btn-danger" onClick={() => { if(socket) socket.emit('disconnect_server', server.key); onClose(); }}>
+                                    <Icons.Disconnect /> Desconectar Bot
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1475,39 +580,48 @@
             );
         }
 
-        // Pages
-        function DashboardPage({ relayUrl, setRelayUrl, isConnected, setIsConnected, logs, setLogs }) {
-            const [bots] = useState([]);
-            const [chatFilter, setChatFilter] = useState('Todos');
+        // ===== DASHBOARD PAGE =====
+        function DashboardPage({ stats, bots, logs, socket, setLogs }) {
+            const [chatFilter, setChatFilter] = useState('all');
             const [chatMsg, setChatMsg] = useState('');
             const [cmdMsg, setCmdMsg] = useState('');
             const [connectIp, setConnectIp] = useState('');
+            const logsEndRef = useRef(null);
 
-            const addLog = (text, type = 'info') => {
-                const time = new Date().toLocaleTimeString('pt-BR');
-                setLogs(prev => [...prev, { text: `[${time}] ${text}`, type, id: Date.now() + Math.random() }]);
+            useEffect(() => {
+                if (logsEndRef.current) logsEndRef.current.scrollTop = logsEndRef.current.scrollHeight;
+            }, [logs]);
+
+            const sendChat = () => {
+                if (!chatMsg.trim() || !socket) return;
+                socket.emit('chat', { message: chatMsg, serverKey: chatFilter });
+                setChatMsg('');
+            };
+
+            const sendCmd = () => {
+                if (!cmdMsg.trim() || !socket) return;
+                socket.emit('command', { command: cmdMsg, serverKey: chatFilter });
+                setCmdMsg('');
             };
 
             return (
                 <div>
                     <div className="stats-grid">
                         <div className="stat-card">
-                            <div className="stat-label">Status</div>
-                            <div className="stat-value" style={{ color: isConnected ? '#22c55e' : '#ef4444', fontSize: 20 }}>
-                                {isConnected ? '● Conectado' : '● Offline'}
-                            </div>
+                            <div className="stat-label">Bots Ativos</div>
+                            <div className="stat-value online">{stats.botsAtivos || 0}</div>
                         </div>
                         <div className="stat-card">
-                            <div className="stat-label">Bots Ativos</div>
-                            <div className="stat-value online">{bots.length}</div>
+                            <div className="stat-label">Total Conectados</div>
+                            <div className="stat-value">{stats.totalBots || 0}</div>
                         </div>
                         <div className="stat-card">
                             <div className="stat-label">Blacklist</div>
-                            <div className="stat-value">0</div>
+                            <div className="stat-value">{stats.blacklistSize || 0}</div>
                         </div>
                         <div className="stat-card">
-                            <div className="stat-label">Mensagens</div>
-                            <div className="stat-value">{ALL_MESSAGES.length}</div>
+                            <div className="stat-label">Intervalo</div>
+                            <div className="stat-value">{stats.intervalo || 0}s</div>
                         </div>
                     </div>
 
@@ -1516,19 +630,19 @@
                             <div className="section-header">
                                 <span className="section-title">Bots Conectados</span>
                                 <div className="section-actions">
-                                    <button className="btn-danger" onClick={() => addLog('Todos os bots desconectados', 'warn')}>Desconectar Todos</button>
-                                    <button className="btn-secondary" onClick={() => addLog('Restart enviado', 'info')}>Restart</button>
+                                    <button className="btn-danger" onClick={() => socket && socket.emit('restartBots')}>Desconectar Todos</button>
+                                    <button className="btn-secondary" onClick={() => socket && socket.emit('refresh')}>Refresh</button>
                                 </div>
                             </div>
                             <div className="bots-list">
-                                {bots.length === 0 ? (
-                                    <div className="bots-empty">Aguardando bots...</div>
+                                {(!bots || bots.length === 0) ? (
+                                    <div className="bots-empty">Nenhum bot conectado</div>
                                 ) : bots.map((b, i) => (
                                     <div key={i} className="bot-item">
                                         <div className="bot-icon"><Icons.Bot /></div>
                                         <div className="bot-info">
-                                            <div className="bot-name">{b.name}</div>
-                                            <div className="bot-server">{b.server}</div>
+                                            <div className="bot-name">{b.username || b.name || '?'}</div>
+                                            <div className="bot-server">{b.serverKey || b.server || '?'}</div>
                                         </div>
                                         <div className="bot-status-indicator" />
                                     </div>
@@ -1539,43 +653,54 @@
                         <div>
                             <div className="dash-section">
                                 <h3>Chat & Comandos</h3>
-                                <div style={{ marginBottom: 10 }}>
-                                    <select className="filter-select" value={chatFilter} onChange={e => setChatFilter(e.target.value)} style={{ width: '100%', marginBottom: 10 }}>
-                                        <option value="Todos">Todos</option>
-                                        {MOCK_SERVERS.map(s => <option key={s.id} value={s.ip}>{s.ip}</option>)}
+                                <div style={{marginBottom: 10}}>
+                                    <select className="filter-select" value={chatFilter} onChange={e => setChatFilter(e.target.value)} style={{width:'100%',marginBottom:10}}>
+                                        <option value="all">Todos os Servidores</option>
+                                        {bots && bots.map((b,i) => <option key={i} value={b.serverKey || b.server}>{b.serverKey || b.server}</option>)}
                                     </select>
                                 </div>
                                 <div className="input-row">
-                                    <input className="input-field" placeholder="Mensagem..." value={chatMsg} onChange={e => setChatMsg(e.target.value)} />
-                                    <button className="btn-primary" onClick={() => { if (chatMsg) { addLog(`Chat enviado: ${chatMsg}`, 'success'); setChatMsg(''); } }}>Enviar</button>
+                                    <input className="input-field" placeholder="Mensagem no chat..." value={chatMsg}
+                                        onChange={e => setChatMsg(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && sendChat()} />
+                                    <button className="btn-primary" onClick={sendChat}>Enviar</button>
                                 </div>
                                 <div className="input-row">
-                                    <input className="input-field" placeholder="/comando" value={cmdMsg} onChange={e => setCmdMsg(e.target.value)} />
-                                    <button className="btn-secondary" onClick={() => { if (cmdMsg) { addLog(`Comando: ${cmdMsg}`, 'info'); setCmdMsg(''); } }}>Executar</button>
+                                    <input className="input-field" placeholder="/comando" value={cmdMsg}
+                                        onChange={e => setCmdMsg(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && sendCmd()} />
+                                    <button className="btn-secondary" onClick={sendCmd}>Executar</button>
                                 </div>
-                                <button className="btn-warn" style={{ width: '100%', marginTop: 6 }} onClick={() => addLog('Anúncio forçado!', 'warn')}>⚡ Forçar Anúncio</button>
+                                <button className="btn-warn" style={{width:'100%',marginTop:6}}
+                                    onClick={() => socket && socket.emit('announce')}>⚡ Forçar Anúncio</button>
                             </div>
 
                             <div className="dash-section">
-                                <h3>Conectar Bot</h3>
+                                <h3>Conectar Bot a Servidor</h3>
                                 <div className="input-row">
-                                    <input className="input-field" placeholder="IP:Porta" value={connectIp} onChange={e => setConnectIp(e.target.value)} />
-                                    <button className="btn-primary" onClick={() => { if (connectIp) { addLog(`Conectando bot a ${connectIp}...`, 'info'); setConnectIp(''); } }}>Conectar</button>
+                                    <input className="input-field" placeholder="IP:Porta (ex: 26.1.2.3:25565)" value={connectIp}
+                                        onChange={e => setConnectIp(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && connectIp && (socket.emit('connect_server', connectIp), setConnectIp(''))} />
+                                    <button className="btn-primary" onClick={() => {
+                                        if (connectIp && socket) { socket.emit('connect_server', connectIp); setConnectIp(''); }
+                                    }}>Conectar</button>
                                 </div>
                             </div>
                         </div>
 
                         <div className="dashboard-full">
                             <div className="dash-section">
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                                    <h3 style={{ marginBottom: 0 }}>Logs</h3>
-                                    <button className="btn-secondary" style={{ padding: '5px 12px', fontSize: 11 }} onClick={() => setLogs([])}>Limpar</button>
+                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                                    <h3 style={{marginBottom:0}}>Logs em Tempo Real</h3>
+                                    <button className="btn-secondary" style={{padding:'5px 12px',fontSize:11}} onClick={() => setLogs([])}>Limpar</button>
                                 </div>
-                                <div className="logs-container">
+                                <div className="logs-container" ref={logsEndRef}>
                                     {logs.length === 0 ? (
-                                        <div style={{ color: '#475569', textAlign: 'center', padding: 20 }}>Sem logs</div>
-                                    ) : logs.map(log => (
-                                        <div key={log.id} className={`log-entry ${log.type}`}>{log.text}</div>
+                                        <div style={{color:'#475569',textAlign:'center',padding:20}}>Aguardando logs do bot...</div>
+                                    ) : logs.map((log, i) => (
+                                        <div key={i} className={`log-entry ${log.type || 'info'}`}>
+                                            {typeof log === 'string' ? log : log.text || log.message || JSON.stringify(log)}
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -1585,147 +710,140 @@
             );
         }
 
-        function ServersPage({ messages }) {
+        // ===== SERVERS PAGE =====
+        function ServersPage({ servers, chatMessages, socket }) {
             const [selectedServer, setSelectedServer] = useState(null);
+
+            const serverList = servers || [];
 
             return (
                 <div>
                     <div className="section-header">
-                        <span className="section-title">Servidores ({MOCK_SERVERS.length})</span>
+                        <span className="section-title">Servidores Detectados ({serverList.length})</span>
+                        <button className="btn-secondary" onClick={() => socket && socket.emit('refresh')}>🔄 Atualizar</button>
                     </div>
-                    <div className="servers-grid">
-                        {MOCK_SERVERS.map(server => (
-                            <div key={server.id} className="server-card" onClick={() => setSelectedServer(server)}>
-                                <div className="server-card-header">
-                                    <div className="server-card-info">
-                                        <h3>{server.motdClean}</h3>
-                                        <div className="server-motd">{server.ip}</div>
+
+                    {serverList.length === 0 ? (
+                        <div className="dash-section" style={{textAlign:'center',padding:40}}>
+                            <Icons.Server />
+                            <p style={{color:'#475569',marginTop:12}}>Nenhum servidor detectado ainda. Aguardando bot escanear a rede LAN...</p>
+                        </div>
+                    ) : (
+                        <div className="servers-grid">
+                            {serverList.map((server, idx) => (
+                                <div key={server.key || idx} className="server-card" onClick={() => setSelectedServer(server)}>
+                                    <div className="server-card-header">
+                                        <div className="server-card-info">
+                                            <h3>{cleanMotd(server.motd) || 'Sem MOTD'}</h3>
+                                            <div className="server-motd">{server.key}</div>
+                                        </div>
+                                        <span className={`server-status-badge ${server.status || 'offline'}`}>
+                                            {server.status === 'online' ? 'Online' : 'Offline'}
+                                        </span>
                                     </div>
-                                    <span className={`server-status-badge ${server.status}`}>
-                                        {server.status === 'online' ? 'Online' : 'Offline'}
-                                    </span>
+                                    <div className="server-card-body">
+                                        <div className="server-detail-row">
+                                            <Icons.Globe /> <span>IP: {server.key}</span>
+                                        </div>
+                                        <div className="server-detail-row">
+                                            <Icons.Users /> <span>Jogadores: {(server.players || []).length}/{server.maxPlayers || '?'}</span>
+                                        </div>
+                                        <div className="server-detail-row">
+                                            <Icons.Gamepad /> <span>Versão: {server.version || '?'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="server-card-footer">
+                                        <button className="server-card-action" onClick={e => { e.stopPropagation(); setSelectedServer(server); }}>
+                                            <Icons.Eye /> Detalhes
+                                        </button>
+                                        <button className="server-card-action" onClick={e => { e.stopPropagation(); socket && socket.emit('connect_server', server.key); }}>
+                                            <Icons.Plug /> Conectar
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="server-card-body">
-                                    <div className="server-detail-row">
-                                        <Icons.Globe />
-                                        <span>IP: {server.ip}</span>
-                                    </div>
-                                    <div className="server-detail-row">
-                                        <Icons.Users />
-                                        <span>Jogadores: {server.players}/{server.maxPlayers}</span>
-                                    </div>
-                                    <div className="server-detail-row">
-                                        <Icons.Gamepad />
-                                        <span>Versão: {server.version}</span>
-                                    </div>
-                                </div>
-                                <div className="server-card-footer">
-                                    <button className="server-card-action" onClick={(e) => { e.stopPropagation(); setSelectedServer(server); }}>
-                                        <Icons.Eye /> Detalhes
-                                    </button>
-                                    <button className="server-card-action" onClick={(e) => { e.stopPropagation(); setSelectedServer(server); }}>
-                                        <Icons.Chat /> Chat
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
 
                     {selectedServer && (
                         <ServerPopup
                             server={selectedServer}
                             onClose={() => setSelectedServer(null)}
-                            messages={messages}
+                            chatMessages={chatMessages}
+                            socket={socket}
                         />
                     )}
                 </div>
             );
         }
 
-        function ChatPage({ chatType, messages }) {
+        // ===== CHAT PAGE =====
+        function ChatPage({ chatType, chatMessages, servers, socket }) {
             const [search, setSearch] = useState('');
-            const [motdFilter, setMotdFilter] = useState('Todos');
+            const [serverFilter, setServerFilter] = useState('all');
 
-            const filteredMessages = useMemo(() => {
-                let filtered = messages;
-
-                if (chatType === 'live') {
-                    filtered = filtered.filter(m => m.isLive);
-                } else if (chatType === 'archived') {
-                    filtered = filtered.filter(m => !m.isLive);
+            const filtered = useMemo(() => {
+                let msgs = chatMessages || [];
+                if (serverFilter !== 'all') {
+                    msgs = msgs.filter(m => m.serverKey === serverFilter);
                 }
-
-                if (motdFilter !== 'Todos') {
-                    filtered = filtered.filter(m => m.serverMotd === motdFilter);
-                }
-
                 if (search.trim()) {
                     const s = search.toLowerCase();
-                    const allFiltered = messages.filter(m => {
-                        const matchesMotd = motdFilter === 'Todos' || m.serverMotd === motdFilter;
-                        const matchesSearch = m.user.toLowerCase().includes(s) ||
-                            m.text.toLowerCase().includes(s) ||
-                            m.serverIp.toLowerCase().includes(s) ||
-                            m.serverMotd.toLowerCase().includes(s);
-                        return matchesMotd && matchesSearch;
-                    });
-                    return allFiltered;
+                    msgs = msgs.filter(m =>
+                        (m.username || '').toLowerCase().includes(s) ||
+                        (m.message || '').toLowerCase().includes(s) ||
+                        (m.serverKey || '').toLowerCase().includes(s)
+                    );
                 }
+                return msgs.slice(-200);
+            }, [chatMessages, search, serverFilter]);
 
-                return filtered;
-            }, [messages, chatType, search, motdFilter]);
-
-            const uniqueMotds = useMemo(() => {
-                const motds = [...new Set(messages.map(m => m.serverMotd))];
-                return motds;
-            }, [messages]);
+            const uniqueServers = useMemo(() => {
+                const keys = [...new Set((chatMessages || []).map(m => m.serverKey))];
+                return keys;
+            }, [chatMessages]);
 
             const exportCSV = () => {
-                const header = 'Hora,Usuário,Mensagem,Servidor IP,MOTD\n';
-                const rows = filteredMessages.map(m =>
-                    `"${m.timestamp.toLocaleString('pt-BR')}","${m.user}","${m.text}","${m.serverIp}","${m.serverMotd}"`
+                const header = 'Hora,Usuário,Mensagem,Servidor\n';
+                const rows = filtered.map(m =>
+                    `"${new Date(m.timestamp).toLocaleString('pt-BR')}","${m.username}","${m.message}","${m.serverKey}"`
                 ).join('\n');
                 const blob = new Blob([header + rows], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `chat_${chatType}_${Date.now()}.csv`;
+                a.download = `chat_${Date.now()}.csv`;
                 a.click();
             };
 
             const highlightText = (text, query) => {
-                if (!query.trim()) return text;
-                const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                const parts = text.split(regex);
-                return parts.map((part, i) =>
-                    regex.test(part) ? <span key={i} className="highlight">{part}</span> : part
-                );
+                if (!query.trim() || !text) return text;
+                try {
+                    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    const parts = String(text).split(regex);
+                    return parts.map((part, i) => regex.test(part) ? <span key={i} className="highlight">{part}</span> : part);
+                } catch { return text; }
             };
 
             const title = chatType === 'live' ? 'Chat Ao Vivo' : 'Chat Arquivado';
 
             return (
-                <div className="chat-container" style={{ height: 'calc(100vh - 104px)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                        <span className="section-title">{title}</span>
-                        {search.trim() && (
-                            <span style={{ fontSize: 12, color: '#6366f1' }}>
-                                🔍 Buscando em todos os chats ({filteredMessages.length} resultados)
-                            </span>
+                <div className="chat-container" style={{height:'calc(100vh - 104px)'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+                        <span className="section-title">{title} ({filtered.length} mensagens)</span>
+                        {chatType === 'live' && (
+                            <button className="btn-danger" style={{fontSize:11,padding:'6px 12px'}}
+                                onClick={() => socket && socket.emit('clearChatDatabase')}>Limpar Chat DB</button>
                         )}
                     </div>
 
                     <div className="chat-toolbar">
-                        <input
-                            className="chat-search"
-                            placeholder="Buscar mensagens (ao vivo + arquivado)..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                        <select className="filter-select" value={motdFilter} onChange={e => setMotdFilter(e.target.value)}>
-                            <option value="Todos">Filtrar por MOTD</option>
-                            {uniqueMotds.map(motd => (
-                                <option key={motd} value={motd}>{motd}</option>
+                        <input className="chat-search" placeholder="Buscar mensagens..."
+                            value={search} onChange={e => setSearch(e.target.value)} />
+                        <select className="filter-select" value={serverFilter} onChange={e => setServerFilter(e.target.value)}>
+                            <option value="all">Todos os Servidores</option>
+                            {uniqueServers.map(key => (
+                                <option key={key} value={key}>{key}</option>
                             ))}
                         </select>
                         <button className="export-btn" onClick={exportCSV}>
@@ -1734,34 +852,25 @@
                     </div>
 
                     <div className="chat-messages">
-                        {filteredMessages.length === 0 ? (
+                        {filtered.length === 0 ? (
                             <div className="chat-empty">
                                 <Icons.MessageEmpty />
-                                <p>Sem mensagens{search ? ' para esta busca' : ''}</p>
+                                <p>Sem mensagens{search ? ' para esta busca' : ' ainda'}</p>
                             </div>
-                        ) : filteredMessages.map(msg => (
-                            <div key={msg.id} className="chat-msg-item">
+                        ) : filtered.map((msg, i) => (
+                            <div key={msg.id || i} className="chat-msg-item">
                                 <div className="chat-msg-avatar">
-                                    {msg.user.substring(0, 2).toUpperCase()}
+                                    {(msg.username || '??').substring(0, 2).toUpperCase()}
                                 </div>
                                 <div className="chat-msg-content">
                                     <div className="chat-msg-header">
-                                        <span className="chat-msg-user">{highlightText(msg.user, search)}</span>
-                                        <span className="chat-msg-server-tag">{msg.serverMotd}</span>
-                                        {search.trim() && (
-                                            <span style={{
-                                                fontSize: 10, padding: '1px 6px', borderRadius: 4,
-                                                background: msg.isLive ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)',
-                                                color: msg.isLive ? '#22c55e' : '#f59e0b', fontWeight: 500
-                                            }}>
-                                                {msg.isLive ? 'Ao Vivo' : 'Arquivado'}
-                                            </span>
-                                        )}
+                                        <span className="chat-msg-user">{highlightText(msg.username || '?', search)}</span>
+                                        <span className="chat-msg-server-tag">{msg.serverKey}</span>
                                         <span className="chat-msg-time">
-                                            {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(msg.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
                                         </span>
                                     </div>
-                                    <div className="chat-msg-text">{highlightText(msg.text, search)}</div>
+                                    <div className="chat-msg-text">{highlightText(msg.message || '', search)}</div>
                                 </div>
                             </div>
                         ))}
@@ -1770,9 +879,20 @@
             );
         }
 
-        function SettingsPage({ username, setUsername, interval, setInterval, blacklist, setBlacklist, announceMessages, setAnnounceMessages }) {
+        // ===== SETTINGS PAGE =====
+        function SettingsPage({ stats, socket }) {
+            const [username, setUsername] = useState(stats.username || 'Anunciador');
+            const [intervalo, setIntervalo] = useState(stats.intervalo || 180);
             const [newBlacklist, setNewBlacklist] = useState('');
             const [newMessage, setNewMessage] = useState('');
+
+            useEffect(() => {
+                setUsername(stats.username || 'Anunciador');
+                setIntervalo(stats.intervalo || 180);
+            }, [stats]);
+
+            const blacklist = stats.blacklistItems || [];
+            const mensagens = stats.mensagens || [];
 
             return (
                 <div>
@@ -1784,21 +904,34 @@
                             <h3><Icons.Settings /> Geral</h3>
                             <div className="setting-row">
                                 <label>Username do Bot</label>
-                                <input className="input-field" value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" />
+                                <div className="input-row">
+                                    <input className="input-field" value={username} onChange={e => setUsername(e.target.value)} />
+                                    <button className="btn-primary" onClick={() => socket && socket.emit('setUsername', username)}>Salvar</button>
+                                </div>
                             </div>
                             <div className="setting-row">
                                 <label>Intervalo de Anúncio (segundos)</label>
-                                <input className="input-field" type="number" value={interval} onChange={e => setInterval(e.target.value)} placeholder="60" />
+                                <div className="input-row">
+                                    <input className="input-field" type="number" value={intervalo} onChange={e => setIntervalo(Number(e.target.value))} />
+                                    <button className="btn-primary" onClick={() => socket && socket.emit('setIntervalo', intervalo)}>Salvar</button>
+                                </div>
                             </div>
                         </div>
 
                         <div className="setting-group">
-                            <h3><Icons.Shield /> Blacklist</h3>
+                            <h3><Icons.Shield /> Blacklist ({blacklist.length})</h3>
                             <div className="input-row">
-                                <input className="input-field" placeholder="IP:Porta" value={newBlacklist} onChange={e => setNewBlacklist(e.target.value)} />
+                                <input className="input-field" placeholder="IP:Porta" value={newBlacklist}
+                                    onChange={e => setNewBlacklist(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && newBlacklist.trim() && socket) {
+                                            socket.emit('addBlacklist', newBlacklist.trim());
+                                            setNewBlacklist('');
+                                        }
+                                    }} />
                                 <button className="btn-primary" onClick={() => {
-                                    if (newBlacklist.trim()) {
-                                        setBlacklist(prev => [...prev, newBlacklist.trim()]);
+                                    if (newBlacklist.trim() && socket) {
+                                        socket.emit('addBlacklist', newBlacklist.trim());
                                         setNewBlacklist('');
                                     }
                                 }}>+ Adicionar</button>
@@ -1807,35 +940,43 @@
                                 {blacklist.map((item, i) => (
                                     <span key={i} className="blacklist-tag">
                                         {item}
-                                        <button onClick={() => setBlacklist(prev => prev.filter((_, idx) => idx !== i))}>×</button>
+                                        <button onClick={() => socket && socket.emit('removeBlacklist', item)}>×</button>
                                     </span>
                                 ))}
-                                {blacklist.length === 0 && <span style={{ fontSize: 12, color: '#475569' }}>Nenhum IP na blacklist</span>}
+                                {blacklist.length === 0 && <span style={{fontSize:12,color:'#475569'}}>Nenhum IP na blacklist</span>}
                             </div>
                             {blacklist.length > 0 && (
-                                <button className="btn-danger" style={{ marginTop: 10, padding: '6px 14px', fontSize: 12 }} onClick={() => setBlacklist([])}>Limpar Tudo</button>
+                                <button className="btn-danger" style={{marginTop:10,padding:'6px 14px',fontSize:12}}
+                                    onClick={() => socket && socket.emit('clearBlacklist')}>Limpar Tudo</button>
                             )}
                         </div>
 
-                        <div className="setting-group" style={{ gridColumn: '1 / -1' }}>
-                            <h3><Icons.Chat /> Mensagens de Anúncio</h3>
+                        <div className="setting-group" style={{gridColumn:'1 / -1'}}>
+                            <h3><Icons.Chat /> Mensagens de Anúncio ({mensagens.length})</h3>
                             <div className="input-row">
-                                <input className="input-field" placeholder="Nova mensagem..." value={newMessage} onChange={e => setNewMessage(e.target.value)} />
+                                <input className="input-field" placeholder="Nova mensagem de anúncio..." value={newMessage}
+                                    onChange={e => setNewMessage(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && newMessage.trim() && socket) {
+                                            socket.emit('addMsg', newMessage.trim());
+                                            setNewMessage('');
+                                        }
+                                    }} />
                                 <button className="btn-primary" onClick={() => {
-                                    if (newMessage.trim()) {
-                                        setAnnounceMessages(prev => [...prev, newMessage.trim()]);
+                                    if (newMessage.trim() && socket) {
+                                        socket.emit('addMsg', newMessage.trim());
                                         setNewMessage('');
                                     }
                                 }}>Adicionar</button>
                             </div>
                             <div className="messages-list">
-                                {announceMessages.map((msg, i) => (
+                                {mensagens.map((msg, i) => (
                                     <div key={i} className="message-item">
                                         <span>{msg}</span>
-                                        <button onClick={() => setAnnounceMessages(prev => prev.filter((_, idx) => idx !== i))}>×</button>
+                                        <button onClick={() => socket && socket.emit('delMsg', i)}>×</button>
                                     </div>
                                 ))}
-                                {announceMessages.length === 0 && <span style={{ fontSize: 12, color: '#475569', padding: 8 }}>Nenhuma mensagem configurada</span>}
+                                {mensagens.length === 0 && <span style={{fontSize:12,color:'#475569',padding:8}}>Nenhuma mensagem configurada</span>}
                             </div>
                         </div>
                     </div>
@@ -1843,18 +984,87 @@
             );
         }
 
-        // Main App
+        // ===== MAIN APP =====
         function App() {
             const [activePage, setActivePage] = useState('dashboard');
             const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
             const [relayUrl, setRelayUrl] = useState('https://anunciador-relay.onrender.com');
             const [isConnected, setIsConnected] = useState(false);
+            const [botOnline, setBotOnline] = useState(false);
+            const [socket, setSocket] = useState(null);
+
+            // Data from relay
+            const [stats, setStats] = useState({ botsAtivos: 0, totalBots: 0, blacklistSize: 0, blacklistItems: [], mensagens: [], intervalo: 180, username: 'Anunciador' });
+            const [bots, setBots] = useState([]);
             const [logs, setLogs] = useState([]);
-            const [username, setUsername] = useState('');
-            const [interval, setIntervalVal] = useState('60');
-            const [blacklist, setBlacklist] = useState([]);
-            const [announceMessages, setAnnounceMessages] = useState([]);
-            const [messages] = useState(ALL_MESSAGES);
+            const [chatMessages, setChatMessages] = useState([]);
+            const [servers, setServers] = useState([]);
+            const [toasts, setToasts] = useState([]);
+
+            const addToast = useCallback((msg) => {
+                const id = Date.now();
+                setToasts(prev => [...prev, { id, text: msg }]);
+                setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+            }, []);
+
+            // Connect to relay
+            const connectRelay = useCallback(() => {
+                if (socket) { socket.disconnect(); }
+
+                const s = io(relayUrl, {
+                    transports: ['websocket', 'polling'],
+                    reconnection: true,
+                    reconnectionDelay: 3000,
+                });
+
+                s.on('connect', () => {
+                    setIsConnected(true);
+                    addToast('✅ Conectado ao relay!');
+                });
+
+                s.on('disconnect', () => {
+                    setIsConnected(false);
+                    addToast('🔌 Desconectado do relay');
+                });
+
+                s.on('connect_error', (err) => {
+                    setIsConnected(false);
+                    console.error('Relay error:', err.message);
+                });
+
+                // Receive initial data
+                s.on('init', (data) => {
+                    if (data.stats) setStats(data.stats);
+                    if (data.bots) setBots(data.bots);
+                    if (data.logs) setLogs(data.logs);
+                    if (data.chatDatabase) setChatMessages(data.chatDatabase);
+                    if (data.servers) setServers(data.servers);
+                });
+
+                // Live updates
+                s.on('botStatus', (online) => setBotOnline(online));
+                s.on('statsUpdate', (data) => setStats(data));
+                s.on('botsUpdate', (data) => setBots(data || []));
+                s.on('log', (entry) => setLogs(prev => [...prev.slice(-199), entry]));
+                s.on('chatMessage', (msg) => setChatMessages(prev => [...prev.slice(-999), msg]));
+                s.on('serverUpdate', (data) => setServers(data || []));
+                s.on('toast', (msg) => addToast(msg));
+                s.on('chatMessages', (msgs) => setChatMessages(msgs));
+
+                setSocket(s);
+            }, [relayUrl, addToast]);
+
+            const disconnectRelay = useCallback(() => {
+                if (socket) { socket.disconnect(); setSocket(null); }
+                setIsConnected(false);
+                setBotOnline(false);
+            }, [socket]);
+
+            // Auto connect on mount
+            useEffect(() => {
+                connectRelay();
+                return () => { if (socket) socket.disconnect(); };
+            }, []);
 
             const pageTitles = {
                 dashboard: 'Dashboard',
@@ -1866,26 +1076,20 @@
 
             const navItems = [
                 { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
-                { id: 'servers', label: 'Servidores', icon: Icons.Server, badge: MOCK_SERVERS.filter(s => s.status === 'online').length },
-                { id: 'chatLive', label: 'Chat Ao Vivo', icon: Icons.Chat, badge: messages.filter(m => m.isLive).length },
+                { id: 'servers', label: 'Servidores', icon: Icons.Server, badge: servers.length },
+                { id: 'chatLive', label: 'Chat Ao Vivo', icon: Icons.Chat, badge: chatMessages.length },
                 { id: 'chatArchived', label: 'Chat Arquivado', icon: Icons.Archive },
                 { id: 'settings', label: 'Configurações', icon: Icons.Settings },
             ];
 
-            const handleConnect = () => {
-                if (isConnected) {
-                    setIsConnected(false);
-                    const time = new Date().toLocaleTimeString('pt-BR');
-                    setLogs(prev => [...prev, { text: `[${time}] Desconectado do relay`, type: 'warn', id: Date.now() }]);
-                } else {
-                    setIsConnected(true);
-                    const time = new Date().toLocaleTimeString('pt-BR');
-                    setLogs(prev => [...prev, { text: `[${time}] Conectado a ${relayUrl}`, type: 'success', id: Date.now() }]);
-                }
-            };
-
             return (
                 <>
+                    {/* TOASTS */}
+                    <div className="toast-container">
+                        {toasts.map(t => <div key={t.id} className="toast">{t.text}</div>)}
+                    </div>
+
+                    {/* SIDEBAR */}
                     <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
                         <div className="sidebar-header">
                             <div className="sidebar-logo">CRV</div>
@@ -1899,15 +1103,13 @@
                             <div className="nav-section">
                                 <div className="nav-label">Menu</div>
                                 {navItems.map(item => (
-                                    <div
-                                        key={item.id}
+                                    <div key={item.id}
                                         className={`nav-item ${activePage === item.id ? 'active' : ''}`}
-                                        onClick={() => setActivePage(item.id)}
-                                    >
+                                        onClick={() => setActivePage(item.id)}>
                                         <item.icon />
                                         <span className="nav-item-text">{item.label}</span>
-                                        {item.badge !== undefined && !sidebarCollapsed && (
-                                            <span className="nav-badge">{item.badge}</span>
+                                        {item.badge !== undefined && item.badge > 0 && !sidebarCollapsed && (
+                                            <span className="nav-badge">{item.badge > 99 ? '99+' : item.badge}</span>
                                         )}
                                     </div>
                                 ))}
@@ -1918,17 +1120,19 @@
                             <div className="connection-status">
                                 <div className={`status-dot ${isConnected ? 'online' : 'offline'}`} />
                                 <span className="status-text">
-                                    <strong>{isConnected ? 'Online' : 'Offline'}</strong>
+                                    Relay: <strong>{isConnected ? 'Online' : 'Offline'}</strong>
+                                </span>
+                            </div>
+                            <div className="connection-status" style={{marginBottom:8}}>
+                                <div className={`status-dot ${botOnline ? 'online' : 'offline'}`} />
+                                <span className="status-text">
+                                    Bot: <strong>{botOnline ? 'Online' : 'Offline'}</strong>
                                 </span>
                             </div>
                             <div className="relay-input-group">
-                                <input
-                                    className="relay-input"
-                                    value={relayUrl}
-                                    onChange={e => setRelayUrl(e.target.value)}
-                                    placeholder="URL do Relay"
-                                />
-                                <button className="relay-btn" onClick={handleConnect}>
+                                <input className="relay-input" value={relayUrl}
+                                    onChange={e => setRelayUrl(e.target.value)} placeholder="URL do Relay" />
+                                <button className="relay-btn" onClick={isConnected ? disconnectRelay : connectRelay}>
                                     {isConnected ? 'Sair' : 'Conectar'}
                                 </button>
                             </div>
@@ -1942,16 +1146,23 @@
                         </div>
                     </div>
 
+                    {/* MAIN CONTENT */}
                     <div className="main-content">
                         <div className="topbar">
                             <div className="topbar-left">
                                 <span className="topbar-title">{pageTitles[activePage]}</span>
                             </div>
                             <div className="topbar-right">
-                                <div className="connection-status" style={{ margin: 0, background: 'transparent', padding: '6px 12px' }}>
+                                <div className="connection-status" style={{margin:0,background:'transparent',padding:'6px 12px'}}>
+                                    <div className={`status-dot ${botOnline ? 'online' : 'offline'}`} />
+                                    <span className="status-text" style={{fontSize:12}}>
+                                        {botOnline ? `Bot Online (${stats.botsAtivos || 0} bots)` : 'Bot Offline'}
+                                    </span>
+                                </div>
+                                <div className="connection-status" style={{margin:0,background:'transparent',padding:'6px 12px'}}>
                                     <div className={`status-dot ${isConnected ? 'online' : 'offline'}`} />
-                                    <span className="status-text" style={{ fontSize: 12 }}>
-                                        {isConnected ? 'Relay Conectado' : 'Relay Desconectado'}
+                                    <span className="status-text" style={{fontSize:12}}>
+                                        {isConnected ? 'Relay ✓' : 'Relay ✗'}
                                     </span>
                                 </div>
                             </div>
@@ -1959,35 +1170,19 @@
 
                         <div className="page-content">
                             {activePage === 'dashboard' && (
-                                <DashboardPage
-                                    relayUrl={relayUrl}
-                                    setRelayUrl={setRelayUrl}
-                                    isConnected={isConnected}
-                                    setIsConnected={setIsConnected}
-                                    logs={logs}
-                                    setLogs={setLogs}
-                                />
+                                <DashboardPage stats={stats} bots={bots} logs={logs} socket={socket} setLogs={setLogs} />
                             )}
                             {activePage === 'servers' && (
-                                <ServersPage messages={messages} />
+                                <ServersPage servers={servers} chatMessages={chatMessages} socket={socket} />
                             )}
                             {activePage === 'chatLive' && (
-                                <ChatPage chatType="live" messages={messages} />
+                                <ChatPage chatType="live" chatMessages={chatMessages} servers={servers} socket={socket} />
                             )}
                             {activePage === 'chatArchived' && (
-                                <ChatPage chatType="archived" messages={messages} />
+                                <ChatPage chatType="archived" chatMessages={chatMessages} servers={servers} socket={socket} />
                             )}
                             {activePage === 'settings' && (
-                                <SettingsPage
-                                    username={username}
-                                    setUsername={setUsername}
-                                    interval={interval}
-                                    setInterval={setIntervalVal}
-                                    blacklist={blacklist}
-                                    setBlacklist={setBlacklist}
-                                    announceMessages={announceMessages}
-                                    setAnnounceMessages={setAnnounceMessages}
-                                />
+                                <SettingsPage stats={stats} socket={socket} />
                             )}
                         </div>
                     </div>
