@@ -1,93 +1,398 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-
-const app = express();
-const server = http.createServer(app);
-
-const io = new Server(server, {
-    cors: {
-        origin: '*',
-        methods: ['GET', 'POST'],
-    },
-    pingTimeout: 60000,
-    pingInterval: 25000,
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤖 Bot Anunciador</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+--bg: #0a0a0f; --card: #12122a; --card2: #1a1a3e;
+--green: #00d474; --red: #ff4757; --yellow: #ffa502;
+--blue: #1e90ff; --purple: #a855f7; --text: #e4e4e4;
+--text2: #7a82a0; --border: #2a2a4a;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+.header {
+background: linear-gradient(135deg, #12122a, #1a1a5e);
+padding: 16px 24px; display: flex; justify-content: space-between;
+align-items: center; border-bottom: 2px solid var(--green);
+flex-wrap: wrap; gap: 10px;
+}
+.header h1 { font-size: 1.3em; }
+.header h1 span { color: var(--green); }
+.badges { display: flex; gap: 10px; flex-wrap: wrap; }
+.badge {
+background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 16px;
+font-size: 0.8em; display: flex; align-items: center; gap: 5px;
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; }
+.d-green { background: var(--green); }
+.d-red { background: var(--red); }
+.d-yellow { background: var(--yellow); }
+.banner {
+padding: 8px 24px; text-align: center; font-weight: 600; font-size: 0.85em;
+}
+.b-on { background: rgba(0,212,116,0.12); color: var(--green); }
+.b-off { background: rgba(255,71,87,0.12); color: var(--red); }
+.connect-bar {
+background: var(--card); border-bottom: 1px solid var(--border);
+padding: 10px 24px; display: flex; gap: 8px; align-items: center;
+flex-wrap: wrap;
+}
+.connect-bar label { font-size: 0.8em; color: var(--text2); }
+.connect-bar input {
+background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+color: var(--text); padding: 6px 10px; border-radius: 6px;
+font-size: 0.8em; outline: none; width: 280px;
+}
+.connect-bar input:focus { border-color: var(--green); }
+.grid {
+display: grid; grid-template-columns: 1fr 1fr;
+gap: 12px; padding: 12px 16px; max-width: 1600px; margin: 0 auto;
+}
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.card-h {
+background: var(--card2); padding: 9px 14px; font-weight: 600; font-size: 0.9em;
+display: flex; justify-content: space-between; align-items: center;
+border-bottom: 1px solid var(--border);
+}
+.card-b { padding: 12px; }
+.bot-item {
+background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+border-radius: 8px; padding: 10px; margin-bottom: 6px;
+display: flex; justify-content: space-between; align-items: center;
+flex-wrap: wrap; gap: 6px;
+}
+.b-name { font-weight: 600; color: var(--green); font-size: 0.9em; }
+.b-det { font-size: 0.75em; color: var(--text2); margin-top: 2px; }
+.b-acts { display: flex; gap: 4px; }
+.btn {
+padding: 5px 11px; border: none; border-radius: 6px; cursor: pointer;
+font-size: 0.78em; font-weight: 500; transition: all 0.15s; color: white;
+}
+.btn:hover { filter: brightness(1.2); }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-g { background: var(--green); color: #000; }
+.btn-r { background: var(--red); }
+.btn-b { background: var(--blue); }
+.btn-p { background: var(--purple); }
+.btn-y { background: var(--yellow); color: #000; }
+.btn-s { padding: 3px 7px; font-size: 0.7em; }
+.btn-f { width: 100%; padding: 8px; margin-top: 6px; }
+.ig { display: flex; gap: 6px; margin-bottom: 7px; }
+.ig input, .ig select {
+flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+color: var(--text); padding: 6px 9px; border-radius: 6px;
+font-size: 0.82em; outline: none;
+}
+.ig input:focus { border-color: var(--green); }
+.logs {
+height: 320px; overflow-y: auto; font-family: 'Consolas', monospace;
+font-size: 0.75em; padding: 6px; background: rgba(0,0,0,0.3); border-radius: 6px;
+}
+.log-e { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.02); word-break: break-all; }
+.log-t { color: var(--text2); }
+.msg-i {
+display: flex; justify-content: space-between; align-items: center;
+padding: 5px 7px; background: rgba(0,0,0,0.2); border-radius: 5px;
+margin-bottom: 4px; gap: 5px;
+}
+.msg-tx { flex: 1; font-size: 0.8em; word-break: break-all; }
+.msg-n { color: var(--text2); font-size: 0.7em; min-width: 16px; }
+.bl-i {
+display: flex; justify-content: space-between; align-items: center;
+padding: 4px 7px; background: rgba(255,71,87,0.08); border: 1px solid rgba(255,71,87,0.15);
+border-radius: 5px; margin-bottom: 3px; font-size: 0.8em;
+}
+.chat-entry {
+padding: 5px 8px; background: rgba(0,0,0,0.2); border-radius: 5px;
+margin-bottom: 4px; font-size: 0.8em;
+}
+.chat-time { color: var(--text2); font-size: 0.7em; }
+.chat-user { color: var(--green); font-weight: 600; }
+.chat-msg { color: var(--text); word-break: break-all; }
+.empty { text-align: center; color: var(--text2); padding: 16px; font-size: 0.82em; }
+.toast {
+position: fixed; bottom: 16px; right: 16px; background: var(--card2);
+border: 1px solid var(--green); color: var(--text); padding: 8px 16px;
+border-radius: 8px; font-size: 0.82em; z-index: 999;
+animation: si 0.3s ease;
+}
+@keyframes si { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.fw { grid-column: 1 / -1; }
+.cfg-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 600px) { .cfg-g { grid-template-columns: 1fr; } }
+.cfg-i label { display: block; font-size: 0.72em; color: var(--text2); margin-bottom: 2px; }
+.cfg-i input {
+width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+color: var(--text); padding: 6px 9px; border-radius: 6px; outline: none; font-size: 0.82em;
+}
+.tabs {
+display: flex; gap: 4px; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px;
+}
+.tab {
+padding: 6px 12px; background: rgba(0,0,0,0.2); border: 1px solid transparent;
+border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.8em;
+transition: all 0.2s;
+}
+.tab:hover { background: rgba(0,0,0,0.4); }
+.tab.active { background: var(--card2); border-color: var(--border); border-bottom-color: var(--card); }
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🤖 Bot <span>Anunciador</span></h1>
+<div class="badges">
+<div class="badge"><span class="dot d-green"></span><span id="s-bots">0 bots</span></div>
+<div class="badge"><span class="dot d-red"></span><span id="s-bl">0 bl</span></div>
+<div class="badge"><span class="dot d-yellow"></span><span id="s-msgs">0 msgs</span></div>
+</div>
+</div>
+<div class="banner b-off" id="banner">⏳ Conectando ao servidor...</div>
+<div class="connect-bar">
+<label>🔌 Relay URL:</label>
+<input type="text" id="relay-url" placeholder="https://seu-relay.onrender.com" value="https://anunciador-relay.onrender.com">
+<button class="btn btn-g" onclick="conectar()">Conectar</button>
+<span id="relay-status" style="font-size:0.75em;color:var(--text2)"></span>
+</div>
+<div class="grid">
+<div class="card">
+<div class="card-h">🟢 Bots
+<div style="display:flex;gap:4px;">
+<button class="btn btn-s btn-y" onclick="emit('restartBots')">🔄 Restart</button>
+<button class="btn btn-s btn-r" onclick="emit('disconnect_server','all')">Desc. Todos</button>
+</div>
+</div>
+<div class="card-b" id="bots-list"><div class="empty">Aguardando...</div></div>
+</div>
+<div class="card">
+<div class="card-h">💬 Chat & Comandos</div>
+<div class="card-b">
+<div class="ig"><select id="ct"><option value="all">Todos</option></select></div>
+<div class="ig">
+<input type="text" id="ci" placeholder="Mensagem..." onkeydown="if(event.key==='Enter')sChat()">
+<button class="btn btn-g" onclick="sChat()">Enviar</button>
+</div>
+<div class="ig">
+<input type="text" id="cmi" placeholder="/comando" onkeydown="if(event.key==='Enter')sCmd()">
+<button class="btn btn-b" onclick="sCmd()">Cmd</button>
+</div>
+<button class="btn btn-p btn-f" onclick="emit('announce')">📣 Forçar Anúncio</button>
+<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;">
+<div class="ig">
+<input type="text" id="cni" placeholder="IP:Porta" onkeydown="if(event.key==='Enter')mConn()">
+<button class="btn btn-y" onclick="mConn()">Conectar</button>
+</div>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="card-h">📋 Mensagens</div>
+<div class="card-b">
+<div id="msgs-list"></div>
+<div class="ig" style="margin-top:6px;">
+<input type="text" id="nm" placeholder="Nova msg..." onkeydown="if(event.key==='Enter')aMsg()">
+<button class="btn btn-g" onclick="aMsg()">+ Add</button>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="card-h">⚙️ Config</div>
+<div class="card-b">
+<div class="cfg-g">
+<div class="cfg-i"><label>👤 Username</label><input type="text" id="cu" onchange="emit('setUsername',this.value)"></div>
+<div class="cfg-i"><label>⏱️ Intervalo (seg)</label><input type="number" id="cv" min="10" onchange="emit('setIntervalo',this.value)"></div>
+</div>
+<div style="margin-top:12px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+<span style="font-weight:600;font-size:0.82em;">🚫 Blacklist</span>
+<button class="btn btn-s btn-r" onclick="emit('clearBlacklist')">Limpar</button>
+</div>
+<div class="ig" style="margin-bottom:8px;">
+<input type="text" id="bl-add" placeholder="IP:Porta" onkeydown="if(event.key==='Enter')addBl()">
+<button class="btn btn-s btn-r" onclick="addBl()">+ Add</button>
+</div>
+<div id="bl-list"><div class="empty" style="padding:6px">Vazia</div></div>
+</div>
+</div>
+</div>
+<div class="card fw">
+<div class="card-h">💾 Database de Chat
+<button class="btn btn-s btn-r" onclick="if(confirm('Limpar todo o histórico?'))emit('clearChatDatabase')">Limpar</button>
+</div>
+<div class="card-b">
+<div class="tabs">
+<div class="tab active" onclick="changeTab(0)">📜 Todas</div>
+<div class="tab" onclick="changeTab(1)">🔍 Filtrar</div>
+</div>
+<div id="tab-0" style="display:block;">
+<div class="logs" id="chat-db" style="height:250px;"></div>
+</div>
+<div id="tab-1" style="display:none;">
+<div class="ig">
+<select id="filter-server"><option value="all">Todos os servidores</option></select>
+<input type="text" id="filter-search" placeholder="Buscar..." onkeydown="if(event.key==='Enter')filterChat()">
+<button class="btn btn-b" onclick="filterChat()">Buscar</button>
+</div>
+<div class="logs" id="chat-filtered" style="height:200px;"></div>
+</div>
+</div>
+</div>
+<div class="card fw">
+<div class="card-h">📜 Logs<button class="btn btn-s btn-b" onclick="document.getElementById('lc').innerHTML=''">Limpar</button></div>
+<div class="card-b"><div class="logs" id="lc"></div></div>
+</div>
+</div>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script>
+let socket = null;
+let pcOn = false;
+let currentTab = 0;
+let chatMessages = [];
+const savedUrl = localStorage.getItem('relayUrl') || 'https://anunciador-relay.onrender.com';
+document.getElementById('relay-url').value = savedUrl;
+if (savedUrl) setTimeout(() => conectar(), 500);
+function conectar() {
+const url = document.getElementById('relay-url').value.trim();
+if (!url) { toast('Cole a URL do Render!'); return; }
+localStorage.setItem('relayUrl', url);
+document.getElementById('relay-status').textContent = 'Conectando...';
+if (socket) { socket.disconnect(); socket = null; }
+socket = io(url, { reconnection: true, reconnectionDelay: 3000, timeout: 15000 });
+socket.on('connect', () => {
+document.getElementById('relay-status').textContent = '✅ Conectado!';
+document.getElementById('relay-status').style.color = 'var(--green)';
 });
-
-// ===== MUDE ESSA CHAVE =====
-const SECRET_KEY = 'MUDE_ESSA_CHAVE_SECRETA_123';
-
-// ===== ESTADO =====
-let botSocket = null;
-let botData = {
-    stats: {
-        botsAtivos: 0, totalBots: 0, blacklistSize: 0,
-        blacklistItems: [], mensagens: [], intervalo: 180, username: 'Anunciador',
-    },
-    bots: [],
-    logs: [],
-};
-
-// Health check (Render precisa disso)
-app.get('/', (req, res) => {
-    res.json({
-        status: 'online',
-        botConectado: botSocket !== null,
-        bots: botData.stats.botsAtivos,
-    });
+socket.on('disconnect', () => {
+document.getElementById('relay-status').textContent = '🔌 Desconectado';
+document.getElementById('relay-status').style.color = 'var(--red)';
+setBanner(false);
 });
-
-app.get('/health', (req, res) => res.send('OK'));
-
-// ===== SOCKET.IO =====
-io.on('connection', (socket) => {
-
-    // --- BOT DO PC ---
-    if (socket.handshake.auth?.key === SECRET_KEY && socket.handshake.auth?.type === 'bot') {
-        console.log('🤖 Bot conectou!');
-        if (botSocket) try { botSocket.disconnect(); } catch {}
-        botSocket = socket;
-        io.emit('botStatus', true);
-
-        socket.on('syncData', (data) => {
-            botData = data;
-            io.emit('init', { stats: botData.stats, bots: botData.bots, logs: botData.logs.slice(-50) });
-        });
-
-        socket.on('log', (entry) => {
-            botData.logs.push(entry);
-            if (botData.logs.length > 200) botData.logs.shift();
-            io.emit('log', entry);
-        });
-
-        socket.on('botsUpdate', (data) => { botData.bots = data; io.emit('botsUpdate', data); });
-        socket.on('statsUpdate', (data) => { botData.stats = data; io.emit('statsUpdate', data); });
-
-        socket.on('disconnect', () => {
-            console.log('🔌 Bot saiu');
-            botSocket = null;
-            io.emit('botStatus', false);
-        });
-
-        return;
-    }
-
-    // --- USUÁRIO WEB ---
-    console.log('🌐 Web conectou');
-    socket.emit('init', { stats: botData.stats, bots: botData.bots, logs: botData.logs.slice(-50) });
-    socket.emit('botStatus', botSocket !== null);
-
-    // Repassa tudo pro bot
-    ['chat','command','announce','addMsg','delMsg','setIntervalo',
-     'setUsername','connect_server','disconnect_server',
-     'clearBlacklist','removeBlacklist','jump','refresh'
-    ].forEach(cmd => {
-        socket.on(cmd, (data) => {
-            if (botSocket) botSocket.emit(cmd, data);
-            else socket.emit('toast', '⚠️ Bot offline!');
-        });
-    });
+socket.on('connect_error', () => {
+document.getElementById('relay-status').textContent = '❌ Erro';
+document.getElementById('relay-status').style.color = 'var(--red)';
 });
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`✅ Relay na porta ${PORT}`));
+socket.on('init', (d) => { 
+uStats(d.stats); 
+uBots(d.bots); 
+d.logs.forEach(aLog); 
+if (d.chatDatabase) {
+chatMessages = d.chatDatabase;
+renderChatDatabase();
+}
+});
+socket.on('log', aLog);
+socket.on('botsUpdate', uBots);
+socket.on('statsUpdate', uStats);
+socket.on('toast', toast);
+socket.on('botStatus', setBanner);
+socket.on('chatMessage', (msg) => {
+chatMessages.push(msg);
+if (chatMessages.length > 5000) chatMessages.shift();
+renderChatDatabase();
+});
+socket.on('chatMessages', (msgs) => {
+const filtered = document.getElementById('chat-filtered');
+if (!msgs.length) {
+filtered.innerHTML = '<div class="empty" style="padding:16px">Nenhuma mensagem encontrada</div>';
+return;
+}
+filtered.innerHTML = msgs.map(m => 
+`<div class="chat-entry"><span class="chat-time">[${m.time}]</span> <span class="chat-user">${esc(m.username)}</span>: <span class="chat-msg">${esc(m.message)}</span></div>`
+).join('');
+filtered.scrollTop = filtered.scrollHeight;
+});
+}
+function setBanner(online) {
+pcOn = online;
+const b = document.getElementById('banner');
+b.className = online ? 'banner b-on' : 'banner b-off';
+b.textContent = online ? '✅ Bot ONLINE — PC conectado' : '⚠️ Bot OFFLINE — Ligue o bot no PC';
+}
+function emit(ev, data) {
+if (!socket?.connected) { toast('Conecte ao relay primeiro!'); return; }
+if (!pcOn && ev !== 'refresh') { toast('⚠️ Bot offline!'); return; }
+socket.emit(ev, data);
+}
+function uStats(s) {
+document.getElementById('s-bots').textContent = `${s.botsAtivos} bots`;
+document.getElementById('s-bl').textContent = `${s.blacklistSize} bl`;
+document.getElementById('s-msgs').textContent = `${s.mensagens.length} msgs`;
+document.getElementById('cu').value = s.username;
+document.getElementById('cv').value = s.intervalo;
+const ml = document.getElementById('msgs-list');
+ml.innerHTML = s.mensagens.length ? s.mensagens.map((m,i) =>
+`<div class="msg-i"><span class="msg-n">#${i+1}</span><span class="msg-tx">${esc(m)}</span><button class="btn btn-s btn-r" onclick="emit('delMsg',${i})">✕</button></div>`
+).join('') : '<div class="empty" style="padding:6px">Sem msgs</div>';
+const bl = document.getElementById('bl-list');
+bl.innerHTML = s.blacklistItems.length ? s.blacklistItems.map(x =>
+`<div class="bl-i"><span>${x}</span><button class="btn btn-s btn-g" onclick="emit('removeBlacklist','${x}')">✓</button></div>`
+).join('') : '<div class="empty" style="padding:6px">Vazia</div>';
+}
+function uBots(b) {
+const c = document.getElementById('bots-list');
+const sel = document.getElementById('ct');
+const selF = document.getElementById('filter-server');
+const cur = sel.value;
+const curF = selF.value;
+if (!b.length) { 
+c.innerHTML = '<div class="empty">Aguardando servidores...</div>'; 
+sel.innerHTML = '<option value="all">Todos</option>'; 
+selF.innerHTML = '<option value="all">Todos os servidores</option>'; 
+return; 
+}
+c.innerHTML = b.map(x => `<div class="bot-item"><div><div class="b-name">${esc(x.username)}</div><div class="b-det">${x.key} • v${x.versao}${x.hp!=null?' • ❤️'+x.hp.toFixed(0)+' 🍖'+x.food:''}${x.pos?' • 📍'+x.pos.x+','+x.pos.y+','+x.pos.z:''}${x.players?' • 👥'+x.players.length:''}</div></div><div class="b-acts"><button class="btn btn-s btn-b" onclick="emit('jump','${x.key}')">🦘</button><button class="btn btn-s btn-r" onclick="emit('disconnect_server','${x.key}')">✕</button></div></div>`).join('');
+sel.innerHTML = '<option value="all">Todos</option>' + b.map(x => `<option value="${x.key}">${x.username}</option>`).join('');
+sel.value = cur;
+selF.innerHTML = '<option value="all">Todos os servidores</option>' + b.map(x => `<option value="${x.key}">${x.key}</option>`).join('');
+selF.value = curF;
+}
+function aLog(e) {
+const c = document.getElementById('lc');
+const d = document.createElement('div');
+d.className = 'log-e';
+d.innerHTML = `<span class="log-t">[${e.time}]</span> ${e.emoji} ${esc(e.msg)}`;
+c.appendChild(d);
+c.scrollTop = c.scrollHeight;
+while (c.children.length > 200) c.removeChild(c.firstChild);
+}
+function renderChatDatabase() {
+if (currentTab !== 0) return;
+const c = document.getElementById('chat-db');
+if (!chatMessages.length) {
+c.innerHTML = '<div class="empty" style="padding:16px">Nenhuma mensagem ainda</div>';
+return;
+}
+c.innerHTML = chatMessages.slice(-200).map(m => 
+`<div class="chat-entry"><span class="chat-time">[${m.time}] [${m.serverKey}]</span> <span class="chat-user">${esc(m.username)}</span>: <span class="chat-msg">${esc(m.message)}</span></div>`
+).join('');
+c.scrollTop = c.scrollHeight;
+}
+function filterChat() {
+const serverKey = document.getElementById('filter-server').value;
+const search = document.getElementById('filter-search').value.trim();
+if (!socket?.connected) { toast('Conecte ao relay!'); return; }
+socket.emit('getChatMessages', { serverKey, search });
+}
+function changeTab(idx) {
+currentTab = idx;
+document.querySelectorAll('.tab').forEach((t, i) => {
+t.classList.toggle('active', i === idx);
+document.getElementById(`tab-${i}`).style.display = i === idx ? 'block' : 'none';
+});
+if (idx === 0) renderChatDatabase();
+}
+function sChat() { const i=document.getElementById('ci'); if(i.value.trim()){emit('chat',{serverKey:document.getElementById('ct').value,message:i.value.trim()});i.value='';} }
+function sCmd() { const i=document.getElementById('cmi'),t=document.getElementById('ct').value; if(t==='all'){toast('Selecione servidor');return;} if(i.value.trim()){emit('command',{serverKey:t,command:i.value.trim()});i.value='';} }
+function aMsg() { const i=document.getElementById('nm'); if(i.value.trim()){emit('addMsg',i.value.trim());i.value='';} }
+function mConn() { const i=document.getElementById('cni'); if(i.value.trim()){emit('connect_server',i.value.trim());i.value='';} }
+function addBl() { const i=document.getElementById('bl-add'); if(i.value.trim()){emit('addBlacklist',i.value.trim());i.value='';} }
+function toast(m) { const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
+function esc(s) { const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+</script>
+</body>
+</html>
