@@ -1,16 +1,12 @@
 {
-  "name": "minecraft-announcer-relay",
-  "version": "4.1.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.7.4",
-    "socket.io-client": "^4.7.4",
-    "mineflayer": "^4.20.1",
-    "minecraft-protocol": "^1.47.0",
-    "node-fetch": "^2.7.0"
-  }
+    "name": "minecraft-announcer-relay",
+    "version": "4.3.0",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "socket.io": "^4.7.4"
+    }
 }
