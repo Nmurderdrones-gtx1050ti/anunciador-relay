@@ -14,137 +14,58 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0a0e1a;
-            color: #e2e8f0;
-            overflow: hidden;
-            height: 100vh;
-        }
+        body { font-family: 'Inter', sans-serif; background: #0a0e1a; color: #e2e8f0; overflow: hidden; height: 100vh; }
         #app { display: flex; height: 100vh; width: 100vw; }
-
-        .sidebar {
-            width: 260px; min-width: 260px; background: #0f1322;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            display: flex; flex-direction: column; height: 100vh; transition: all 0.3s;
-        }
+        .sidebar { width: 260px; min-width: 260px; background: #0f1322; border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; height: 100vh; transition: all 0.3s; }
         .sidebar.collapsed { width: 68px; min-width: 68px; }
-        .sidebar-header {
-            padding: 20px 16px; display: flex; align-items: center; gap: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .sidebar-logo {
-            width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 14px; color: white; flex-shrink: 0;
-        }
+        .sidebar-header { padding: 20px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .sidebar-logo { width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white; flex-shrink: 0; }
         .sidebar-brand { display: flex; flex-direction: column; }
         .sidebar-brand-name { font-size: 14px; font-weight: 700; color: #f1f5f9; white-space: nowrap; }
         .sidebar-brand-sub { font-size: 10px; color: #64748b; white-space: nowrap; }
-        .sidebar.collapsed .sidebar-brand,
-        .sidebar.collapsed .nav-label,
-        .sidebar.collapsed .nav-item-text,
-        .sidebar.collapsed .connection-section,
-        .sidebar.collapsed .sidebar-footer-text,
-        .sidebar.collapsed .nav-badge { display: none; }
+        .sidebar.collapsed .sidebar-brand, .sidebar.collapsed .nav-label, .sidebar.collapsed .nav-item-text, .sidebar.collapsed .connection-section, .sidebar.collapsed .sidebar-footer-text, .sidebar.collapsed .nav-badge { display: none; }
         .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
         .nav-section { margin-bottom: 8px; }
-        .nav-label {
-            font-size: 10px; font-weight: 600; color: #475569;
-            text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px 6px;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px; padding: 9px 12px;
-            border-radius: 8px; cursor: pointer; transition: all 0.15s;
-            color: #94a3b8; font-size: 13px; font-weight: 500; position: relative;
-        }
+        .nav-label { font-size: 10px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px 6px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: #94a3b8; font-size: 13px; font-weight: 500; position: relative; }
         .nav-item:hover { background: rgba(255,255,255,0.04); color: #cbd5e1; }
         .nav-item.active { background: rgba(99,102,241,0.12); color: #818cf8; }
-        .nav-item.active::before {
-            content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
-            width: 3px; height: 20px; background: #6366f1; border-radius: 0 3px 3px 0;
-        }
+        .nav-item.active::before { content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: #6366f1; border-radius: 0 3px 3px 0; }
         .nav-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .nav-icon svg { width: 18px; height: 18px; }
-        .nav-badge {
-            margin-left: auto; background: #6366f1; color: white;
-            font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px;
-        }
+        .nav-badge { margin-left: auto; background: #6366f1; color: white; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
         .connection-section { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
-        .connection-status {
-            display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-            background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px;
-        }
+        .connection-status { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
         .status-dot.online { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
         .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
         .status-text { font-size: 12px; color: #94a3b8; }
         .status-text strong { color: #e2e8f0; }
         .relay-input-group { display: flex; gap: 6px; }
-        .relay-input {
-            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 6px; padding: 7px 10px; font-size: 11px; color: #e2e8f0;
-            font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
-        }
+        .relay-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 7px 10px; font-size: 11px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; }
         .relay-input:focus { border-color: #6366f1; }
-        .relay-btn {
-            background: #6366f1; color: white; border: none; border-radius: 6px;
-            padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer;
-            font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap;
-        }
+        .relay-btn { background: #6366f1; color: white; border: none; border-radius: 6px; padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap; }
         .relay-btn:hover { background: #5558e6; }
         .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
-        .sidebar-toggle {
-            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-            border-radius: 8px; cursor: pointer; color: #64748b; font-size: 12px;
-            transition: all 0.15s; background: none; border: none; width: 100%;
-            font-family: 'Inter', sans-serif;
-        }
+        .sidebar-toggle { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #64748b; font-size: 12px; transition: all 0.15s; background: none; border: none; width: 100%; font-family: 'Inter', sans-serif; }
         .sidebar-toggle:hover { background: rgba(255,255,255,0.04); color: #94a3b8; }
         .sidebar-toggle svg { width: 16px; height: 16px; }
-
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #0a0e1a; }
-        .topbar {
-            height: 56px; border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 24px; background: rgba(15,19,34,0.8); backdrop-filter: blur(10px); flex-shrink: 0;
-        }
+        .topbar { height: 56px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(15,19,34,0.8); backdrop-filter: blur(10px); flex-shrink: 0; }
         .topbar-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
         .topbar-right { display: flex; align-items: center; gap: 8px; }
-        .topbar-status {
-            display: flex; align-items: center; gap: 6px; padding: 4px 10px;
-            background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 11px; color: #94a3b8;
-        }
+        .topbar-status { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 11px; color: #94a3b8; }
         .page-content { flex: 1; overflow-y: auto; padding: 24px; }
-
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px; margin-bottom: 24px;
-        }
-        .stat-card {
-            background: #111827; border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px; padding: 20px; transition: all 0.2s;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; transition: all 0.2s; }
         .stat-card:hover { border-color: rgba(99,102,241,0.3); }
         .stat-label { font-size: 12px; color: #64748b; font-weight: 500; margin-bottom: 8px; }
         .stat-value { font-size: 28px; font-weight: 800; color: #f1f5f9; }
         .stat-value.green { color: #22c55e; }
-
-        .servers-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 16px; margin-top: 16px;
-        }
-        .server-card {
-            background: #111827; border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.25s;
-        }
-        .server-card:hover {
-            border-color: rgba(99,102,241,0.4); transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-        }
-        .server-card-header {
-            padding: 18px 20px 14px; display: flex; justify-content: space-between; align-items: flex-start;
-        }
+        .servers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
+        .server-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.25s; }
+        .server-card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .server-card-header { padding: 18px 20px 14px; display: flex; justify-content: space-between; align-items: flex-start; }
         .server-card-info { flex: 1; min-width: 0; }
         .server-card-info h3 { font-size: 14px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .server-motd { font-size: 12px; color: #6366f1; font-weight: 500; }
@@ -152,145 +73,66 @@
         .server-status-badge.online { background: rgba(34,197,94,0.15); color: #22c55e; }
         .server-status-badge.offline { background: rgba(239,68,68,0.15); color: #ef4444; }
         .server-card-body { padding: 0 20px 14px; }
-        .server-detail-row {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
-            font-size: 12px; color: #94a3b8;
-        }
+        .server-detail-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: #94a3b8; }
         .server-detail-row .detail-icon { width: 14px; height: 14px; flex-shrink: 0; display: flex; align-items: center; }
         .server-detail-row .detail-icon svg { width: 14px; height: 14px; color: #64748b; }
         .server-card-footer { border-top: 1px solid rgba(255,255,255,0.06); display: flex; }
-        .server-card-action {
-            flex: 1; padding: 12px; display: flex; align-items: center; justify-content: center;
-            gap: 6px; font-size: 12px; font-weight: 500; color: #64748b; cursor: pointer;
-            transition: all 0.15s; background: none; border: none; font-family: 'Inter', sans-serif;
-        }
+        .server-card-action { flex: 1; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.15s; background: none; border: none; font-family: 'Inter', sans-serif; }
         .server-card-action:hover { background: rgba(255,255,255,0.03); color: #94a3b8; }
         .server-card-action + .server-card-action { border-left: 1px solid rgba(255,255,255,0.06); }
         .server-card-action svg { width: 14px; height: 14px; }
-
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s;
-        }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal {
-            background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
-            width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column;
-            animation: slideUp 0.3s; overflow: hidden;
-        }
+        .modal { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; animation: slideUp 0.3s; overflow: hidden; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header {
-            padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
         .modal-header h2 { font-size: 18px; font-weight: 700; }
-        .modal-close {
-            width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05);
-            border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; font-size: 18px; transition: all 0.15s;
-        }
+        .modal-close { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.15s; }
         .modal-close:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
         .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
         .modal-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
         .modal-info-item { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px 16px; }
-        .modal-info-item label {
-            font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase;
-            letter-spacing: 0.03em; display: block; margin-bottom: 4px;
-        }
+        .modal-info-item label { font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; display: block; margin-bottom: 4px; }
         .modal-info-item span { font-size: 14px; font-weight: 600; color: #e2e8f0; }
-        .modal-section-title {
-            font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 12px;
-            display: flex; align-items: center; gap: 8px;
-        }
+        .modal-section-title { font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         .modal-section-title svg { width: 16px; height: 16px; }
         .players-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-        .player-tag {
-            background: rgba(99,102,241,0.1); color: #818cf8; padding: 5px 12px;
-            border-radius: 20px; font-size: 12px; font-weight: 500;
-        }
-        .modal-chat {
-            background: rgba(0,0,0,0.2); border-radius: 10px; height: 200px; overflow-y: auto; padding: 12px;
-        }
+        .player-tag { background: rgba(99,102,241,0.1); color: #818cf8; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .modal-chat { background: rgba(0,0,0,0.2); border-radius: 10px; height: 200px; overflow-y: auto; padding: 12px; }
         .modal-chat-msg { margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
         .modal-chat-msg .chat-time { color: #475569; margin-right: 6px; }
         .modal-chat-msg .chat-user { color: #6366f1; font-weight: 600; margin-right: 4px; }
         .modal-chat-msg .chat-text { color: #cbd5e1; }
         .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
-
         .chat-container { display: flex; flex-direction: column; height: 100%; }
         .chat-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-        .chat-search {
-            flex: 1; min-width: 200px; background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
-            padding: 9px 14px 9px 36px; font-size: 13px; color: #e2e8f0;
-            font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: 12px center;
-        }
+        .chat-search { flex: 1; min-width: 200px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 14px 9px 36px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 12px center; }
         .chat-search:focus { border-color: #6366f1; }
-        .filter-select {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0;
-            font-family: 'Inter', sans-serif; outline: none; cursor: pointer; min-width: 180px;
-            appearance: none; -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: calc(100% - 12px) center; padding-right: 32px;
-        }
+        .filter-select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; cursor: pointer; min-width: 180px; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: calc(100% - 12px) center; padding-right: 32px; }
         .filter-select option { background: #1e293b; color: #e2e8f0; }
-        .export-btn {
-            display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 16px;
-            font-size: 13px; color: #94a3b8; cursor: pointer; font-family: 'Inter', sans-serif;
-            transition: all 0.15s; font-weight: 500;
-        }
+        .export-btn { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 16px; font-size: 13px; color: #94a3b8; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; font-weight: 500; }
         .export-btn:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
         .export-btn svg { width: 15px; height: 15px; }
-        .chat-messages {
-            flex: 1; background: #111827; border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px; overflow-y: auto; padding: 4px;
-        }
-        .chat-msg-item {
-            display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px;
-            border-radius: 8px; transition: background 0.1s;
-        }
+        .chat-messages { flex: 1; background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow-y: auto; padding: 4px; }
+        .chat-msg-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; border-radius: 8px; transition: background 0.1s; }
         .chat-msg-item:hover { background: rgba(255,255,255,0.02); }
-        .chat-msg-avatar {
-            width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.15);
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-            font-size: 12px; font-weight: 700; color: #818cf8;
-        }
+        .chat-msg-avatar { width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 700; color: #818cf8; }
         .chat-msg-content { flex: 1; min-width: 0; }
         .chat-msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; flex-wrap: wrap; }
         .chat-msg-user { font-size: 13px; font-weight: 600; color: #e2e8f0; }
-        .chat-msg-server-tag {
-            font-size: 10px; padding: 1px 7px; border-radius: 4px;
-            background: rgba(99,102,241,0.1); color: #818cf8; font-weight: 500;
-        }
+        .chat-msg-server-tag { font-size: 10px; padding: 1px 7px; border-radius: 4px; background: rgba(99,102,241,0.1); color: #818cf8; font-weight: 500; }
         .chat-msg-time { font-size: 11px; color: #475569; margin-left: auto; }
         .chat-msg-text { font-size: 13px; color: #94a3b8; line-height: 1.5; }
-        .chat-empty {
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; height: 100%; min-height: 300px; color: #475569;
-        }
+        .chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 300px; color: #475569; }
         .chat-empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5; }
         .chat-empty p { font-size: 14px; }
-
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .section-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
         .section-actions { display: flex; gap: 8px; }
-        .bots-list {
-            background: #111827; border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px; overflow: hidden; margin-bottom: 24px;
-        }
-        .bot-item {
-            display: flex; align-items: center; padding: 12px 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.04); gap: 12px;
-        }
+        .bots-list { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+        .bot-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 12px; }
         .bot-item:last-child { border-bottom: none; }
-        .bot-icon {
-            width: 36px; height: 36px; border-radius: 8px; background: rgba(34,197,94,0.1);
-            display: flex; align-items: center; justify-content: center;
-        }
+        .bot-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(34,197,94,0.1); display: flex; align-items: center; justify-content: center; }
         .bot-icon svg { width: 18px; height: 18px; color: #22c55e; }
         .bot-info { flex: 1; min-width: 0; }
         .bot-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
@@ -298,48 +140,21 @@
         .bot-motd { font-size: 10px; color: #818cf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .bot-status-indicator { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
         .bots-empty { padding: 40px; text-align: center; color: #475569; font-size: 13px; }
-        .dash-section {
-            background: #111827; border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px; padding: 20px; margin-bottom: 24px;
-        }
+        .dash-section { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
         .dash-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: #f1f5f9; }
         .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
-        .input-field {
-            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0;
-            font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
-        }
+        .input-field { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; }
         .input-field:focus { border-color: #6366f1; }
-        .btn-primary {
-            background: #6366f1; color: white; border: none; border-radius: 8px;
-            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
-            font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap;
-        }
+        .btn-primary { background: #6366f1; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap; }
         .btn-primary:hover { background: #5558e6; }
-        .btn-danger {
-            background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 8px;
-            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
-            font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap;
-        }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
         .btn-danger:hover { background: rgba(239,68,68,0.25); }
-        .btn-secondary {
-            background: rgba(255,255,255,0.05); color: #94a3b8;
-            border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
-            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
-            font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap;
-        }
+        .btn-secondary { background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
         .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
-        .btn-warn {
-            background: rgba(245,158,11,0.15); color: #f59e0b; border: none; border-radius: 8px;
-            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
-            font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap;
-        }
+        .btn-warn { background: rgba(245,158,11,0.15); color: #f59e0b; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
         .btn-warn:hover { background: rgba(245,158,11,0.25); }
-        .logs-container {
-            background: #0a0e1a; border-radius: 8px; padding: 12px; max-height: 200px;
-            overflow-y: auto; font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 11px; line-height: 1.6; color: #64748b;
-        }
+        .logs-container { background: #0a0e1a; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11px; line-height: 1.6; color: #64748b; }
         .log-entry { padding: 2px 0; }
         .log-entry .log-emoji { margin-right: 4px; }
         .log-entry .log-time { color: #475569; margin-right: 6px; }
@@ -347,107 +162,51 @@
         .log-entry.success { color: #22c55e; }
         .log-entry.error { color: #ef4444; }
         .log-entry.warn { color: #f59e0b; }
-
-        .settings-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;
-        }
-        .setting-group {
-            background: #111827; border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px; padding: 20px;
-        }
-        .setting-group h3 {
-            font-size: 14px; font-weight: 700; margin-bottom: 16px; color: #f1f5f9;
-            display: flex; align-items: center; gap: 8px;
-        }
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+        .setting-group { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; }
+        .setting-group h3 { font-size: 14px; font-weight: 700; margin-bottom: 16px; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
         .setting-group h3 svg { width: 16px; height: 16px; }
         .setting-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
         .setting-row:last-child { margin-bottom: 0; }
         .setting-row label { font-size: 12px; color: #64748b; font-weight: 500; }
         .blacklist-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .blacklist-tag {
-            background: rgba(239,68,68,0.1); color: #ef4444; padding: 4px 10px;
-            border-radius: 6px; font-size: 12px; font-weight: 500;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .blacklist-tag button {
-            background: none; border: none; color: #ef4444; cursor: pointer;
-            font-size: 14px; line-height: 1; padding: 0; opacity: 0.6;
-        }
+        .blacklist-tag { background: rgba(239,68,68,0.1); color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+        .blacklist-tag button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: 0.6; }
         .blacklist-tag button:hover { opacity: 1; }
         .messages-list { margin-top: 10px; }
-        .message-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 6px;
-            margin-bottom: 4px; font-size: 13px; color: #94a3b8;
-        }
-        .message-item button {
-            background: none; border: none; color: #ef4444; cursor: pointer;
-            font-size: 14px; opacity: 0.6; flex-shrink: 0;
-        }
+        .message-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 6px; margin-bottom: 4px; font-size: 13px; color: #94a3b8; }
+        .message-item button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; opacity: 0.6; flex-shrink: 0; }
         .message-item button:hover { opacity: 1; }
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: 1fr; } }
         .dashboard-full { grid-column: 1 / -1; }
-
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
-        .toast {
-            background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-            padding: 12px 20px; font-size: 13px; color: #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-            animation: toastIn 0.3s; min-width: 250px;
-        }
+        .toast { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 20px; font-size: 13px; color: #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.4); animation: toastIn 0.3s; min-width: 250px; }
         @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        /* MC Color codes */
-        .mc-0 { color: #000000; } .mc-1 { color: #0000AA; } .mc-2 { color: #00AA00; }
-        .mc-3 { color: #00AAAA; } .mc-4 { color: #AA0000; } .mc-5 { color: #AA00AA; }
-        .mc-6 { color: #FFAA00; } .mc-7 { color: #AAAAAA; } .mc-8 { color: #555555; }
-        .mc-9 { color: #5555FF; } .mc-a { color: #55FF55; } .mc-b { color: #55FFFF; }
-        .mc-c { color: #FF5555; } .mc-d { color: #FF55FF; } .mc-e { color: #FFFF55; }
-        .mc-f { color: #FFFFFF; }
-        .mc-l { font-weight: bold; } .mc-o { font-style: italic; }
-        .mc-n { text-decoration: underline; } .mc-m { text-decoration: line-through; }
-        .mc-k { animation: mcObfuscate 0.1s infinite; }
-        @keyframes mcObfuscate { 0% { opacity: 1; } 50% { opacity: 0.5; } }
-
-        /* Analytics */
+        .mc-0{color:#000}.mc-1{color:#0000AA}.mc-2{color:#00AA00}.mc-3{color:#00AAAA}.mc-4{color:#AA0000}.mc-5{color:#AA00AA}.mc-6{color:#FFAA00}.mc-7{color:#AAA}.mc-8{color:#555}.mc-9{color:#55F}.mc-a{color:#5F5}.mc-b{color:#5FF}.mc-c{color:#F55}.mc-d{color:#F5F}.mc-e{color:#FF5}.mc-f{color:#FFF}
+        .mc-l{font-weight:bold}.mc-o{font-style:italic}.mc-n{text-decoration:underline}.mc-m{text-decoration:line-through}
         .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
         @media (max-width: 1000px) { .analytics-grid { grid-template-columns: 1fr; } }
-        .chart-card {
-            background: #111827; border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px; padding: 20px;
-        }
+        .chart-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; }
         .chart-card h3 { font-size: 14px; font-weight: 700; color: #f1f5f9; margin-bottom: 16px; }
         .chart-card canvas { max-height: 250px; }
-        .chart-card-full { grid-column: 1 / -1; }
-        .analytics-stat-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px; margin-bottom: 16px;
-        }
-        .analytics-stat {
-            background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px;
-            text-align: center;
-        }
+        .analytics-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .analytics-stat { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px; text-align: center; }
         .analytics-stat .val { font-size: 24px; font-weight: 800; color: #818cf8; }
         .analytics-stat .lbl { font-size: 11px; color: #64748b; margin-top: 4px; }
-        .top-server-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
-            font-size: 12px;
-        }
+        .top-server-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
         .top-server-row:last-child { border-bottom: none; }
         .top-server-name { color: #e2e8f0; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .top-server-val { color: #818cf8; font-weight: 700; margin-left: 12px; }
-
-        /* Server separator */
-        .server-section-label {
-            font-size: 13px; font-weight: 700; color: #94a3b8; margin: 20px 0 10px;
-            padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex; align-items: center; gap: 8px;
-        }
+        .server-section-label { font-size: 13px; font-weight: 700; color: #94a3b8; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
         .server-section-label .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
         .highlight { background: rgba(99,102,241,0.3); border-radius: 2px; padding: 0 1px; }
-
+        .login-bg { position: fixed; inset: 0; background: #0a0e1a; display: flex; align-items: center; justify-content: center; z-index: 3000; }
+        .login-card { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 90%; max-width: 400px; animation: slideUp 0.3s; overflow: hidden; }
+        .login-card-header { padding: 30px 30px 0; text-align: center; }
+        .login-card-body { padding: 24px 30px 30px; }
+        .login-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #ef4444; margin-bottom: 12px; text-align: center; }
+        .login-footer { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; font-size: 11px; color: #475569; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
@@ -456,84 +215,43 @@
 </head>
 <body>
     <div id="app"></div>
-
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-        // ===== MC MOTD PARSER (renders §colors as colored spans) =====
         function parseMotd(motd) {
             if (!motd) return [{ text: '', classes: [] }];
             if (typeof motd === 'object') {
-                if (motd.text !== undefined) {
-                    let parts = parseMotdString(String(motd.text || ''));
-                    if (motd.extra) {
-                        motd.extra.forEach(e => {
-                            parts = parts.concat(parseMotd(e));
-                        });
-                    }
-                    return parts;
-                }
+                if (motd.text !== undefined) { let parts = parseMotdString(String(motd.text || '')); if (motd.extra) motd.extra.forEach(e => { parts = parts.concat(parseMotd(e)); }); return parts; }
                 if (motd.translate) return parseMotdString(motd.translate);
                 return parseMotdString(JSON.stringify(motd));
             }
             return parseMotdString(String(motd));
         }
-
         function parseMotdString(str) {
-            const parts = [];
-            let current = { text: '', classes: [] };
-            let i = 0;
+            const parts = []; let current = { text: '', classes: [] }; let i = 0;
             while (i < str.length) {
                 if (str[i] === '§' && i + 1 < str.length) {
-                    if (current.text) { parts.push({ ...current }); }
+                    if (current.text) parts.push({ ...current });
                     const code = str[i + 1].toLowerCase();
-                    if (code === 'r') {
-                        current = { text: '', classes: [] };
-                    } else if ('0123456789abcdef'.includes(code)) {
-                        current = { text: '', classes: ['mc-' + code] };
-                    } else if ('lmnok'.includes(code)) {
-                        current = { text: '', classes: [...current.classes, 'mc-' + code] };
-                    } else {
-                        current = { text: '', classes: [...current.classes] };
-                    }
+                    if (code === 'r') current = { text: '', classes: [] };
+                    else if ('0123456789abcdef'.includes(code)) current = { text: '', classes: ['mc-' + code] };
+                    else if ('lmnok'.includes(code)) current = { text: '', classes: [...current.classes, 'mc-' + code] };
+                    else current = { text: '', classes: [...current.classes] };
                     i += 2;
-                } else {
-                    current.text += str[i];
-                    i++;
-                }
+                } else { current.text += str[i]; i++; }
             }
-            if (current.text) parts.push(current);
-            return parts;
+            if (current.text) parts.push(current); return parts;
         }
-
         function MotdText({ motd }) {
             const parts = parseMotd(motd);
             if (!parts.length || (parts.length === 1 && !parts[0].text)) return <span style={{color:'#64748b'}}>Sem MOTD</span>;
-            return (
-                <span>
-                    {parts.map((p, i) => (
-                        <span key={i} className={p.classes.join(' ')}>{p.text}</span>
-                    ))}
-                </span>
-            );
+            return <span>{parts.map((p, i) => <span key={i} className={p.classes.join(' ')}>{p.text}</span>)}</span>;
         }
 
-        function cleanMotd(motd) {
-            if (!motd) return '';
-            if (typeof motd === 'object') {
-                if (motd.text !== undefined) return cleanMotd(motd.text) + (motd.extra ? motd.extra.map(e => cleanMotd(e)).join('') : '');
-                if (motd.translate) return motd.translate;
-                return JSON.stringify(motd);
-            }
-            return String(motd).replace(/§[0-9a-fk-or]/gi, '');
-        }
-
-        // ===== ICONS (fixed sizes) =====
         const I = {
             Dashboard: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
             Server: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg>,
             Chat: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-            Archive: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
             Settings: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
             Analytics: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
             Bot: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>,
@@ -548,7 +266,6 @@
             Plug: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v6"/><path d="M6 8h12"/><path d="M8 8v4a4 4 0 0 0 8 0V8"/><path d="M12 16v6"/></svg>,
             MsgEmpty: () => <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg>,
         };
-
         // ===== SERVER POPUP =====
         function ServerPopup({ server, onClose, chatMessages, socket }) {
             const serverChat = (chatMessages || []).filter(m => m.serverKey === server.key).slice(-30);
@@ -584,7 +301,7 @@
                                 )) : <div style={{color:'#475569',textAlign:'center',padding:20,fontSize:13}}>Sem mensagens</div>}
                             </div>
                             <div className="modal-actions">
-                                <button className="btn-primary" onClick={() => {if(socket) socket.emit('connect_server',server.key); onClose();}}><I.Plug/> Conectar Bot</button>
+                                <button className="btn-primary" onClick={() => {if(socket) socket.emit('connect_server',server.key); onClose();}}>Conectar Bot</button>
                                 <button className="btn-danger" onClick={() => {if(socket) socket.emit('disconnect_server',server.key); onClose();}}>Desconectar</button>
                             </div>
                         </div>
@@ -593,7 +310,7 @@
             );
         }
 
-        // ===== LOG PARSER =====
+        // ===== LOG ENTRY =====
         function LogEntry({ log }) {
             if (typeof log === 'string') return <div className="log-entry">{log}</div>;
             const emoji = log.emoji || '';
@@ -603,29 +320,22 @@
             if (emoji.includes('✅') || emoji.includes('📣')) cls = 'success';
             else if (emoji.includes('❌') || emoji.includes('🚫')) cls = 'error';
             else if (emoji.includes('⚠') || emoji.includes('🔌')) cls = 'warn';
-            return (
-                <div className={`log-entry ${cls}`}>
-                    <span className="log-time">[{time}]</span> <span className="log-emoji">{emoji}</span> {msg}
-                </div>
-            );
+            return <div className={`log-entry ${cls}`}><span className="log-time">[{time}]</span> <span className="log-emoji">{emoji}</span> {msg}</div>;
         }
 
-        // ===== DASHBOARD PAGE =====
-        function DashboardPage({ stats, bots, logs, servers, socket, setLogs }) {
+        // ===== DASHBOARD =====
+        const DashboardPage = React.memo(function DashboardPage({ stats, bots, logs, servers, socket, setLogs }) {
             const [chatFilter, setChatFilter] = useState('all');
             const [chatMsg, setChatMsg] = useState('');
             const [cmdMsg, setCmdMsg] = useState('');
             const [connectIp, setConnectIp] = useState('');
             const logsEndRef = useRef(null);
 
-            useEffect(() => {
-                if (logsEndRef.current) logsEndRef.current.scrollTop = logsEndRef.current.scrollHeight;
-            }, [logs]);
+            useEffect(() => { if (logsEndRef.current) logsEndRef.current.scrollTop = logsEndRef.current.scrollHeight; }, [logs]);
 
             const sendChat = () => { if(!chatMsg.trim()||!socket) return; socket.emit('chat',{message:chatMsg,serverKey:chatFilter}); setChatMsg(''); };
             const sendCmd = () => { if(!cmdMsg.trim()||!socket) return; socket.emit('command',{command:cmdMsg,serverKey:chatFilter}); setCmdMsg(''); };
 
-            // Find server info for each bot
             const getServerForBot = (bot) => {
                 const key = bot.serverKey || bot.server;
                 return (servers || []).find(s => s.key === key);
@@ -650,17 +360,14 @@
                                 </div>
                             </div>
                             <div className="bots-list">
-                                {(!bots||bots.length===0) ? (
-                                    <div className="bots-empty">Nenhum bot conectado</div>
-                                ) : bots.map((b,i) => {
+                                {(!bots||bots.length===0) ? <div className="bots-empty">Nenhum bot conectado</div> : bots.map((b,i) => {
                                     const srv = getServerForBot(b);
-                                    const key = b.serverKey || b.server || '?';
                                     return (
                                         <div key={i} className="bot-item">
                                             <div className="bot-icon"><I.Bot/></div>
                                             <div className="bot-info">
                                                 <div className="bot-name">{b.username||b.name||'?'}</div>
-                                                <div className="bot-server">{key}</div>
+                                                <div className="bot-server">{b.serverKey||b.server||'?'}</div>
                                                 <div className="bot-motd">{srv ? <MotdText motd={srv.motd}/> : ''}</div>
                                             </div>
                                             <div className="bot-status-indicator"/>
@@ -701,25 +408,20 @@
                                     <button className="btn-secondary" style={{padding:'5px 12px',fontSize:11}} onClick={()=>setLogs([])}>Limpar</button>
                                 </div>
                                 <div className="logs-container" ref={logsEndRef}>
-                                    {logs.length===0 ? (
-                                        <div style={{color:'#475569',textAlign:'center',padding:20}}>Aguardando logs...</div>
-                                    ) : logs.map((log,i) => <LogEntry key={i} log={log}/>)}
+                                    {logs.length===0 ? <div style={{color:'#475569',textAlign:'center',padding:20}}>Aguardando logs...</div>
+                                    : logs.map((log,i) => <LogEntry key={i} log={log}/>)}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             );
-        }
+        });
 
-        // ===== SERVERS PAGE =====
-        function ServersPage({ servers, bots, chatMessages, socket }) {
+        // ===== SERVERS =====
+        const ServersPage = React.memo(function ServersPage({ servers, bots, chatMessages, socket }) {
             const [selectedServer, setSelectedServer] = useState(null);
-
-            // Determine which servers have bots connected
             const botServerKeys = new Set((bots||[]).map(b => b.serverKey || b.server));
-
-            // Separate and sort
             const onlineServers = (servers||[]).filter(s => s.status === 'online' || botServerKeys.has(s.key));
             const offlineServers = (servers||[]).filter(s => s.status !== 'online' && !botServerKeys.has(s.key));
 
@@ -728,10 +430,7 @@
                 return (
                     <div key={server.key} className="server-card" onClick={() => setSelectedServer(server)}>
                         <div className="server-card-header">
-                            <div className="server-card-info">
-                                <h3><MotdText motd={server.motd}/></h3>
-                                <div className="server-motd">{server.key}</div>
-                            </div>
+                            <div className="server-card-info"><h3><MotdText motd={server.motd}/></h3><div className="server-motd">{server.key}</div></div>
                             <span className={`server-status-badge ${isOnline?'online':'offline'}`}>{isOnline?'Online':'Offline'}</span>
                         </div>
                         <div className="server-card-body">
@@ -753,35 +452,19 @@
                         <span className="section-title">Servidores ({(servers||[]).length})</span>
                         <button className="btn-secondary" onClick={()=>socket&&socket.emit('refresh')}>🔄 Atualizar</button>
                     </div>
-
-                    {(servers||[]).length === 0 ? (
-                        <div className="dash-section" style={{textAlign:'center',padding:40}}>
-                            <p style={{color:'#475569'}}>Nenhum servidor detectado. Aguardando bot...</p>
-                        </div>
-                    ) : (
+                    {(servers||[]).length === 0 ? <div className="dash-section" style={{textAlign:'center',padding:40}}><p style={{color:'#475569'}}>Nenhum servidor detectado.</p></div> : (
                         <>
-                            {onlineServers.length > 0 && (
-                                <>
-                                    <div className="server-section-label"><span className="dot" style={{background:'#22c55e'}}/> Online ({onlineServers.length})</div>
-                                    <div className="servers-grid">{onlineServers.map(renderCard)}</div>
-                                </>
-                            )}
-                            {offlineServers.length > 0 && (
-                                <>
-                                    <div className="server-section-label"><span className="dot" style={{background:'#ef4444'}}/> Offline ({offlineServers.length})</div>
-                                    <div className="servers-grid">{offlineServers.map(renderCard)}</div>
-                                </>
-                            )}
+                            {onlineServers.length > 0 && <><div className="server-section-label"><span className="dot" style={{background:'#22c55e'}}/> Online ({onlineServers.length})</div><div className="servers-grid">{onlineServers.map(renderCard)}</div></>}
+                            {offlineServers.length > 0 && <><div className="server-section-label"><span className="dot" style={{background:'#ef4444'}}/> Offline ({offlineServers.length})</div><div className="servers-grid">{offlineServers.map(renderCard)}</div></>}
                         </>
                     )}
-
                     {selectedServer && <ServerPopup server={selectedServer} onClose={()=>setSelectedServer(null)} chatMessages={chatMessages} socket={socket}/>}
                 </div>
             );
-        }
+        });
 
-        // ===== CHAT PAGE =====
-        function ChatPage({ chatMessages, socket }) {
+        // ===== CHAT =====
+        const ChatPage = React.memo(function ChatPage({ chatMessages, socket }) {
             const [search, setSearch] = useState('');
             const [serverFilter, setServerFilter] = useState('all');
             const chatEndRef = useRef(null);
@@ -789,31 +472,23 @@
             const filtered = useMemo(() => {
                 let msgs = chatMessages || [];
                 if (serverFilter !== 'all') msgs = msgs.filter(m => m.serverKey === serverFilter);
-                if (search.trim()) {
-                    const s = search.toLowerCase();
-                    msgs = msgs.filter(m => (m.username||'').toLowerCase().includes(s) || (m.message||'').toLowerCase().includes(s) || (m.serverKey||'').toLowerCase().includes(s));
-                }
+                if (search.trim()) { const s = search.toLowerCase(); msgs = msgs.filter(m => (m.username||'').toLowerCase().includes(s) || (m.message||'').toLowerCase().includes(s) || (m.serverKey||'').toLowerCase().includes(s)); }
                 return msgs.slice(-300);
             }, [chatMessages, search, serverFilter]);
 
             const uniqueServers = useMemo(() => [...new Set((chatMessages||[]).map(m=>m.serverKey))], [chatMessages]);
-
             useEffect(() => { if(chatEndRef.current) chatEndRef.current.scrollTop = chatEndRef.current.scrollHeight; }, [filtered]);
 
             const exportCSV = () => {
                 const header = 'Hora,Usuário,Mensagem,Servidor\n';
-                const rows = filtered.map(m=>`"${new Date(m.timestamp).toLocaleString('pt-BR')}","${m.username}","${m.message}","${m.serverKey}"`).join('\n');
-                const blob = new Blob([header+rows],{type:'text/csv'});
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-                a.download = `chat_${Date.now()}.csv`; a.click();
+                const rows = filtered.map(m=>`"${new Date(m.timestamp).toLocaleString('pt-BR')}","${m.username}","${(m.message||'').replace(/"/g,'""')}","${m.serverKey}"`).join('\n');
+                const blob = new Blob([header+rows],{type:'text/csv;charset=utf-8'});
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `chat_${Date.now()}.csv`; a.click();
             };
 
             const highlightText = (text, q) => {
                 if (!q.trim() || !text) return text;
-                try {
-                    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi');
-                    return String(text).split(re).map((p,i) => re.test(p) ? <span key={i} className="highlight">{p}</span> : p);
-                } catch { return text; }
+                try { const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'); return String(text).split(re).map((p,i) => re.test(p) ? <span key={i} className="highlight">{p}</span> : p); } catch { return text; }
             };
 
             return (
@@ -831,9 +506,8 @@
                         <button className="export-btn" onClick={exportCSV}><I.Download/> CSV</button>
                     </div>
                     <div className="chat-messages" ref={chatEndRef}>
-                        {filtered.length===0 ? (
-                            <div className="chat-empty"><I.MsgEmpty/><p>Sem mensagens{search?' para esta busca':''}</p></div>
-                        ) : filtered.map((msg,i) => (
+                        {filtered.length===0 ? <div className="chat-empty"><I.MsgEmpty/><p>Sem mensagens{search?' para esta busca':''}</p></div>
+                        : filtered.map((msg,i) => (
                             <div key={msg.id||i} className="chat-msg-item">
                                 <div className="chat-msg-avatar">{(msg.username||'??').substring(0,2).toUpperCase()}</div>
                                 <div className="chat-msg-content">
@@ -849,82 +523,48 @@
                     </div>
                 </div>
             );
-        }
+        });
 
-        // ===== ANALYTICS PAGE =====
-        function AnalyticsPage({ chatMessages, servers, bots, analytics, socket }) {
+        // ===== ANALYTICS =====
+        const AnalyticsPage = React.memo(function AnalyticsPage({ chatMessages, servers, bots, analytics, socket }) {
             const playersChartRef = useRef(null);
             const msgsChartRef = useRef(null);
-            const playersChartInstance = useRef(null);
-            const msgsChartInstance = useRef(null);
             const [timeRange, setTimeRange] = useState('24h');
 
             useEffect(() => { if(socket) socket.emit('getAnalytics', timeRange); }, [timeRange, socket]);
 
-            const totalPlayers = useMemo(() => {
-                let t = 0;
-                (servers||[]).forEach(s => { if(s.players) t += s.players.length; });
-                return t;
-            }, [servers]);
-
+            const totalPlayers = useMemo(() => { let t=0; (servers||[]).forEach(s => { if(s.players) t+=s.players.length; }); return t; }, [servers]);
             const totalMsgs = (chatMessages||[]).length;
             const onlineCount = (servers||[]).filter(s => s.status === 'online').length;
             const topServers = (analytics && analytics.topServers) || [];
 
-            // Players over time chart
             useEffect(() => {
-                if (!playersChartRef.current) return;
-                if (playersChartInstance.current) playersChartInstance.current.destroy();
+                const canvas = playersChartRef.current;
+                if (!canvas) return;
+                const existing = Chart.getChart(canvas);
+                if (existing) existing.destroy();
                 const data = (analytics && analytics.playersOverTime) || [];
-                const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
-                const values = data.map(d => d.total);
-                playersChartInstance.current = new Chart(playersChartRef.current, {
-                    type: 'line',
-                    data: {
-                        labels, datasets: [{
-                            label: 'Jogadores', data: values,
-                            borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)',
-                            fill: true, tension: 0.4, pointRadius: 0,
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { ticks: { color: '#475569', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-                            y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
-                        }
-                    }
+                if (data.length === 0) return;
+                const chart = new Chart(canvas, {
+                    type: 'line', data: { labels: data.map(d => new Date(d.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})), datasets: [{ label: 'Jogadores', data: data.map(d => d.total), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4, pointRadius: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#475569', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true } } }
                 });
-                return () => { if(playersChartInstance.current) playersChartInstance.current.destroy(); };
+                return () => chart.destroy();
             }, [analytics]);
 
-            // Messages per hour chart
             useEffect(() => {
-                if (!msgsChartRef.current) return;
-                if (msgsChartInstance.current) msgsChartInstance.current.destroy();
+                const canvas = msgsChartRef.current;
+                if (!canvas) return;
+                const existing = Chart.getChart(canvas);
+                if (existing) existing.destroy();
                 const data = (analytics && analytics.messagesPerHour) || [];
+                if (data.length === 0) return;
                 const sorted = [...data].sort((a,b) => a.hour - b.hour);
-                const labels = sorted.map(d => `${String(d.hour).padStart(2,'0')}:00`);
-                const values = sorted.map(d => d.count);
-                msgsChartInstance.current = new Chart(msgsChartRef.current, {
-                    type: 'bar',
-                    data: {
-                        labels, datasets: [{
-                            label: 'Mensagens', data: values,
-                            backgroundColor: 'rgba(99,102,241,0.5)', borderColor: '#6366f1', borderWidth: 1, borderRadius: 4,
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' } },
-                            y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
-                        }
-                    }
+                const chart = new Chart(canvas, {
+                    type: 'bar', data: { labels: sorted.map(d => `${String(d.hour).padStart(2,'0')}:00`), datasets: [{ label: 'Mensagens', data: sorted.map(d => d.count), backgroundColor: 'rgba(99,102,241,0.5)', borderColor: '#6366f1', borderWidth: 1, borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true } } }
                 });
-                return () => { if(msgsChartInstance.current) msgsChartInstance.current.destroy(); };
+                return () => chart.destroy();
             }, [analytics]);
 
             return (
@@ -932,66 +572,35 @@
                     <div className="section-header">
                         <span className="section-title">Analytics</span>
                         <div className="section-actions">
-                            {['1h','24h','7d'].map(r => (
-                                <button key={r} className={r===timeRange?'btn-primary':'btn-secondary'}
-                                    style={{padding:'6px 14px',fontSize:12}}
-                                    onClick={()=>setTimeRange(r)}>{r}</button>
-                            ))}
+                            {['1h','24h','7d'].map(r => <button key={r} className={r===timeRange?'btn-primary':'btn-secondary'} style={{padding:'6px 14px',fontSize:12}} onClick={()=>setTimeRange(r)}>{r}</button>)}
                         </div>
                     </div>
-
                     <div className="analytics-stat-grid">
                         <div className="analytics-stat"><div className="val">{totalPlayers}</div><div className="lbl">Jogadores Agora</div></div>
                         <div className="analytics-stat"><div className="val">{onlineCount}</div><div className="lbl">Servidores Online</div></div>
                         <div className="analytics-stat"><div className="val">{(bots||[]).length}</div><div className="lbl">Bots Ativos</div></div>
                         <div className="analytics-stat"><div className="val">{totalMsgs}</div><div className="lbl">Total Mensagens</div></div>
                     </div>
-
                     <div className="analytics-grid">
-                        <div className="chart-card">
-                            <h3>Jogadores ao Longo do Tempo</h3>
-                            <div style={{height:250}}><canvas ref={playersChartRef}/></div>
+                        <div className="chart-card"><h3>Jogadores ao Longo do Tempo</h3><div style={{height:250}}><canvas ref={playersChartRef}/></div></div>
+                        <div className="chart-card"><h3>Mensagens por Hora</h3><div style={{height:250}}><canvas ref={msgsChartRef}/></div></div>
+                        <div className="chart-card"><h3>Top Servidores</h3>
+                            {topServers.length===0 ? <div style={{color:'#475569',textAlign:'center',padding:20,fontSize:13}}>Sem dados</div>
+                            : topServers.map((s,i) => <div key={i} className="top-server-row"><span style={{color:'#475569',marginRight:8,fontSize:11}}>#{i+1}</span><span className="top-server-name">{s.serverKey}</span><span className="top-server-val">{s.messages} msgs</span><span style={{color:'#64748b',fontSize:11,marginLeft:8}}>{s.uniquePlayers} players</span></div>)}
                         </div>
-                        <div className="chart-card">
-                            <h3>Mensagens por Hora</h3>
-                            <div style={{height:250}}><canvas ref={msgsChartRef}/></div>
-                        </div>
-                        <div className="chart-card">
-                            <h3>Top Servidores (por mensagens)</h3>
-                            {topServers.length === 0 ? (
-                                <div style={{color:'#475569',textAlign:'center',padding:20,fontSize:13}}>Sem dados ainda</div>
-                            ) : topServers.map((s,i) => (
-                                <div key={i} className="top-server-row">
-                                    <span style={{color:'#475569',marginRight:8,fontSize:11}}>#{i+1}</span>
-                                    <span className="top-server-name">{s.serverKey}</span>
-                                    <span className="top-server-val">{s.messages} msgs</span>
-                                    <span style={{color:'#64748b',fontSize:11,marginLeft:8}}>{s.uniquePlayers} players</span>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="chart-card">
-                            <h3>Servidores por Status</h3>
+                        <div className="chart-card"><h3>Status</h3>
                             <div style={{display:'flex',gap:20,justifyContent:'center',padding:20}}>
-                                <div style={{textAlign:'center'}}>
-                                    <div style={{fontSize:36,fontWeight:800,color:'#22c55e'}}>{onlineCount}</div>
-                                    <div style={{fontSize:12,color:'#64748b'}}>Online</div>
-                                </div>
-                                <div style={{textAlign:'center'}}>
-                                    <div style={{fontSize:36,fontWeight:800,color:'#ef4444'}}>{(servers||[]).length - onlineCount}</div>
-                                    <div style={{fontSize:12,color:'#64748b'}}>Offline</div>
-                                </div>
-                                <div style={{textAlign:'center'}}>
-                                    <div style={{fontSize:36,fontWeight:800,color:'#818cf8'}}>{(servers||[]).length}</div>
-                                    <div style={{fontSize:12,color:'#64748b'}}>Total</div>
-                                </div>
+                                <div style={{textAlign:'center'}}><div style={{fontSize:36,fontWeight:800,color:'#22c55e'}}>{onlineCount}</div><div style={{fontSize:12,color:'#64748b'}}>Online</div></div>
+                                <div style={{textAlign:'center'}}><div style={{fontSize:36,fontWeight:800,color:'#ef4444'}}>{(servers||[]).length - onlineCount}</div><div style={{fontSize:12,color:'#64748b'}}>Offline</div></div>
+                                <div style={{textAlign:'center'}}><div style={{fontSize:36,fontWeight:800,color:'#818cf8'}}>{(servers||[]).length}</div><div style={{fontSize:12,color:'#64748b'}}>Total</div></div>
                             </div>
                         </div>
                     </div>
                 </div>
             );
-        }
+        });
 
-        // ===== SETTINGS PAGE =====
+        // ===== SETTINGS =====
         function SettingsPage({ stats, socket }) {
             const [username, setUsername] = useState(stats.username || 'Anunciador');
             const [intervalo, setIntervalo] = useState(stats.intervalo || 180);
@@ -1006,27 +615,12 @@
                     <div className="settings-grid">
                         <div className="setting-group">
                             <h3><I.Settings/> Geral</h3>
-                            <div className="setting-row">
-                                <label>Username do Bot</label>
-                                <div className="input-row">
-                                    <input className="input-field" value={username} onChange={e=>setUsername(e.target.value)}/>
-                                    <button className="btn-primary" onClick={()=>socket&&socket.emit('setUsername',username)}>Salvar</button>
-                                </div>
-                            </div>
-                            <div className="setting-row">
-                                <label>Intervalo (segundos)</label>
-                                <div className="input-row">
-                                    <input className="input-field" type="number" value={intervalo} onChange={e=>setIntervalo(Number(e.target.value))}/>
-                                    <button className="btn-primary" onClick={()=>socket&&socket.emit('setIntervalo',intervalo)}>Salvar</button>
-                                </div>
-                            </div>
+                            <div className="setting-row"><label>Username do Bot</label><div className="input-row"><input className="input-field" value={username} onChange={e=>setUsername(e.target.value)}/><button className="btn-primary" onClick={()=>socket&&socket.emit('setUsername',username)}>Salvar</button></div></div>
+                            <div className="setting-row"><label>Intervalo (segundos)</label><div className="input-row"><input className="input-field" type="number" value={intervalo} onChange={e=>setIntervalo(Number(e.target.value))}/><button className="btn-primary" onClick={()=>socket&&socket.emit('setIntervalo',intervalo)}>Salvar</button></div></div>
                         </div>
                         <div className="setting-group">
                             <h3><I.Shield/> Blacklist ({bl.length})</h3>
-                            <div className="input-row">
-                                <input className="input-field" placeholder="IP:Porta" value={newBl} onChange={e=>setNewBl(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newBl.trim()&&socket){socket.emit('addBlacklist',newBl.trim());setNewBl('');}}}/>
-                                <button className="btn-primary" onClick={()=>{if(newBl.trim()&&socket){socket.emit('addBlacklist',newBl.trim());setNewBl('');}}}>+</button>
-                            </div>
+                            <div className="input-row"><input className="input-field" placeholder="IP:Porta" value={newBl} onChange={e=>setNewBl(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newBl.trim()&&socket){socket.emit('addBlacklist',newBl.trim());setNewBl('');}}}/><button className="btn-primary" onClick={()=>{if(newBl.trim()&&socket){socket.emit('addBlacklist',newBl.trim());setNewBl('');}}}>+</button></div>
                             <div className="blacklist-items">
                                 {bl.map((item,i) => <span key={i} className="blacklist-tag">{item}<button onClick={()=>socket&&socket.emit('removeBlacklist',item)}>×</button></span>)}
                                 {bl.length===0 && <span style={{fontSize:12,color:'#475569'}}>Vazio</span>}
@@ -1035,10 +629,7 @@
                         </div>
                         <div className="setting-group" style={{gridColumn:'1/-1'}}>
                             <h3><I.Chat/> Mensagens de Anúncio ({msgs.length})</h3>
-                            <div className="input-row">
-                                <input className="input-field" placeholder="Nova mensagem..." value={newMsg} onChange={e=>setNewMsg(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}/>
-                                <button className="btn-primary" onClick={()=>{if(newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}>Adicionar</button>
-                            </div>
+                            <div className="input-row"><input className="input-field" placeholder="Nova mensagem..." value={newMsg} onChange={e=>setNewMsg(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}/><button className="btn-primary" onClick={()=>{if(newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}>Adicionar</button></div>
                             <div className="messages-list">
                                 {msgs.map((m,i) => <div key={i} className="message-item"><span>{m}</span><button onClick={()=>socket&&socket.emit('delMsg',i)}>×</button></div>)}
                                 {msgs.length===0 && <span style={{fontSize:12,color:'#475569',padding:8}}>Nenhuma mensagem</span>}
@@ -1049,7 +640,7 @@
             );
         }
 
-        // ===== MAIN APP =====
+        // ===== MAIN APP (COM LOGIN) =====
         function App() {
             const [page, setPage] = useState('dashboard');
             const [collapsed, setCollapsed] = useState(false);
@@ -1064,12 +655,23 @@
             const [servers, setServers] = useState([]);
             const [analytics, setAnalytics] = useState({playersOverTime:[],messagesPerHour:[],topServers:[]});
             const [toasts, setToasts] = useState([]);
+            const [authenticated, setAuthenticated] = useState(false);
+            const [needsAuth, setNeedsAuth] = useState(false);
+            const [loginPassword, setLoginPassword] = useState('');
+            const [loginError, setLoginError] = useState('');
+            const [loginLoading, setLoginLoading] = useState(false);
 
-            const addToast = useCallback((msg) => {
-                const id = Date.now();
-                setToasts(p => [...p, {id, text: msg}]);
-                setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
-            }, []);
+            const addToast = useCallback((msg) => { const id = Date.now(); setToasts(p => [...p, {id, text: msg}]); setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000); }, []);
+
+            const handleLogin = useCallback(() => {
+                if (!socket || !loginPassword.trim()) return;
+                setLoginLoading(true); setLoginError('');
+                socket.emit('authenticate', loginPassword, (response) => {
+                    setLoginLoading(false);
+                    if (response && response.success) { setAuthenticated(true); setNeedsAuth(false); addToast('✅ Login realizado!'); }
+                    else setLoginError('❌ Senha incorreta!');
+                });
+            }, [socket, loginPassword, addToast]);
 
             const connectRelay = useCallback(() => {
                 if (socket) socket.disconnect();
@@ -1077,7 +679,13 @@
                 s.on('connect', () => { setConnected(true); addToast('✅ Conectado ao relay!'); });
                 s.on('disconnect', () => { setConnected(false); addToast('🔌 Desconectado'); });
                 s.on('connect_error', () => setConnected(false));
-                s.on('init', (d) => { if(d.stats)setStats(d.stats); if(d.bots)setBots(d.bots); if(d.logs)setLogs(d.logs); if(d.chatDatabase)setChatMessages(d.chatDatabase); if(d.servers)setServers(d.servers); if(d.analytics)setAnalytics(d.analytics); });
+                s.on('requireAuth', () => { setNeedsAuth(true); setAuthenticated(false); });
+                s.on('init', (d) => {
+                    if(d.stats)setStats(d.stats); if(d.bots)setBots(d.bots); if(d.logs)setLogs(d.logs);
+                    if(d.chatDatabase)setChatMessages(d.chatDatabase); if(d.servers)setServers(d.servers);
+                    if(d.analytics)setAnalytics(d.analytics);
+                    setAuthenticated(true); setNeedsAuth(false);
+                });
                 s.on('botStatus', (v) => setBotOnline(v));
                 s.on('statsUpdate', (d) => setStats(d));
                 s.on('botsUpdate', (d) => setBots(d||[]));
@@ -1090,7 +698,7 @@
                 setSocket(s);
             }, [relayUrl, addToast]);
 
-            const disconnectRelay = useCallback(() => { if(socket){socket.disconnect();setSocket(null);} setConnected(false);setBotOnline(false); }, [socket]);
+            const disconnectRelay = useCallback(() => { if(socket){socket.disconnect();setSocket(null);} setConnected(false);setBotOnline(false);setAuthenticated(false);setNeedsAuth(false); }, [socket]);
 
             useEffect(() => { connectRelay(); return () => { if(socket) socket.disconnect(); }; }, []);
 
@@ -1103,75 +711,76 @@
                 {id:'settings',label:'Configurações',icon:I.Settings},
             ];
 
+            // ===== TELA DE LOGIN =====
+            if (needsAuth && !authenticated) {
+                return (
+                    <><div className="toast-container">{toasts.map(t=><div key={t.id} className="toast">{t.text}</div>)}</div>
+                    <div className="login-bg">
+                        <div className="login-card">
+                            <div className="login-card-header">
+                                <div className="sidebar-logo" style={{width:60,height:60,fontSize:20,margin:'0 auto 12px',borderRadius:14}}>CRV</div>
+                                <div style={{fontSize:16,fontWeight:700,color:'#f1f5f9'}}>Central Radmin VPN</div>
+                                <div style={{fontSize:12,color:'#64748b',marginTop:4}}>Painel de Controle</div>
+                            </div>
+                            <div className="login-card-body">
+                                <div style={{marginBottom:12}}>
+                                    <label style={{fontSize:12,color:'#64748b',fontWeight:500,display:'block',marginBottom:6}}>Senha do Painel</label>
+                                    <input className="input-field" type="password" placeholder="Digite a senha..." value={loginPassword}
+                                        onChange={e => {setLoginPassword(e.target.value);setLoginError('');}}
+                                        onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                                        style={{width:'100%',padding:'12px 16px',fontSize:14}} autoFocus/>
+                                </div>
+                                {loginError && <div className="login-error">{loginError}</div>}
+                                <button className="btn-primary" onClick={handleLogin} disabled={loginLoading || !loginPassword.trim()}
+                                    style={{width:'100%',padding:'12px',fontSize:14,opacity:(loginLoading||!loginPassword.trim())?0.5:1}}>
+                                    {loginLoading ? '⏳ Verificando...' : '🔓 Entrar'}
+                                </button>
+                                <div className="login-footer">
+                                    <div className={`status-dot ${connected?'online':'offline'}`} style={{width:6,height:6}}/>
+                                    {connected ? 'Conectado ao relay' : 'Desconectado'}
+                                </div>
+                            </div>
+                        </div>
+                    </div></>
+                );
+            }
+
+            // ===== APP PRINCIPAL =====
             return (
-                <>
-                    <div className="toast-container">{toasts.map(t=><div key={t.id} className="toast">{t.text}</div>)}</div>
-
-                    <div className={`sidebar ${collapsed?'collapsed':''}`}>
-                        <div className="sidebar-header">
-                            <div className="sidebar-logo">CRV</div>
-                            <div className="sidebar-brand">
-                                <span className="sidebar-brand-name">Central Radmin VPN</span>
-                                <span className="sidebar-brand-sub">Painel de Controle</span>
+                <><div className="toast-container">{toasts.map(t=><div key={t.id} className="toast">{t.text}</div>)}</div>
+                <div className={`sidebar ${collapsed?'collapsed':''}`}>
+                    <div className="sidebar-header"><div className="sidebar-logo">CRV</div><div className="sidebar-brand"><span className="sidebar-brand-name">Central Radmin VPN</span><span className="sidebar-brand-sub">Painel de Controle</span></div></div>
+                    <div className="sidebar-nav"><div className="nav-section"><div className="nav-label">Menu</div>
+                        {navItems.map(item => (
+                            <div key={item.id} className={`nav-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
+                                <span className="nav-icon"><item.icon/></span><span className="nav-item-text">{item.label}</span>
+                                {item.badge!==undefined && item.badge>0 && !collapsed && <span className="nav-badge">{item.badge>999?'999+':item.badge}</span>}
                             </div>
-                        </div>
-                        <div className="sidebar-nav">
-                            <div className="nav-section">
-                                <div className="nav-label">Menu</div>
-                                {navItems.map(item => (
-                                    <div key={item.id} className={`nav-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
-                                        <span className="nav-icon"><item.icon/></span>
-                                        <span className="nav-item-text">{item.label}</span>
-                                        {item.badge!==undefined && item.badge>0 && !collapsed && <span className="nav-badge">{item.badge>999?'999+':item.badge}</span>}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="connection-section">
-                            <div className="connection-status">
-                                <div className={`status-dot ${connected?'online':'offline'}`}/>
-                                <span className="status-text">Relay: <strong>{connected?'Online':'Offline'}</strong></span>
-                            </div>
-                            <div className="connection-status">
-                                <div className={`status-dot ${botOnline?'online':'offline'}`}/>
-                                <span className="status-text">Bot: <strong>{botOnline?'Online':'Offline'}</strong></span>
-                            </div>
-                            <div className="relay-input-group">
-                                <input className="relay-input" value={relayUrl} onChange={e=>setRelayUrl(e.target.value)} placeholder="URL do Relay"/>
-                                <button className="relay-btn" onClick={connected?disconnectRelay:connectRelay}>{connected?'Sair':'Conectar'}</button>
-                            </div>
-                        </div>
-                        <div className="sidebar-footer">
-                            <button className="sidebar-toggle" onClick={()=>setCollapsed(!collapsed)}>
-                                {collapsed?<I.ChevronRight/>:<I.ChevronLeft/>}
-                                <span className="sidebar-footer-text">Recolher</span>
-                            </button>
+                        ))}
+                    </div></div>
+                    <div className="connection-section">
+                        <div className="connection-status"><div className={`status-dot ${connected?'online':'offline'}`}/><span className="status-text">Relay: <strong>{connected?'Online':'Offline'}</strong></span></div>
+                        <div className="connection-status"><div className={`status-dot ${botOnline?'online':'offline'}`}/><span className="status-text">Bot: <strong>{botOnline?'Online':'Offline'}</strong></span></div>
+                        <div className="relay-input-group"><input className="relay-input" value={relayUrl} onChange={e=>setRelayUrl(e.target.value)} placeholder="URL do Relay"/><button className="relay-btn" onClick={connected?disconnectRelay:connectRelay}>{connected?'Sair':'Conectar'}</button></div>
+                    </div>
+                    <div className="sidebar-footer"><button className="sidebar-toggle" onClick={()=>setCollapsed(!collapsed)}>{collapsed?<I.ChevronRight/>:<I.ChevronLeft/>}<span className="sidebar-footer-text">Recolher</span></button></div>
+                </div>
+                <div className="main-content">
+                    <div className="topbar">
+                        <span className="topbar-title">{titles[page]}</span>
+                        <div className="topbar-right">
+                            <div className="topbar-status"><div className={`status-dot ${botOnline?'online':'offline'}`}/>{botOnline?`Bot (${stats.botsAtivos||0})`:'Bot Off'}</div>
+                            <div className="topbar-status"><div className={`status-dot ${connected?'online':'offline'}`}/>{connected?'Relay ✓':'Relay ✗'}</div>
                         </div>
                     </div>
-
-                    <div className="main-content">
-                        <div className="topbar">
-                            <span className="topbar-title">{titles[page]}</span>
-                            <div className="topbar-right">
-                                <div className="topbar-status">
-                                    <div className={`status-dot ${botOnline?'online':'offline'}`}/>
-                                    {botOnline?`Bot (${stats.botsAtivos||0})`:'Bot Off'}
-                                </div>
-                                <div className="topbar-status">
-                                    <div className={`status-dot ${connected?'online':'offline'}`}/>
-                                    {connected?'Relay ✓':'Relay ✗'}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="page-content">
-                            {page==='dashboard' && <DashboardPage stats={stats} bots={bots} logs={logs} servers={servers} socket={socket} setLogs={setLogs}/>}
-                            {page==='servers' && <ServersPage servers={servers} bots={bots} chatMessages={chatMessages} socket={socket}/>}
-                            {page==='chat' && <ChatPage chatMessages={chatMessages} socket={socket}/>}
-                            {page==='analytics' && <AnalyticsPage chatMessages={chatMessages} servers={servers} bots={bots} analytics={analytics} socket={socket}/>}
-                            {page==='settings' && <SettingsPage stats={stats} socket={socket}/>}
-                        </div>
+                    <div className="page-content">
+                        {page==='dashboard' && <DashboardPage stats={stats} bots={bots} logs={logs} servers={servers} socket={socket} setLogs={setLogs}/>}
+                        {page==='servers' && <ServersPage servers={servers} bots={bots} chatMessages={chatMessages} socket={socket}/>}
+                        {page==='chat' && <ChatPage chatMessages={chatMessages} socket={socket}/>}
+                        {page==='analytics' && <AnalyticsPage chatMessages={chatMessages} servers={servers} bots={bots} analytics={analytics} socket={socket}/>}
+                        {page==='settings' && <SettingsPage stats={stats} socket={socket}/>}
                     </div>
-                </>
+                </div></>
             );
         }
 
