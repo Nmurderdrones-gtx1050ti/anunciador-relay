@@ -29,7 +29,6 @@ let botData = {
     }
 };
 
-// Health check
 app.get('/', (req, res) => {
     res.json({
         status: 'online',
@@ -42,7 +41,6 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => res.send('OK'));
 
-// Analytics
 function updateAnalytics() {
     const now = Date.now();
     let totalPlayers = 0;
@@ -54,14 +52,21 @@ function updateAnalytics() {
     if (botData.analytics.playersOverTime.length > 720) botData.analytics.playersOverTime.shift();
 
     const currentHour = new Date().getHours();
-    const hourData = botData.analytics.messagesPerHour.find(h => h.hour === currentHour);
-    if (hourData) {
-        hourData.count = botData.chatDatabase.filter(m => {
-            const msgHour = new Date(m.timestamp).getHours();
-            return msgHour === currentHour;
-        }).length;
+    const hourIdx = botData.analytics.messagesPerHour.findIndex(h => h.hour === currentHour);
+    const hourCount = botData.chatDatabase.filter(m => {
+        const msgHour = new Date(m.timestamp).getHours();
+        return msgHour === currentHour;
+    }).length;
+
+    if (hourIdx >= 0) {
+        botData.analytics.messagesPerHour[hourIdx].count = hourCount;
     } else {
-        botData.analytics.messagesPerHour.push({ hour: currentHour, count: 1 });
+        botData.analytics.messagesPerHour.push({ hour: currentHour, count: hourCount });
+    }
+
+    // Keep only 24 hours
+    if (botData.analytics.messagesPerHour.length > 24) {
+        botData.analytics.messagesPerHour = botData.analytics.messagesPerHour.slice(-24);
     }
 
     const serverStats = {};
@@ -78,9 +83,18 @@ function updateAnalytics() {
 
 setInterval(updateAnalytics, 60000);
 
-// Socket.IO
+// Sync server status with bot connections
+function syncServerStatus() {
+    const botKeys = new Set(botData.bots.map(b => b.serverKey || b.server));
+    botData.servers.forEach(s => {
+        if (botKeys.has(s.key)) {
+            s.status = 'online';
+        }
+    });
+}
+
 io.on('connection', (socket) => {
-    // Bot do PC
+    // Bot
     if (socket.handshake.auth?.key === SECRET_KEY && socket.handshake.auth?.type === 'bot') {
         console.log('🤖 Bot conectou!');
         if (botSocket) try { botSocket.disconnect(); } catch {}
@@ -88,7 +102,12 @@ io.on('connection', (socket) => {
         io.emit('botStatus', true);
 
         socket.on('syncData', (data) => {
-            botData = { ...botData, ...data };
+            if (data.stats) botData.stats = data.stats;
+            if (data.bots) botData.bots = data.bots;
+            if (data.logs) botData.logs = data.logs;
+            if (data.chatDatabase) botData.chatDatabase = data.chatDatabase;
+            if (data.servers) botData.servers = data.servers;
+            syncServerStatus();
             updateAnalytics();
             io.emit('init', {
                 stats: botData.stats,
@@ -114,14 +133,28 @@ io.on('connection', (socket) => {
         });
 
         socket.on('serverUpdate', (serverData) => {
-            const idx = botData.servers.findIndex(s => s.key === serverData.key);
-            if (idx >= 0) botData.servers[idx] = { ...botData.servers[idx], ...serverData };
-            else botData.servers.push(serverData);
+            // serverData can be a single server or array
+            if (Array.isArray(serverData)) {
+                botData.servers = serverData;
+            } else {
+                const idx = botData.servers.findIndex(s => s.key === serverData.key);
+                if (idx >= 0) botData.servers[idx] = { ...botData.servers[idx], ...serverData };
+                else botData.servers.push(serverData);
+            }
+            syncServerStatus();
             io.emit('serverUpdate', botData.servers);
         });
 
-        socket.on('botsUpdate', (data) => { botData.bots = data; io.emit('botsUpdate', data); });
-        socket.on('statsUpdate', (data) => { botData.stats = data; io.emit('statsUpdate', data); });
+        socket.on('botsUpdate', (data) => {
+            botData.bots = data;
+            syncServerStatus();
+            io.emit('botsUpdate', data);
+        });
+
+        socket.on('statsUpdate', (data) => {
+            botData.stats = data;
+            io.emit('statsUpdate', data);
+        });
 
         socket.on('disconnect', () => {
             console.log('🔌 Bot saiu');
@@ -131,8 +164,9 @@ io.on('connection', (socket) => {
         return;
     }
 
-    // Usuário web
+    // Web user
     console.log('🌐 Web conectou');
+    syncServerStatus();
     socket.emit('init', {
         stats: botData.stats,
         bots: botData.bots,
@@ -146,7 +180,7 @@ io.on('connection', (socket) => {
     ['chat', 'command', 'announce', 'addMsg', 'delMsg', 'setIntervalo',
      'setUsername', 'connect_server', 'disconnect_server',
      'clearBlacklist', 'removeBlacklist', 'jump', 'refresh',
-     'addBlacklist', 'restartBots', 'clearChatDatabase'
+     'addBlacklist', 'restartBots', 'clearChatDatabase', 'saveChat'
     ].forEach(cmd => {
         socket.on(cmd, (data) => {
             if (botSocket) botSocket.emit(cmd, data);
@@ -160,7 +194,9 @@ io.on('connection', (socket) => {
             filtered = filtered.filter(m => m.serverKey === filter.serverKey);
         if (filter.search) {
             const s = filter.search.toLowerCase();
-            filtered = filtered.filter(m => m.username.toLowerCase().includes(s) || m.message.toLowerCase().includes(s));
+            filtered = filtered.filter(m =>
+                m.username.toLowerCase().includes(s) || m.message.toLowerCase().includes(s)
+            );
         }
         socket.emit('chatMessages', filtered.slice(-500));
     });
@@ -180,15 +216,10 @@ io.on('connection', (socket) => {
             totalMessages: botData.chatDatabase.filter(m => m.timestamp >= startTime).length
         });
     });
-
-    // Buscar arquivos do GitHub
-    socket.on('getArchives', async () => {
-        // Dashboard vai buscar direto da API do GitHub (público)
-        socket.emit('archivesReady');
-    });
 });
 
 setInterval(() => {
+    syncServerStatus();
     io.emit('botsUpdate', botData.bots);
     io.emit('serverUpdate', botData.servers);
 }, 5000);
