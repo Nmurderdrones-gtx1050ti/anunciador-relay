@@ -130,7 +130,7 @@ async function discordFetch(endpoint, method = 'GET', body = null, retries = 3) 
 
             // Rate limit
             if (response.status === 429) {
-                let retryAfter = 10000;
+                let retryAfter = 30000;
                 try {
                     const data = await response.json();
                     retryAfter = Math.ceil((data.retry_after || 10) * 1000);
@@ -161,7 +161,7 @@ async function discordFetch(endpoint, method = 'GET', body = null, retries = 3) 
                 const errText = await response.text();
                 console.error(`❌ Discord ${response.status}:`, errText.substring(0, 100));
                 if (attempt < retries) {
-                    await sleep(3000 * attempt);
+                    await sleep(10000 * attempt);
                     continue;
                 }
                 return null;
@@ -193,7 +193,7 @@ async function initDiscord() {
     }
 
     console.log('🔍 Iniciando Discord em 5s...');
-    await sleep(5000);
+    await sleep(30000);
 
     // Testa autenticação
     let me = null;
@@ -201,7 +201,7 @@ async function initDiscord() {
         me = await discordFetch('/users/@me');
         if (me) break;
         console.log(`⚠️ Discord tentativa ${attempt}/3 falhou...`);
-        await sleep(10000 * attempt);
+        await sleep(30000 * attempt);
     }
 
     if (!me) {
