@@ -15,14 +15,13 @@ const SECRET_KEY = 'MUDE_ESSA_CHAVE_SECRETA_123';
 
 // ===== DISCORD CONFIG =====
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN
-    || 'MTQ3MjM5MjI5MTE1NDAwMjAzNg.G2-5Sh.mjL38yryUir-qLfA1zw7DC7gWriyX5owl2727w';
+    || 'MTQ3MjM5MjI5MTE1NDAwMjAzNg.GlkY68.pkfiWrICwZQA7oJS2IEJ5vSEQsj9CKJb9s2RHg';
 const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID || '1472389594308939970';
 const DISCORD_CATEGORY_ID = process.env.DISCORD_CATEGORY_ID || '1472394117244915803';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const DISCORD_ENABLED = DISCORD_BOT_TOKEN.length > 50;
 
-// Discord state
 const discordChannels = {};
 const channelCreationLocks = {};
 const failedAttempts = {};
@@ -46,7 +45,6 @@ function queueDiscord(fn, priority = false) {
 async function drainDiscordQueue() {
     if (processingDiscord) return;
     processingDiscord = true;
-
     while (discordQueue.length > 0) {
         const { fn, resolve } = discordQueue.shift();
         try {
@@ -58,7 +56,6 @@ async function drainDiscordQueue() {
         }
         await new Promise(r => setTimeout(r, 1500));
     }
-
     processingDiscord = false;
 }
 
@@ -76,7 +73,6 @@ async function discordFetch(endpoint, method = 'GET', body = null) {
 
         const response = await fetch(`${DISCORD_API}${endpoint}`, options);
 
-        // Rate limit — espera o tempo que o Discord pede
         if (response.status === 429) {
             let retryAfter = 10000;
             try {
@@ -88,11 +84,9 @@ async function discordFetch(endpoint, method = 'GET', body = null) {
             console.log(`⏳ Rate limit em ${endpoint}, esperando ${retryAfter + 2000}ms...`);
             await new Promise(r => setTimeout(r, retryAfter + 2000));
 
-            // Segunda tentativa
             const retry = await fetch(`${DISCORD_API}${endpoint}`, options);
 
             if (retry.status === 429) {
-                // Ainda rate limited — espera mais
                 let retryAfter2 = 30000;
                 try {
                     const data2 = await retry.json();
@@ -103,7 +97,6 @@ async function discordFetch(endpoint, method = 'GET', body = null) {
                 console.log(`⏳ Rate limit duplo, esperando ${retryAfter2 + 5000}ms...`);
                 await new Promise(r => setTimeout(r, retryAfter2 + 5000));
 
-                // Terceira tentativa
                 const retry2 = await fetch(`${DISCORD_API}${endpoint}`, options);
                 if (retry2.status === 204) return {};
                 if (!retry2.ok) {
@@ -125,14 +118,8 @@ async function discordFetch(endpoint, method = 'GET', body = null) {
             return await retry.json();
         }
 
-        if (response.status === 401) {
-            console.error('❌ Discord token inválido!');
-            return null;
-        }
-        if (response.status === 403) {
-            console.error('❌ Discord sem permissão!');
-            return null;
-        }
+        if (response.status === 401) { console.error('❌ Discord token inválido!'); return null; }
+        if (response.status === 403) { console.error('❌ Discord sem permissão!'); return null; }
         if (response.status === 404) return null;
         if (response.status === 204) return {};
 
@@ -150,6 +137,7 @@ async function discordFetch(endpoint, method = 'GET', body = null) {
         return null;
     }
 }
+
 // ===== DISCORD INIT =====
 async function initDiscord() {
     if (!DISCORD_ENABLED) {
@@ -157,7 +145,6 @@ async function initDiscord() {
         return;
     }
 
-    // Espera 5s antes de começar (evita rate limit no deploy)
     console.log('🔍 Iniciando Discord em 5s...');
     await new Promise(r => setTimeout(r, 5000));
 
@@ -166,7 +153,6 @@ async function initDiscord() {
         me = await discordFetch('/users/@me');
         if (me) break;
         console.log(`⚠️ Discord tentativa ${attempt}/3 falhou...`);
-        // Espera progressivamente mais
         await new Promise(r => setTimeout(r, 10000 * attempt));
     }
 
@@ -191,15 +177,15 @@ async function initDiscord() {
 
     await new Promise(r => setTimeout(r, 2000));
 
-    const channels = await discordFetch(`/guilds/${DISCORD_GUILD_ID}/channels`);
-    if (!channels || !Array.isArray(channels)) {
+    const channelList = await discordFetch(`/guilds/${DISCORD_GUILD_ID}/channels`);
+    if (!channelList || !Array.isArray(channelList)) {
         console.error('❌ Discord: não listou canais!');
         console.log('🔄 Tentando novamente em 120s...');
         setTimeout(initDiscord, 120000);
         return;
     }
 
-    const category = channels.find(ch => ch.id === DISCORD_CATEGORY_ID);
+    const category = channelList.find(ch => ch.id === DISCORD_CATEGORY_ID);
     if (!category) {
         console.error('❌ Discord: categoria não encontrada!');
         return;
@@ -207,7 +193,7 @@ async function initDiscord() {
     console.log(`✅ Discord Categoria: ${category.name}`);
 
     let cached = 0;
-    channels
+    channelList
         .filter(ch => ch.parent_id === DISCORD_CATEGORY_ID && ch.type === 0)
         .forEach(ch => {
             if (ch.topic) {
@@ -240,41 +226,7 @@ async function initDiscord() {
         });
     }
 }
-    // Cache canais existentes
-    let cached = 0;
-    channels
-        .filter(ch => ch.parent_id === DISCORD_CATEGORY_ID && ch.type === 0)
-        .forEach(ch => {
-            if (ch.topic) {
-                const match = ch.topic.match(/(\d+\.\d+\.\d+\.\d+:\d+)/);
-                if (match) {
-                    discordChannels[match[1]] = {
-                        channelId: ch.id,
-                        channelName: ch.name,
-                        webhookId: null,
-                        webhookToken: null,
-                    };
-                    cached++;
-                }
-            }
-        });
 
-    discordReady = true;
-    console.log(`🎮 Discord pronto! (${cached} canais em cache)`);
-
-    // Carrega webhooks (em queue, devagar)
-    for (const key of Object.keys(discordChannels)) {
-        const info = discordChannels[key];
-        queueDiscord(async () => {
-            const webhooks = await discordFetch(`/channels/${info.channelId}/webhooks`);
-            if (webhooks && Array.isArray(webhooks) && webhooks.length > 0) {
-                const wh = webhooks.find(w => w.name === 'MC Chat') || webhooks[0];
-                info.webhookId = wh.id;
-                info.webhookToken = wh.token;
-                console.log(`🔗 Webhook carregado: ${key}`);
-            }
-        });
-    }
 // ===== CHANNEL HELPERS =====
 function cleanMotd(motd) {
     if (!motd) return 'sem-motd';
@@ -301,15 +253,12 @@ function sanitizeChannelName(name) {
 
 // ===== GET OR CREATE CHANNEL =====
 async function getOrCreateChannel(serverKey, motd) {
-    // Já em cache
     if (discordChannels[serverKey]?.channelId) {
         return discordChannels[serverKey];
     }
-
     if (!discordReady) return null;
     if ((failedAttempts[serverKey] || 0) >= MAX_FAILURES) return null;
 
-    // Já sendo criado
     if (channelCreationLocks[serverKey]) {
         for (let i = 0; i < 60; i++) {
             await new Promise(r => setTimeout(r, 500));
@@ -348,7 +297,6 @@ async function getOrCreateChannel(serverKey, motd) {
         }
 
         console.log(`✅ Canal criado: #${channel.name}`);
-
         await new Promise(r => setTimeout(r, 1500));
 
         let webhook = null;
@@ -370,7 +318,6 @@ async function getOrCreateChannel(serverKey, motd) {
         discordChannels[serverKey] = info;
         failedAttempts[serverKey] = 0;
 
-        // Embed de boas-vindas
         queueDiscord(async () => {
             await discordFetch(`/channels/${channel.id}/messages`, 'POST', {
                 embeds: [{
@@ -413,8 +360,6 @@ async function sendMessageViaDiscord(info, username, message) {
             if (resp.ok || resp.status === 204) return;
         } catch {}
     }
-
-    // Fallback: mensagem normal
     await discordFetch(`/channels/${info.channelId}/messages`, 'POST', {
         content: `**${username}** » ${message}`,
     });
@@ -426,10 +371,8 @@ function sendChatToDiscord(serverKey, motd, username, message) {
     const info = discordChannels[serverKey];
 
     if (info?.channelId) {
-        // Canal existe → envia direto
         queueDiscord(() => sendMessageViaDiscord(info, username, message));
     } else {
-        // Canal não existe → cria e depois envia
         getOrCreateChannel(serverKey, motd)
             .then((channelInfo) => {
                 if (channelInfo?.channelId) {
@@ -437,7 +380,7 @@ function sendChatToDiscord(serverKey, motd, username, message) {
                         sendMessageViaDiscord(channelInfo, username, message)
                     );
                 } else {
-                    console.log(`⚠️ Sem canal para ${serverKey}, mensagem perdida: <${username}> ${message}`);
+                    console.log(`⚠️ Sem canal para ${serverKey}, mensagem perdida`);
                 }
             })
             .catch(() => {});
@@ -532,10 +475,7 @@ function updateAnalytics() {
         }
     });
 
-    botData.analytics.playersOverTime.push({
-        timestamp: now,
-        total: totalPlayers
-    });
+    botData.analytics.playersOverTime.push({ timestamp: now, total: totalPlayers });
     if (botData.analytics.playersOverTime.length > 720) {
         botData.analytics.playersOverTime.shift();
     }
@@ -583,13 +523,11 @@ setInterval(() => {
 // ===== PROCESS NEW SERVER =====
 function processNewServer(s) {
     serverLastSeen[s.key] = Date.now();
-
     const idx = botData.servers.findIndex(x => x.key === s.key);
     if (idx >= 0) {
         botData.servers[idx] = { ...botData.servers[idx], ...s };
     } else {
         botData.servers.push(s);
-        // Cria canal no Discord (async, não bloqueia)
         getOrCreateChannel(s.key, s.motd).catch(() => {});
     }
 }
@@ -609,7 +547,6 @@ app.get('/', (req, res) => res.json({
 
 app.get('/health', (req, res) => res.send('OK'));
 
-// Debug do Discord
 app.get('/discord-debug', (req, res) => res.json({
     enabled: DISCORD_ENABLED,
     ready: discordReady,
@@ -626,7 +563,7 @@ app.get('/discord-debug', (req, res) => res.json({
 // ===== SOCKET.IO =====
 io.on('connection', (socket) => {
 
-    // === BOT CONNECTION ===
+    // === BOT ===
     if (
         socket.handshake.auth?.key === SECRET_KEY &&
         socket.handshake.auth?.type === 'bot'
@@ -669,7 +606,6 @@ io.on('connection', (socket) => {
             io.emit('chatMessage', data);
             updateAnalytics();
 
-            // Envia pro Discord
             const srv = botData.servers.find(s => s.key === data.serverKey);
             sendChatToDiscord(
                 data.serverKey,
@@ -712,7 +648,7 @@ io.on('connection', (socket) => {
         return;
     }
 
-    // === WEB CONNECTION ===
+    // === WEB ===
     console.log('🌐 Web conectou');
     syncServerStatus();
 
@@ -726,7 +662,6 @@ io.on('connection', (socket) => {
     });
     socket.emit('botStatus', !!botSocket);
 
-    // Proxy de comandos pro bot
     const commands = [
         'chat', 'command', 'announce', 'addMsg', 'delMsg',
         'setIntervalo', 'setUsername', 'connect_server',
@@ -780,7 +715,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Sync periódico
 setInterval(() => {
     io.emit('botsUpdate', botData.bots);
 }, 5000);
@@ -799,7 +733,5 @@ server.listen(PORT, async () => {
     console.log(`║ 📁 Categoria: ${DISCORD_CATEGORY_ID}`);
     console.log('╚════════════════════════════════════════╝');
     console.log('');
-
     await initDiscord();
 });
-
