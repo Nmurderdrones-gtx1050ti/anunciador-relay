@@ -15,7 +15,7 @@ const SECRET_KEY = 'MUDE_ESSA_CHAVE_SECRETA_123';
 
 // ===== DISCORD CONFIG =====
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN
-    || 'MTQ3MjM5MjI5MTE1NDAwMjAzNg.GrpnDs.wOJHkSd33XcuxxH1TRaYFxwg6VMrV2emX5H7CE';
+    || 'MTQ3MjM5MjI5MTE1NDAwMjAzNg.G2-5Sh.mjL38yryUir-qLfA1zw7DC7gWriyX5owl2727w';
 const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID || '1472389594308939970';
 const DISCORD_CATEGORY_ID = process.env.DISCORD_CATEGORY_ID || '1472394117244915803';
 
@@ -802,3 +802,4 @@ server.listen(PORT, async () => {
 
     await initDiscord();
 });
+
