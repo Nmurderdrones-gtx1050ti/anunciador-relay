@@ -30,7 +30,7 @@ loadEnv();
 
 // ========== CONFIG ==========
 const PORT = parseInt(process.env.PORT) || 3000;
-const SECRET_KEY = process.env.SECRET_KEY || 'MUDE_ESSA_CHAVE_SECRETA_123';
+const SECRET_KEY = process.env.SECRET_KEY || 'CRVf998@+';
 const WEB_PASSWORD = process.env.WEB_PASSWORD || '';
 const WEBHOOK_CHAT = process.env.WEBHOOK_CHAT || '';
 const WEBHOOK_LOGS = process.env.WEBHOOK_LOGS || '';
