@@ -14,7 +14,7 @@ const io = new Server(server, {
 const SECRET_KEY = 'MUDE_ESSA_CHAVE_SECRETA_123';
 
 // ===== DISCORD CONFIG =====
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || 'MTQ3MjM5MjI5MTE1NDAwMjAzNg.GGTRED.sgY85ZjZG-_kBXwjQq0KjRQLN2T1fTJGAI2DbY';
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || 'MTQ3MjM5MjI5MTE1NDAwMjAzNg.GrpnDs.wOJHkSd33XcuxxH1TRaYFxwg6VMrV2emX5H7CE';
 const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID || '1472394117244915803';
 const DISCORD_CATEGORY_ID = process.env.DISCORD_CATEGORY_ID || '1472389594308939970';
 
@@ -528,4 +528,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, async () => {
     console.log(`✅ Relay na porta ${PORT}`);
     await initDiscord();
+
 });
