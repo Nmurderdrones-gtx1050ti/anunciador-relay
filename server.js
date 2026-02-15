@@ -76,18 +76,45 @@ async function discordFetch(endpoint, method = 'GET', body = null) {
 
         const response = await fetch(`${DISCORD_API}${endpoint}`, options);
 
-        // Rate limit
+        // Rate limit — espera o tempo que o Discord pede
         if (response.status === 429) {
-            const text = await response.text();
-            let retryAfter = 5000;
+            let retryAfter = 10000;
             try {
-                const data = JSON.parse(text);
-                retryAfter = (data.retry_after || 5) * 1000;
-            } catch {}
-            console.log(`⏳ Rate limit, esperando ${retryAfter}ms...`);
-            await new Promise(r => setTimeout(r, retryAfter + 1000));
+                const data = await response.json();
+                retryAfter = Math.ceil((data.retry_after || 10) * 1000);
+            } catch {
+                try { await response.text(); } catch {}
+            }
+            console.log(`⏳ Rate limit em ${endpoint}, esperando ${retryAfter + 2000}ms...`);
+            await new Promise(r => setTimeout(r, retryAfter + 2000));
 
+            // Segunda tentativa
             const retry = await fetch(`${DISCORD_API}${endpoint}`, options);
+
+            if (retry.status === 429) {
+                // Ainda rate limited — espera mais
+                let retryAfter2 = 30000;
+                try {
+                    const data2 = await retry.json();
+                    retryAfter2 = Math.ceil((data2.retry_after || 30) * 1000);
+                } catch {
+                    try { await retry.text(); } catch {}
+                }
+                console.log(`⏳ Rate limit duplo, esperando ${retryAfter2 + 5000}ms...`);
+                await new Promise(r => setTimeout(r, retryAfter2 + 5000));
+
+                // Terceira tentativa
+                const retry2 = await fetch(`${DISCORD_API}${endpoint}`, options);
+                if (retry2.status === 204) return {};
+                if (!retry2.ok) {
+                    console.error(`❌ Discord falhou após 3 tentativas: ${retry2.status}`);
+                    return null;
+                }
+                const ct2 = retry2.headers.get('content-type') || '';
+                if (!ct2.includes('json')) return null;
+                return await retry2.json();
+            }
+
             if (retry.status === 204) return {};
             if (!retry.ok) {
                 console.error(`❌ Discord retry falhou: ${retry.status}`);
@@ -123,7 +150,6 @@ async function discordFetch(endpoint, method = 'GET', body = null) {
         return null;
     }
 }
-
 // ===== DISCORD INIT =====
 async function initDiscord() {
     if (!DISCORD_ENABLED) {
@@ -131,43 +157,45 @@ async function initDiscord() {
         return;
     }
 
-    console.log('🔍 Iniciando Discord...');
+    // Espera 5s antes de começar (evita rate limit no deploy)
+    console.log('🔍 Iniciando Discord em 5s...');
+    await new Promise(r => setTimeout(r, 5000));
 
-    // Tenta até 3 vezes
     let me = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
         me = await discordFetch('/users/@me');
         if (me) break;
         console.log(`⚠️ Discord tentativa ${attempt}/3 falhou...`);
-        await new Promise(r => setTimeout(r, 5000));
+        // Espera progressivamente mais
+        await new Promise(r => setTimeout(r, 10000 * attempt));
     }
 
     if (!me) {
-        console.error('❌ Discord: token inválido após 3 tentativas!');
-        console.log('🔄 Tentando novamente em 60s...');
-        setTimeout(initDiscord, 60000);
+        console.error('❌ Discord: falhou após 3 tentativas!');
+        console.log('🔄 Tentando novamente em 120s...');
+        setTimeout(initDiscord, 120000);
         return;
     }
     console.log(`✅ Discord Bot: ${me.username} (${me.id})`);
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
 
     const guild = await discordFetch(`/guilds/${DISCORD_GUILD_ID}`);
     if (!guild) {
         console.error('❌ Discord: servidor não encontrado!');
-        console.log('🔄 Tentando novamente em 60s...');
-        setTimeout(initDiscord, 60000);
+        console.log('🔄 Tentando novamente em 120s...');
+        setTimeout(initDiscord, 120000);
         return;
     }
     console.log(`✅ Discord Servidor: ${guild.name}`);
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
 
     const channels = await discordFetch(`/guilds/${DISCORD_GUILD_ID}/channels`);
     if (!channels || !Array.isArray(channels)) {
         console.error('❌ Discord: não listou canais!');
-        console.log('🔄 Tentando novamente em 60s...');
-        setTimeout(initDiscord, 60000);
+        console.log('🔄 Tentando novamente em 120s...');
+        setTimeout(initDiscord, 120000);
         return;
     }
 
@@ -178,6 +206,40 @@ async function initDiscord() {
     }
     console.log(`✅ Discord Categoria: ${category.name}`);
 
+    let cached = 0;
+    channels
+        .filter(ch => ch.parent_id === DISCORD_CATEGORY_ID && ch.type === 0)
+        .forEach(ch => {
+            if (ch.topic) {
+                const match = ch.topic.match(/(\d+\.\d+\.\d+\.\d+:\d+)/);
+                if (match) {
+                    discordChannels[match[1]] = {
+                        channelId: ch.id,
+                        channelName: ch.name,
+                        webhookId: null,
+                        webhookToken: null,
+                    };
+                    cached++;
+                }
+            }
+        });
+
+    discordReady = true;
+    console.log(`🎮 Discord pronto! (${cached} canais em cache)`);
+
+    for (const key of Object.keys(discordChannels)) {
+        const info = discordChannels[key];
+        queueDiscord(async () => {
+            const webhooks = await discordFetch(`/channels/${info.channelId}/webhooks`);
+            if (webhooks && Array.isArray(webhooks) && webhooks.length > 0) {
+                const wh = webhooks.find(w => w.name === 'MC Chat') || webhooks[0];
+                info.webhookId = wh.id;
+                info.webhookToken = wh.token;
+                console.log(`🔗 Webhook carregado: ${key}`);
+            }
+        });
+    }
+}
     // Cache canais existentes
     let cached = 0;
     channels
@@ -213,8 +275,6 @@ async function initDiscord() {
             }
         });
     }
-}
-
 // ===== CHANNEL HELPERS =====
 function cleanMotd(motd) {
     if (!motd) return 'sem-motd';
