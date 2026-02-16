@@ -1066,27 +1066,62 @@ function getKeyAdRemaining(keyId) {
 }
 
 // ========== SHUTDOWN ==========
+let isShuttingDown = false;
+
 async function shutdown() {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
     console.log('\n🛑 Desligando relay...');
-    clearInterval(analyticsTimer); clearInterval(serverStatusTimer); clearInterval(botsUpdateTimer);
-    savePersistedChat(); saveKeys(); saveAds(); savePlayersDB();
-    await flushSheetsBatch();
-    sendLogToDiscord('🛑', 'Relay desligando...');
-    await new Promise(r => setTimeout(r, 3000));
-    io.close(); server_http.close();
-    process.exit(0);
+    
+    try {
+        clearInterval(analyticsTimer);
+        clearInterval(serverStatusTimer);
+        clearInterval(botsUpdateTimer);
+        savePersistedChat();
+        saveKeys();
+        saveAds();
+        savePlayersDB();
+        await flushSheetsBatch();
+        sendLogToDiscord('🛑', 'Relay desligando...');
+    } catch (err) {
+        console.error('Erro no shutdown:', err.message);
+    }
+    
+    setTimeout(() => {
+        try {
+            io.close();
+            server_http.close();
+        } catch {}
+        console.log('👋 Relay desligado!');
+        process.exit(0);
+    }, 2000);
 }
 
 process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-process.on('uncaughtException', (err) => { console.error('❌ FATAL:', err.message); observability.recordError('fatal', err.message); });
+process.on('SIGTERM', () => {
+    // Render envia SIGTERM no redeploy - só desliga se já estabilizou
+    if (Date.now() - SERVER_START_TIME > 30000) {
+        shutdown();
+    } else {
+        console.log('⏳ SIGTERM ignorado (inicializando...)');
+    }
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('❌ FATAL:', err.message);
+    observability.recordError('fatal', err.message);
+});
+
 process.on('unhandledRejection', (reason) => {
     const msg = String(reason?.message || reason || '').substring(0, 200);
-    if (!['fetch failed', 'ECONNRESET', 'ETIMEDOUT'].some(f => msg.includes(f))) { console.error('⚠️ Unhandled:', msg); observability.recordError('unhandled', msg); }
+    if (!['fetch failed', 'ECONNRESET', 'ETIMEDOUT'].some(f => msg.includes(f))) {
+        console.error('⚠️ Unhandled:', msg);
+        observability.recordError('unhandled', msg);
+    }
 });
 
 // ========== START ==========
-server_http.listen(PORT, () => {
+server_http.listen(PORT, '0.0.0.0', () => {
     console.log('');
     console.log('╔══════════════════════════════════════════╗');
     console.log('║          RELAY SERVER v8.0               ║');
@@ -1101,5 +1136,6 @@ server_http.listen(PORT, () => {
     console.log(`║ 🔐 Criptografia: AES-256-CBC ✅`);
     console.log('╚══════════════════════════════════════════╝');
     console.log('');
-    sendLogToDiscord('🚀', `Relay v8.0 iniciado!`);
+    console.log('✅ Servidor pronto e ouvindo!');
+    sendLogToDiscord('🚀', `Relay v8.0 iniciado! Porta ${PORT}`);
 });
