@@ -681,20 +681,29 @@ let totalWebConnections = 0;
 let totalChatMessages = 0;
 
 // ========== ROUTES ==========
-app.get('/', (req, res) => res.json({
-    status: 'online', version: '8.0', uptime: getUptime(), botConectado: !!botSocket,
-    bots: botData.stats.botsAtivos, msgs: botData.chatDatabase.length,
-    servers: botData.servers.length, webClients: io.engine.clientsCount,
-    memory: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
-}));
-
-app.get('/health', (req, res) => res.json({ status: 'ok', uptime: getUptime() }));
-
-// Client page for key holders
-app.get('/client', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client.html'));
+// Serve o painel web
+app.get('/', (req, res) => {
+    const htmlPath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(htmlPath)) {
+        res.sendFile(htmlPath);
+    } else {
+        res.json({ status: 'online', version: '8.0', error: 'index.html não encontrado!' });
+    }
 });
 
+// Health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        version: '8.0',
+        uptime: getUptime(),
+        botConectado: !!botSocket,
+        bots: botData.stats.botsAtivos,
+        msgs: botData.chatDatabase.length,
+        servers: botData.servers.length,
+        memory: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
+    });
+});
 // ========== AUTH ==========
 const authenticatedSockets = new Map(); // socketId -> { username, role, sessionToken, keyId? }
 
