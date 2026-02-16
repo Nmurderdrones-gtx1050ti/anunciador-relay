@@ -27,41 +27,45 @@
         .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
         .nav-section { margin-bottom: 8px; }
         .nav-label { font-size: 10px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px 6px; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: #94a3b8; font-size: 13px; font-weight: 500; position: relative; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: #94a3b8; font-size: 13px; font-weight: 500; position: relative; user-select: none; }
         .nav-item:hover { background: rgba(255,255,255,0.04); color: #cbd5e1; }
         .nav-item.active { background: rgba(99,102,241,0.12); color: #818cf8; }
         .nav-item.active::before { content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: #6366f1; border-radius: 0 3px 3px 0; }
         .nav-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .nav-icon svg { width: 18px; height: 18px; }
-        .nav-badge { margin-left: auto; background: #6366f1; color: white; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
+        .nav-badge { margin-left: auto; background: #6366f1; color: white; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; min-width: 22px; text-align: center; }
         .connection-section { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
         .connection-status { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .status-dot.online { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+        .status-dot.online { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); animation: pulse 2s infinite; }
         .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         .status-text { font-size: 12px; color: #94a3b8; }
         .status-text strong { color: #e2e8f0; }
         .relay-input-group { display: flex; gap: 6px; }
         .relay-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 7px 10px; font-size: 11px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; }
         .relay-input:focus { border-color: #6366f1; }
-        .relay-btn { background: #6366f1; color: white; border: none; border-radius: 6px; padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap; }
-        .relay-btn:hover { background: #5558e6; }
+        .relay-btn { background: #6366f1; color: white; border: none; border-radius: 6px; padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
+        .relay-btn:hover { background: #5558e6; transform: translateY(-1px); }
         .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
         .sidebar-toggle { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #64748b; font-size: 12px; transition: all 0.15s; background: none; border: none; width: 100%; font-family: 'Inter', sans-serif; }
         .sidebar-toggle:hover { background: rgba(255,255,255,0.04); color: #94a3b8; }
         .sidebar-toggle svg { width: 16px; height: 16px; }
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #0a0e1a; }
         .topbar { height: 56px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(15,19,34,0.8); backdrop-filter: blur(10px); flex-shrink: 0; }
-        .topbar-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+        .topbar-title { font-size: 16px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
         .topbar-right { display: flex; align-items: center; gap: 8px; }
         .topbar-status { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 11px; color: #94a3b8; }
-        .page-content { flex: 1; overflow-y: auto; padding: 24px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; transition: all 0.2s; }
-        .stat-card:hover { border-color: rgba(99,102,241,0.3); }
-        .stat-label { font-size: 12px; color: #64748b; font-weight: 500; margin-bottom: 8px; }
-        .stat-value { font-size: 28px; font-weight: 800; color: #f1f5f9; }
+        .topbar-uptime { font-size: 11px; color: #475569; }
+        .page-content { flex: 1; overflow-y: auto; padding: 24px; scroll-behavior: smooth; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .stat-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 18px; transition: all 0.25s; }
+        .stat-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .stat-label { font-size: 11px; color: #64748b; font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .stat-value { font-size: 26px; font-weight: 800; color: #f1f5f9; }
         .stat-value.green { color: #22c55e; }
+        .stat-value.purple { color: #818cf8; }
+        .stat-value.yellow { color: #f59e0b; }
         .servers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
         .server-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.25s; }
         .server-card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
@@ -97,7 +101,8 @@
         .modal-section-title { font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         .modal-section-title svg { width: 16px; height: 16px; }
         .players-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-        .player-tag { background: rgba(99,102,241,0.1); color: #818cf8; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .player-tag { background: rgba(99,102,241,0.1); color: #818cf8; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+        .player-tag img { width: 16px; height: 16px; border-radius: 2px; }
         .modal-chat { background: rgba(0,0,0,0.2); border-radius: 10px; height: 200px; overflow-y: auto; padding: 12px; }
         .modal-chat-msg { margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
         .modal-chat-msg .chat-time { color: #475569; margin-right: 6px; }
@@ -116,13 +121,14 @@
         .chat-messages { flex: 1; background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow-y: auto; padding: 4px; }
         .chat-msg-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; border-radius: 8px; transition: background 0.1s; }
         .chat-msg-item:hover { background: rgba(255,255,255,0.02); }
-        .chat-msg-avatar { width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 700; color: #818cf8; }
+        .chat-msg-avatar { width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 700; color: #818cf8; overflow: hidden; }
+        .chat-msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .chat-msg-content { flex: 1; min-width: 0; }
         .chat-msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; flex-wrap: wrap; }
         .chat-msg-user { font-size: 13px; font-weight: 600; color: #e2e8f0; }
         .chat-msg-server-tag { font-size: 10px; padding: 1px 7px; border-radius: 4px; background: rgba(99,102,241,0.1); color: #818cf8; font-weight: 500; }
         .chat-msg-time { font-size: 11px; color: #475569; margin-left: auto; }
-        .chat-msg-text { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+        .chat-msg-text { font-size: 13px; color: #94a3b8; line-height: 1.5; word-break: break-word; }
         .chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 300px; color: #475569; }
         .chat-empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5; }
         .chat-empty p { font-size: 14px; }
@@ -130,8 +136,9 @@
         .section-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
         .section-actions { display: flex; gap: 8px; }
         .bots-list { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
-        .bot-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 12px; }
+        .bot-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 12px; transition: background 0.15s; }
         .bot-item:last-child { border-bottom: none; }
+        .bot-item:hover { background: rgba(255,255,255,0.02); }
         .bot-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(34,197,94,0.1); display: flex; align-items: center; justify-content: center; }
         .bot-icon svg { width: 18px; height: 18px; color: #22c55e; }
         .bot-info { flex: 1; min-width: 0; }
@@ -141,13 +148,13 @@
         .bot-status-indicator { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
         .bots-empty { padding: 40px; text-align: center; color: #475569; font-size: 13px; }
         .dash-section { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-        .dash-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: #f1f5f9; }
+        .dash-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
         .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-field { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; }
         .input-field:focus { border-color: #6366f1; }
-        .btn-primary { background: #6366f1; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap; }
-        .btn-primary:hover { background: #5558e6; }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: #6366f1; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
+        .btn-primary:hover { background: #5558e6; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         .btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
         .btn-danger:hover { background: rgba(239,68,68,0.25); }
         .btn-secondary { background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
@@ -180,8 +187,8 @@
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: 1fr; } }
         .dashboard-full { grid-column: 1 / -1; }
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
-        .toast { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 20px; font-size: 13px; color: #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.4); animation: toastIn 0.3s; min-width: 250px; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 20px; font-size: 13px; color: #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.4); animation: toastIn 0.3s; min-width: 250px; pointer-events: auto; }
         @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .mc-0{color:#000}.mc-1{color:#0000AA}.mc-2{color:#00AA00}.mc-3{color:#00AAAA}.mc-4{color:#AA0000}.mc-5{color:#AA00AA}.mc-6{color:#FFAA00}.mc-7{color:#AAA}.mc-8{color:#555}.mc-9{color:#55F}.mc-a{color:#5F5}.mc-b{color:#5FF}.mc-c{color:#F55}.mc-d{color:#F5F}.mc-e{color:#FF5}.mc-f{color:#FFF}
         .mc-l{font-weight:bold}.mc-o{font-style:italic}.mc-n{text-decoration:underline}.mc-m{text-decoration:line-through}
@@ -205,12 +212,17 @@
         .login-card { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 90%; max-width: 400px; animation: slideUp 0.3s; overflow: hidden; }
         .login-card-header { padding: 30px 30px 0; text-align: center; }
         .login-card-body { padding: 24px 30px 30px; }
-        .login-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #ef4444; margin-bottom: 12px; text-align: center; }
+        .login-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #ef4444; margin-bottom: 12px; text-align: center; animation: shake 0.4s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
         .login-footer { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; font-size: 11px; color: #475569; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+        .no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; color: #475569; text-align: center; }
+        .no-data-placeholder svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
+        .no-data-placeholder p { font-size: 14px; margin-bottom: 4px; }
+        .no-data-placeholder span { font-size: 12px; color: #374151; }
     </style>
 </head>
 <body>
@@ -218,15 +230,21 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
+        // ===== MOTD PARSER =====
         function parseMotd(motd) {
             if (!motd) return [{ text: '', classes: [] }];
             if (typeof motd === 'object') {
-                if (motd.text !== undefined) { let parts = parseMotdString(String(motd.text || '')); if (motd.extra) motd.extra.forEach(e => { parts = parts.concat(parseMotd(e)); }); return parts; }
+                if (motd.text !== undefined) {
+                    let parts = parseMotdString(String(motd.text || ''));
+                    if (motd.extra) motd.extra.forEach(e => { parts = parts.concat(parseMotd(e)); });
+                    return parts;
+                }
                 if (motd.translate) return parseMotdString(motd.translate);
                 return parseMotdString(JSON.stringify(motd));
             }
             return parseMotdString(String(motd));
         }
+
         function parseMotdString(str) {
             const parts = []; let current = { text: '', classes: [] }; let i = 0;
             while (i < str.length) {
@@ -240,35 +258,46 @@
                     i += 2;
                 } else { current.text += str[i]; i++; }
             }
-            if (current.text) parts.push(current); return parts;
+            if (current.text) parts.push(current);
+            return parts;
         }
+
         function MotdText({ motd }) {
             const parts = parseMotd(motd);
             if (!parts.length || (parts.length === 1 && !parts[0].text)) return <span style={{color:'#64748b'}}>Sem MOTD</span>;
             return <span>{parts.map((p, i) => <span key={i} className={p.classes.join(' ')}>{p.text}</span>)}</span>;
         }
 
+        // ===== ICONS =====
         const I = {
-            Dashboard: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
-            Server: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg>,
-            Chat: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-            Settings: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
-            Analytics: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
-            Bot: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>,
-            Users: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-            Eye: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
-            Download: () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-            ChevronLeft: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
-            ChevronRight: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
-            Globe: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
-            Shield: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-            Gamepad: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg>,
-            Plug: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v6"/><path d="M6 8h12"/><path d="M8 8v4a4 4 0 0 0 8 0V8"/><path d="M12 16v6"/></svg>,
-            MsgEmpty: () => <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg>,
+            Dashboard: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
+            Server: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg>,
+            Chat: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+            Settings: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+            Analytics: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+            Bot: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>,
+            Users: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+            Eye: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Download: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+            ChevronLeft: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
+            ChevronRight: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
+            Globe: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            Shield: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+            Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg>,
+            Plug: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v6"/><path d="M6 8h12"/><path d="M8 8v4a4 4 0 0 0 8 0V8"/><path d="M12 16v6"/></svg>,
+            MsgEmpty: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg>,
+            Clock: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
         };
+
         // ===== SERVER POPUP =====
         function ServerPopup({ server, onClose, chatMessages, socket }) {
-            const serverChat = (chatMessages || []).filter(m => m.serverKey === server.key).slice(-30);
+            const serverChat = useMemo(() =>
+                (chatMessages || []).filter(m => m.serverKey === server.key).slice(-30),
+                [chatMessages, server.key]
+            );
+            const chatEndRef = useRef(null);
+            useEffect(() => { if(chatEndRef.current) chatEndRef.current.scrollTop = chatEndRef.current.scrollHeight; }, [serverChat]);
+
             return (
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="modal" onClick={e => e.stopPropagation()}>
@@ -286,12 +315,18 @@
                             </div>
                             <div className="modal-section-title"><I.Users/> Jogadores ({(server.players||[]).length})</div>
                             <div className="players-list">
-                                {(server.players||[]).length > 0 ? (server.players||[]).map((p,i) => (
-                                    <span key={i} className="player-tag">{typeof p==='string'?p:p.username||p.name||'?'}</span>
-                                )) : <span style={{color:'#475569',fontSize:13}}>Nenhum jogador</span>}
+                                {(server.players||[]).length > 0 ? (server.players||[]).map((p,i) => {
+                                    const name = typeof p==='string'?p:p.username||p.name||'?';
+                                    return (
+                                        <span key={i} className="player-tag">
+                                            <img src={`https://mc-heads.net/avatar/${encodeURIComponent(name)}/16`} alt="" onError={e=>{e.target.style.display='none'}}/>
+                                            {name}
+                                        </span>
+                                    );
+                                }) : <span style={{color:'#475569',fontSize:13}}>Nenhum jogador</span>}
                             </div>
                             <div className="modal-section-title"><I.Chat/> Chat</div>
-                            <div className="modal-chat">
+                            <div className="modal-chat" ref={chatEndRef}>
                                 {serverChat.length>0 ? serverChat.map((msg,i) => (
                                     <div key={i} className="modal-chat-msg">
                                         <span className="chat-time">[{new Date(msg.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}]</span>
@@ -317,9 +352,9 @@
             const time = log.time || '';
             const msg = log.msg || log.text || log.message || JSON.stringify(log);
             let cls = 'info';
-            if (emoji.includes('✅') || emoji.includes('📣')) cls = 'success';
-            else if (emoji.includes('❌') || emoji.includes('🚫')) cls = 'error';
-            else if (emoji.includes('⚠') || emoji.includes('🔌')) cls = 'warn';
+            if (/[✅📣]/.test(emoji)) cls = 'success';
+            else if (/[❌🚫⛔]/.test(emoji)) cls = 'error';
+            else if (/[⚠🔌🔄]/.test(emoji)) cls = 'warn';
             return <div className={`log-entry ${cls}`}><span className="log-time">[{time}]</span> <span className="log-emoji">{emoji}</span> {msg}</div>;
         }
 
@@ -333,21 +368,30 @@
 
             useEffect(() => { if (logsEndRef.current) logsEndRef.current.scrollTop = logsEndRef.current.scrollHeight; }, [logs]);
 
-            const sendChat = () => { if(!chatMsg.trim()||!socket) return; socket.emit('chat',{message:chatMsg,serverKey:chatFilter}); setChatMsg(''); };
-            const sendCmd = () => { if(!cmdMsg.trim()||!socket) return; socket.emit('command',{command:cmdMsg,serverKey:chatFilter}); setCmdMsg(''); };
+            const sendChat = useCallback(() => {
+                if(!chatMsg.trim()||!socket) return;
+                socket.emit('chat',{message:chatMsg,serverKey:chatFilter});
+                setChatMsg('');
+            }, [chatMsg, chatFilter, socket]);
 
-            const getServerForBot = (bot) => {
+            const sendCmd = useCallback(() => {
+                if(!cmdMsg.trim()||!socket) return;
+                socket.emit('command',{command:cmdMsg,serverKey:chatFilter});
+                setCmdMsg('');
+            }, [cmdMsg, chatFilter, socket]);
+
+            const getServerForBot = useCallback((bot) => {
                 const key = bot.serverKey || bot.server;
                 return (servers || []).find(s => s.key === key);
-            };
+            }, [servers]);
 
             return (
                 <div>
                     <div className="stats-grid">
                         <div className="stat-card"><div className="stat-label">Bots Ativos</div><div className="stat-value green">{stats.botsAtivos||0}</div></div>
-                        <div className="stat-card"><div className="stat-label">Total Conectados</div><div className="stat-value">{stats.totalBots||0}</div></div>
+                        <div className="stat-card"><div className="stat-label">Total Conectados</div><div className="stat-value purple">{stats.totalBots||0}</div></div>
                         <div className="stat-card"><div className="stat-label">Servidores</div><div className="stat-value">{(servers||[]).length}</div></div>
-                        <div className="stat-card"><div className="stat-label">Blacklist</div><div className="stat-value">{stats.blacklistSize||0}</div></div>
+                        <div className="stat-card"><div className="stat-label">Blacklist</div><div className="stat-value yellow">{stats.blacklistSize||0}</div></div>
                         <div className="stat-card"><div className="stat-label">Intervalo</div><div className="stat-value">{stats.intervalo||0}s</div></div>
                     </div>
                     <div className="dashboard-grid">
@@ -355,19 +399,19 @@
                             <div className="section-header">
                                 <span className="section-title">Bots Conectados</span>
                                 <div className="section-actions">
-                                    <button className="btn-danger" onClick={() => socket&&socket.emit('restartBots')}>Desconectar Todos</button>
-                                    <button className="btn-secondary" onClick={() => socket&&socket.emit('refresh')}>Refresh</button>
+                                    <button className="btn-danger" onClick={() => socket&&socket.emit('restartBots')}>Desconectar</button>
+                                    <button className="btn-secondary" onClick={() => socket&&socket.emit('refresh')}>🔄</button>
                                 </div>
                             </div>
                             <div className="bots-list">
                                 {(!bots||bots.length===0) ? <div className="bots-empty">Nenhum bot conectado</div> : bots.map((b,i) => {
                                     const srv = getServerForBot(b);
                                     return (
-                                        <div key={i} className="bot-item">
+                                        <div key={b.key||i} className="bot-item">
                                             <div className="bot-icon"><I.Bot/></div>
                                             <div className="bot-info">
                                                 <div className="bot-name">{b.username||b.name||'?'}</div>
-                                                <div className="bot-server">{b.serverKey||b.server||'?'}</div>
+                                                <div className="bot-server">{b.serverKey||b.server||'?'} {b.versao?`(v${b.versao})`:''}</div>
                                                 <div className="bot-motd">{srv ? <MotdText motd={srv.motd}/> : ''}</div>
                                             </div>
                                             <div className="bot-status-indicator"/>
@@ -378,10 +422,10 @@
                         </div>
                         <div>
                             <div className="dash-section">
-                                <h3>Chat & Comandos</h3>
+                                <h3><I.Chat/> Chat & Comandos</h3>
                                 <select className="filter-select" value={chatFilter} onChange={e=>setChatFilter(e.target.value)} style={{width:'100%',marginBottom:10}}>
                                     <option value="all">Todos os Servidores</option>
-                                    {bots&&bots.map((b,i)=><option key={i} value={b.serverKey||b.server}>{b.serverKey||b.server}</option>)}
+                                    {bots&&bots.map((b,i)=><option key={b.key||i} value={b.serverKey||b.server}>{b.serverKey||b.server}</option>)}
                                 </select>
                                 <div className="input-row">
                                     <input className="input-field" placeholder="Mensagem..." value={chatMsg} onChange={e=>setChatMsg(e.target.value)} onKeyDown={e=>e.key==='Enter'&&sendChat()}/>
@@ -394,7 +438,7 @@
                                 <button className="btn-warn" style={{width:'100%',marginTop:6}} onClick={()=>socket&&socket.emit('announce')}>⚡ Forçar Anúncio</button>
                             </div>
                             <div className="dash-section">
-                                <h3>Conectar Bot</h3>
+                                <h3><I.Plug/> Conectar Bot</h3>
                                 <div className="input-row">
                                     <input className="input-field" placeholder="IP:Porta" value={connectIp} onChange={e=>setConnectIp(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&connectIp&&socket){socket.emit('connect_server',connectIp);setConnectIp('');}}}/>
                                     <button className="btn-primary" onClick={()=>{if(connectIp&&socket){socket.emit('connect_server',connectIp);setConnectIp('');}}}>Conectar</button>
@@ -404,7 +448,7 @@
                         <div className="dashboard-full">
                             <div className="dash-section">
                                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-                                    <h3 style={{marginBottom:0}}>Logs</h3>
+                                    <h3 style={{marginBottom:0}}>📋 Logs ({logs.length})</h3>
                                     <button className="btn-secondary" style={{padding:'5px 12px',fontSize:11}} onClick={()=>setLogs([])}>Limpar</button>
                                 </div>
                                 <div className="logs-container" ref={logsEndRef}>
@@ -421,11 +465,23 @@
         // ===== SERVERS =====
         const ServersPage = React.memo(function ServersPage({ servers, bots, chatMessages, socket }) {
             const [selectedServer, setSelectedServer] = useState(null);
-            const botServerKeys = new Set((bots||[]).map(b => b.serverKey || b.server));
-            const onlineServers = (servers||[]).filter(s => s.status === 'online' || botServerKeys.has(s.key));
-            const offlineServers = (servers||[]).filter(s => s.status !== 'online' && !botServerKeys.has(s.key));
+            const [searchTerm, setSearchTerm] = useState('');
 
-            const renderCard = (server) => {
+            const botServerKeys = useMemo(() => new Set((bots||[]).map(b => b.serverKey || b.server)), [bots]);
+
+            const filteredServers = useMemo(() => {
+                let srvs = servers || [];
+                if (searchTerm.trim()) {
+                    const s = searchTerm.toLowerCase();
+                    srvs = srvs.filter(srv => srv.key.toLowerCase().includes(s) || String(srv.motd||'').toLowerCase().includes(s));
+                }
+                return srvs;
+            }, [servers, searchTerm]);
+
+            const onlineServers = useMemo(() => filteredServers.filter(s => s.status === 'online' || botServerKeys.has(s.key)), [filteredServers, botServerKeys]);
+            const offlineServers = useMemo(() => filteredServers.filter(s => s.status !== 'online' && !botServerKeys.has(s.key)), [filteredServers, botServerKeys]);
+
+            const renderCard = useCallback((server) => {
                 const isOnline = server.status === 'online' || botServerKeys.has(server.key);
                 return (
                     <div key={server.key} className="server-card" onClick={() => setSelectedServer(server)}>
@@ -444,15 +500,20 @@
                         </div>
                     </div>
                 );
-            };
+            }, [botServerKeys, socket]);
 
             return (
                 <div>
                     <div className="section-header">
                         <span className="section-title">Servidores ({(servers||[]).length})</span>
-                        <button className="btn-secondary" onClick={()=>socket&&socket.emit('refresh')}>🔄 Atualizar</button>
+                        <div className="section-actions">
+                            <input className="chat-search" style={{minWidth:150}} placeholder="Buscar servidor..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
+                            <button className="btn-secondary" onClick={()=>socket&&socket.emit('refresh')}>🔄 Atualizar</button>
+                        </div>
                     </div>
-                    {(servers||[]).length === 0 ? <div className="dash-section" style={{textAlign:'center',padding:40}}><p style={{color:'#475569'}}>Nenhum servidor detectado.</p></div> : (
+                    {filteredServers.length === 0 ? (
+                        <div className="no-data-placeholder"><I.Server/><p>Nenhum servidor {searchTerm?'encontrado':'detectado'}.</p><span>{searchTerm?'Tente outro termo':'Aguardando detecção LAN...'}</span></div>
+                    ) : (
                         <>
                             {onlineServers.length > 0 && <><div className="server-section-label"><span className="dot" style={{background:'#22c55e'}}/> Online ({onlineServers.length})</div><div className="servers-grid">{onlineServers.map(renderCard)}</div></>}
                             {offlineServers.length > 0 && <><div className="server-section-label"><span className="dot" style={{background:'#ef4444'}}/> Offline ({offlineServers.length})</div><div className="servers-grid">{offlineServers.map(renderCard)}</div></>}
@@ -468,34 +529,57 @@
             const [search, setSearch] = useState('');
             const [serverFilter, setServerFilter] = useState('all');
             const chatEndRef = useRef(null);
+            const [autoScroll, setAutoScroll] = useState(true);
 
             const filtered = useMemo(() => {
                 let msgs = chatMessages || [];
                 if (serverFilter !== 'all') msgs = msgs.filter(m => m.serverKey === serverFilter);
-                if (search.trim()) { const s = search.toLowerCase(); msgs = msgs.filter(m => (m.username||'').toLowerCase().includes(s) || (m.message||'').toLowerCase().includes(s) || (m.serverKey||'').toLowerCase().includes(s)); }
+                if (search.trim()) {
+                    const s = search.toLowerCase();
+                    msgs = msgs.filter(m =>
+                        (m.username||'').toLowerCase().includes(s) ||
+                        (m.message||'').toLowerCase().includes(s) ||
+                        (m.serverKey||'').toLowerCase().includes(s)
+                    );
+                }
                 return msgs.slice(-300);
             }, [chatMessages, search, serverFilter]);
 
             const uniqueServers = useMemo(() => [...new Set((chatMessages||[]).map(m=>m.serverKey))], [chatMessages]);
-            useEffect(() => { if(chatEndRef.current) chatEndRef.current.scrollTop = chatEndRef.current.scrollHeight; }, [filtered]);
 
-            const exportCSV = () => {
+            useEffect(() => {
+                if(chatEndRef.current && autoScroll) chatEndRef.current.scrollTop = chatEndRef.current.scrollHeight;
+            }, [filtered, autoScroll]);
+
+            const handleScroll = useCallback((e) => {
+                const el = e.target;
+                const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+                setAutoScroll(atBottom);
+            }, []);
+
+            const exportCSV = useCallback(() => {
                 const header = 'Hora,Usuário,Mensagem,Servidor\n';
                 const rows = filtered.map(m=>`"${new Date(m.timestamp).toLocaleString('pt-BR')}","${m.username}","${(m.message||'').replace(/"/g,'""')}","${m.serverKey}"`).join('\n');
                 const blob = new Blob([header+rows],{type:'text/csv;charset=utf-8'});
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `chat_${Date.now()}.csv`; a.click();
-            };
+            }, [filtered]);
 
-            const highlightText = (text, q) => {
+            const highlightText = useCallback((text, q) => {
                 if (!q.trim() || !text) return text;
-                try { const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'); return String(text).split(re).map((p,i) => re.test(p) ? <span key={i} className="highlight">{p}</span> : p); } catch { return text; }
-            };
+                try {
+                    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi');
+                    return String(text).split(re).map((p,i) => re.test(p) ? <span key={i} className="highlight">{p}</span> : p);
+                } catch { return text; }
+            }, []);
 
             return (
                 <div className="chat-container" style={{height:'calc(100vh - 104px)'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
                         <span className="section-title">Chat ({filtered.length})</span>
-                        <button className="btn-danger" style={{fontSize:11,padding:'6px 12px'}} onClick={()=>socket&&socket.emit('clearChatDatabase')}>Limpar DB</button>
+                        <div className="section-actions">
+                            {!autoScroll && <button className="btn-secondary" style={{fontSize:11,padding:'6px 12px'}} onClick={()=>setAutoScroll(true)}>↓ Auto-scroll</button>}
+                            <button className="btn-danger" style={{fontSize:11,padding:'6px 12px'}} onClick={()=>socket&&socket.emit('clearChatDatabase')}>Limpar DB</button>
+                        </div>
                     </div>
                     <div className="chat-toolbar">
                         <input className="chat-search" placeholder="Buscar..." value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -505,11 +589,14 @@
                         </select>
                         <button className="export-btn" onClick={exportCSV}><I.Download/> CSV</button>
                     </div>
-                    <div className="chat-messages" ref={chatEndRef}>
+                    <div className="chat-messages" ref={chatEndRef} onScroll={handleScroll}>
                         {filtered.length===0 ? <div className="chat-empty"><I.MsgEmpty/><p>Sem mensagens{search?' para esta busca':''}</p></div>
                         : filtered.map((msg,i) => (
-                            <div key={msg.id||i} className="chat-msg-item">
-                                <div className="chat-msg-avatar">{(msg.username||'??').substring(0,2).toUpperCase()}</div>
+                            <div key={msg.id||`${msg.timestamp}-${i}`} className="chat-msg-item">
+                                <div className="chat-msg-avatar">
+                                    <img src={`https://mc-heads.net/avatar/${encodeURIComponent(msg.username||'Steve')}/32`}
+                                         alt="" onError={e=>{e.target.style.display='none'; e.target.parentNode.textContent=(msg.username||'??').substring(0,2).toUpperCase();}}/>
+                                </div>
                                 <div className="chat-msg-content">
                                     <div className="chat-msg-header">
                                         <span className="chat-msg-user">{highlightText(msg.username||'?',search)}</span>
@@ -529,11 +616,15 @@
         const AnalyticsPage = React.memo(function AnalyticsPage({ chatMessages, servers, bots, analytics, socket }) {
             const playersChartRef = useRef(null);
             const msgsChartRef = useRef(null);
+            const playersChartInstance = useRef(null);
+            const msgsChartInstance = useRef(null);
             const [timeRange, setTimeRange] = useState('24h');
 
             useEffect(() => { if(socket) socket.emit('getAnalytics', timeRange); }, [timeRange, socket]);
 
-            const totalPlayers = useMemo(() => { let t=0; (servers||[]).forEach(s => { if(s.players) t+=s.players.length; }); return t; }, [servers]);
+            const totalPlayers = useMemo(() => {
+                let t=0; (servers||[]).forEach(s => { if(s.players) t+=s.players.length; }); return t;
+            }, [servers]);
             const totalMsgs = (chatMessages||[]).length;
             const onlineCount = (servers||[]).filter(s => s.status === 'online').length;
             const topServers = (analytics && analytics.topServers) || [];
@@ -541,30 +632,36 @@
             useEffect(() => {
                 const canvas = playersChartRef.current;
                 if (!canvas) return;
-                const existing = Chart.getChart(canvas);
-                if (existing) existing.destroy();
+                if (playersChartInstance.current) { playersChartInstance.current.destroy(); playersChartInstance.current = null; }
                 const data = (analytics && analytics.playersOverTime) || [];
                 if (data.length === 0) return;
-                const chart = new Chart(canvas, {
-                    type: 'line', data: { labels: data.map(d => new Date(d.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})), datasets: [{ label: 'Jogadores', data: data.map(d => d.total), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4, pointRadius: 0 }] },
+                playersChartInstance.current = new Chart(canvas, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => new Date(d.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})),
+                        datasets: [{ label: 'Jogadores', data: data.map(d => d.total), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4, pointRadius: 0 }]
+                    },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#475569', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true } } }
                 });
-                return () => chart.destroy();
+                return () => { if(playersChartInstance.current) { playersChartInstance.current.destroy(); playersChartInstance.current = null; } };
             }, [analytics]);
 
             useEffect(() => {
                 const canvas = msgsChartRef.current;
                 if (!canvas) return;
-                const existing = Chart.getChart(canvas);
-                if (existing) existing.destroy();
+                if (msgsChartInstance.current) { msgsChartInstance.current.destroy(); msgsChartInstance.current = null; }
                 const data = (analytics && analytics.messagesPerHour) || [];
                 if (data.length === 0) return;
                 const sorted = [...data].sort((a,b) => a.hour - b.hour);
-                const chart = new Chart(canvas, {
-                    type: 'bar', data: { labels: sorted.map(d => `${String(d.hour).padStart(2,'0')}:00`), datasets: [{ label: 'Mensagens', data: sorted.map(d => d.count), backgroundColor: 'rgba(99,102,241,0.5)', borderColor: '#6366f1', borderWidth: 1, borderRadius: 4 }] },
+                msgsChartInstance.current = new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: sorted.map(d => `${String(d.hour).padStart(2,'0')}:00`),
+                        datasets: [{ label: 'Mensagens', data: sorted.map(d => d.count), backgroundColor: 'rgba(99,102,241,0.5)', borderColor: '#6366f1', borderWidth: 1, borderRadius: 4 }]
+                    },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true } } }
                 });
-                return () => chart.destroy();
+                return () => { if(msgsChartInstance.current) { msgsChartInstance.current.destroy(); msgsChartInstance.current = null; } };
             }, [analytics]);
 
             return (
@@ -616,7 +713,7 @@
                         <div className="setting-group">
                             <h3><I.Settings/> Geral</h3>
                             <div className="setting-row"><label>Username do Bot</label><div className="input-row"><input className="input-field" value={username} onChange={e=>setUsername(e.target.value)}/><button className="btn-primary" onClick={()=>socket&&socket.emit('setUsername',username)}>Salvar</button></div></div>
-                            <div className="setting-row"><label>Intervalo (segundos)</label><div className="input-row"><input className="input-field" type="number" value={intervalo} onChange={e=>setIntervalo(Number(e.target.value))}/><button className="btn-primary" onClick={()=>socket&&socket.emit('setIntervalo',intervalo)}>Salvar</button></div></div>
+                            <div className="setting-row"><label>Intervalo de Anúncio (segundos)</label><div className="input-row"><input className="input-field" type="number" min="10" value={intervalo} onChange={e=>setIntervalo(Number(e.target.value))}/><button className="btn-primary" onClick={()=>socket&&socket.emit('setIntervalo',intervalo)}>Salvar</button></div></div>
                         </div>
                         <div className="setting-group">
                             <h3><I.Shield/> Blacklist ({bl.length})</h3>
@@ -625,14 +722,14 @@
                                 {bl.map((item,i) => <span key={i} className="blacklist-tag">{item}<button onClick={()=>socket&&socket.emit('removeBlacklist',item)}>×</button></span>)}
                                 {bl.length===0 && <span style={{fontSize:12,color:'#475569'}}>Vazio</span>}
                             </div>
-                            {bl.length>0 && <button className="btn-danger" style={{marginTop:10,padding:'6px 14px',fontSize:12}} onClick={()=>socket&&socket.emit('clearBlacklist')}>Limpar</button>}
+                            {bl.length>0 && <button className="btn-danger" style={{marginTop:10,padding:'6px 14px',fontSize:12}} onClick={()=>socket&&socket.emit('clearBlacklist')}>Limpar Tudo</button>}
                         </div>
                         <div className="setting-group" style={{gridColumn:'1/-1'}}>
                             <h3><I.Chat/> Mensagens de Anúncio ({msgs.length})</h3>
-                            <div className="input-row"><input className="input-field" placeholder="Nova mensagem..." value={newMsg} onChange={e=>setNewMsg(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}/><button className="btn-primary" onClick={()=>{if(newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}>Adicionar</button></div>
+                            <div className="input-row"><input className="input-field" placeholder="Nova mensagem de anúncio..." value={newMsg} onChange={e=>setNewMsg(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}/><button className="btn-primary" onClick={()=>{if(newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}>Adicionar</button></div>
                             <div className="messages-list">
-                                {msgs.map((m,i) => <div key={i} className="message-item"><span>{m}</span><button onClick={()=>socket&&socket.emit('delMsg',i)}>×</button></div>)}
-                                {msgs.length===0 && <span style={{fontSize:12,color:'#475569',padding:8}}>Nenhuma mensagem</span>}
+                                {msgs.map((m,i) => <div key={i} className="message-item"><span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m}</span><button onClick={()=>socket&&socket.emit('delMsg',i)}>×</button></div>)}
+                                {msgs.length===0 && <span style={{fontSize:12,color:'#475569',padding:8}}>Nenhuma mensagem configurada</span>}
                             </div>
                         </div>
                     </div>
@@ -640,7 +737,7 @@
             );
         }
 
-        // ===== MAIN APP (COM LOGIN) =====
+        // ===== MAIN APP =====
         function App() {
             const [page, setPage] = useState('dashboard');
             const [collapsed, setCollapsed] = useState(false);
@@ -661,46 +758,79 @@
             const [loginError, setLoginError] = useState('');
             const [loginLoading, setLoginLoading] = useState(false);
 
-            const addToast = useCallback((msg) => { const id = Date.now(); setToasts(p => [...p, {id, text: msg}]); setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000); }, []);
+            const socketRef = useRef(null);
+
+            const addToast = useCallback((msg) => {
+                const id = Date.now() + Math.random();
+                setToasts(p => [...p.slice(-4), {id, text: msg}]);
+                setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
+            }, []);
 
             const handleLogin = useCallback(() => {
-                if (!socket || !loginPassword.trim()) return;
+                if (!socketRef.current || !loginPassword.trim()) return;
                 setLoginLoading(true); setLoginError('');
-                socket.emit('authenticate', loginPassword, (response) => {
+                socketRef.current.emit('authenticate', loginPassword, (response) => {
                     setLoginLoading(false);
-                    if (response && response.success) { setAuthenticated(true); setNeedsAuth(false); addToast('✅ Login realizado!'); }
-                    else setLoginError('❌ Senha incorreta!');
+                    if (response && response.success) {
+                        setAuthenticated(true); setNeedsAuth(false);
+                        addToast('✅ Login realizado!');
+                    } else {
+                        setLoginError('❌ Senha incorreta!');
+                    }
                 });
-            }, [socket, loginPassword, addToast]);
+            }, [loginPassword, addToast]);
 
-            const connectRelay = useCallback(() => {
-                if (socket) socket.disconnect();
-                const s = io(relayUrl, { transports: ['websocket','polling'], reconnection: true, reconnectionDelay: 3000 });
+            const connectRelay = useCallback((url) => {
+                const targetUrl = url || relayUrl;
+                if (socketRef.current) { socketRef.current.removeAllListeners(); socketRef.current.disconnect(); }
+
+                const s = io(targetUrl, { transports: ['websocket','polling'], reconnection: true, reconnectionDelay: 3000, reconnectionDelayMax: 15000, timeout: 15000 });
+                socketRef.current = s;
+                setSocket(s);
+
                 s.on('connect', () => { setConnected(true); addToast('✅ Conectado ao relay!'); });
-                s.on('disconnect', () => { setConnected(false); addToast('🔌 Desconectado'); });
+                s.on('disconnect', () => { setConnected(false); });
                 s.on('connect_error', () => setConnected(false));
                 s.on('requireAuth', () => { setNeedsAuth(true); setAuthenticated(false); });
+
                 s.on('init', (d) => {
-                    if(d.stats)setStats(d.stats); if(d.bots)setBots(d.bots); if(d.logs)setLogs(d.logs);
-                    if(d.chatDatabase)setChatMessages(d.chatDatabase); if(d.servers)setServers(d.servers);
-                    if(d.analytics)setAnalytics(d.analytics);
+                    if(d.stats) setStats(d.stats);
+                    if(d.bots) setBots(d.bots);
+                    if(d.logs) setLogs(d.logs);
+                    if(d.chatDatabase) setChatMessages(prev => {
+                        const existingTs = new Set(prev.map(m => m.timestamp));
+                        const newMsgs = d.chatDatabase.filter(m => !existingTs.has(m.timestamp));
+                        const combined = [...prev, ...newMsgs];
+                        return combined.slice(-2000);
+                    });
+                    if(d.servers) setServers(d.servers);
+                    if(d.analytics) setAnalytics(d.analytics);
                     setAuthenticated(true); setNeedsAuth(false);
                 });
+
                 s.on('botStatus', (v) => setBotOnline(v));
                 s.on('statsUpdate', (d) => setStats(d));
                 s.on('botsUpdate', (d) => setBots(d||[]));
                 s.on('log', (e) => setLogs(p => [...p.slice(-199), e]));
-                s.on('chatMessage', (m) => setChatMessages(p => [...p.slice(-999), m]));
+                s.on('chatMessage', (m) => setChatMessages(p => [...p.slice(-1999), m]));
                 s.on('serverUpdate', (d) => setServers(d||[]));
                 s.on('toast', (m) => addToast(m));
                 s.on('chatMessages', (m) => setChatMessages(m));
                 s.on('analyticsData', (d) => setAnalytics(d));
-                setSocket(s);
             }, [relayUrl, addToast]);
 
-            const disconnectRelay = useCallback(() => { if(socket){socket.disconnect();setSocket(null);} setConnected(false);setBotOnline(false);setAuthenticated(false);setNeedsAuth(false); }, [socket]);
+            const disconnectRelay = useCallback(() => {
+                if(socketRef.current) { socketRef.current.removeAllListeners(); socketRef.current.disconnect(); socketRef.current = null; }
+                setSocket(null); setConnected(false); setBotOnline(false);
+                setAuthenticated(false); setNeedsAuth(false);
+            }, []);
 
-            useEffect(() => { connectRelay(); return () => { if(socket) socket.disconnect(); }; }, []);
+            useEffect(() => {
+                connectRelay();
+                return () => {
+                    if(socketRef.current) { socketRef.current.removeAllListeners(); socketRef.current.disconnect(); }
+                };
+            }, []);
 
             const titles = {dashboard:'Dashboard',servers:'Servidores',chat:'Chat',analytics:'Analytics',settings:'Configurações'};
             const navItems = [
@@ -711,7 +841,7 @@
                 {id:'settings',label:'Configurações',icon:I.Settings},
             ];
 
-            // ===== TELA DE LOGIN =====
+            // ===== LOGIN SCREEN =====
             if (needsAuth && !authenticated) {
                 return (
                     <><div className="toast-container">{toasts.map(t=><div key={t.id} className="toast">{t.text}</div>)}</div>
@@ -720,7 +850,7 @@
                             <div className="login-card-header">
                                 <div className="sidebar-logo" style={{width:60,height:60,fontSize:20,margin:'0 auto 12px',borderRadius:14}}>CRV</div>
                                 <div style={{fontSize:16,fontWeight:700,color:'#f1f5f9'}}>Central Radmin VPN</div>
-                                <div style={{fontSize:12,color:'#64748b',marginTop:4}}>Painel de Controle</div>
+                                <div style={{fontSize:12,color:'#64748b',marginTop:4}}>Painel de Controle v6.0</div>
                             </div>
                             <div className="login-card-body">
                                 <div style={{marginBottom:12}}>
@@ -732,7 +862,7 @@
                                 </div>
                                 {loginError && <div className="login-error">{loginError}</div>}
                                 <button className="btn-primary" onClick={handleLogin} disabled={loginLoading || !loginPassword.trim()}
-                                    style={{width:'100%',padding:'12px',fontSize:14,opacity:(loginLoading||!loginPassword.trim())?0.5:1}}>
+                                    style={{width:'100%',padding:'12px',fontSize:14}}>
                                     {loginLoading ? '⏳ Verificando...' : '🔓 Entrar'}
                                 </button>
                                 <div className="login-footer">
@@ -745,11 +875,11 @@
                 );
             }
 
-            // ===== APP PRINCIPAL =====
+            // ===== MAIN APP =====
             return (
                 <><div className="toast-container">{toasts.map(t=><div key={t.id} className="toast">{t.text}</div>)}</div>
                 <div className={`sidebar ${collapsed?'collapsed':''}`}>
-                    <div className="sidebar-header"><div className="sidebar-logo">CRV</div><div className="sidebar-brand"><span className="sidebar-brand-name">Central Radmin VPN</span><span className="sidebar-brand-sub">Painel de Controle</span></div></div>
+                    <div className="sidebar-header"><div className="sidebar-logo">CRV</div><div className="sidebar-brand"><span className="sidebar-brand-name">Central Radmin VPN</span><span className="sidebar-brand-sub">Painel v6.0</span></div></div>
                     <div className="sidebar-nav"><div className="nav-section"><div className="nav-label">Menu</div>
                         {navItems.map(item => (
                             <div key={item.id} className={`nav-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
@@ -761,7 +891,7 @@
                     <div className="connection-section">
                         <div className="connection-status"><div className={`status-dot ${connected?'online':'offline'}`}/><span className="status-text">Relay: <strong>{connected?'Online':'Offline'}</strong></span></div>
                         <div className="connection-status"><div className={`status-dot ${botOnline?'online':'offline'}`}/><span className="status-text">Bot: <strong>{botOnline?'Online':'Offline'}</strong></span></div>
-                        <div className="relay-input-group"><input className="relay-input" value={relayUrl} onChange={e=>setRelayUrl(e.target.value)} placeholder="URL do Relay"/><button className="relay-btn" onClick={connected?disconnectRelay:connectRelay}>{connected?'Sair':'Conectar'}</button></div>
+                        <div className="relay-input-group"><input className="relay-input" value={relayUrl} onChange={e=>setRelayUrl(e.target.value)} placeholder="URL do Relay"/><button className="relay-btn" onClick={connected?disconnectRelay:()=>connectRelay()}>{connected?'Sair':'Conectar'}</button></div>
                     </div>
                     <div className="sidebar-footer"><button className="sidebar-toggle" onClick={()=>setCollapsed(!collapsed)}>{collapsed?<I.ChevronRight/>:<I.ChevronLeft/>}<span className="sidebar-footer-text">Recolher</span></button></div>
                 </div>

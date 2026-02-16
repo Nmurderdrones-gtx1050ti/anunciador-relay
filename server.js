@@ -1,4 +1,4 @@
-// server.js
+// server.js - v6.0 (Otimizado + Bugs corrigidos)
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -37,6 +37,27 @@ const WEBHOOK_LOGS = process.env.WEBHOOK_LOGS || '';
 const GOOGLE_SHEETS_URL = process.env.GOOGLE_SHEETS_URL || '';
 const SERVER_START_TIME = Date.now();
 
+// ========== RATE LIMITING ==========
+const rateLimits = new Map();
+function checkRateLimit(socketId, action, maxPerMinute = 30) {
+    const key = `${socketId}:${action}`;
+    const now = Date.now();
+    const entry = rateLimits.get(key) || { count: 0, resetAt: now + 60000 };
+    if (now > entry.resetAt) {
+        entry.count = 0;
+        entry.resetAt = now + 60000;
+    }
+    entry.count++;
+    rateLimits.set(key, entry);
+    return entry.count <= maxPerMinute;
+}
+
+// Limpa rate limits a cada 5 min
+setInterval(() => {
+    const now = Date.now();
+    rateLimits.forEach((v, k) => { if (now > v.resetAt + 60000) rateLimits.delete(k); });
+}, 300000);
+
 // ========== GOOGLE SHEETS ==========
 const sheetsBatch = [];
 let sheetsTimer = null;
@@ -67,23 +88,22 @@ async function sendToSheets(data) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
             redirect: 'follow',
+            signal: AbortSignal.timeout(15000),
         });
         return resp.ok;
     } catch (err) {
-        console.error('⚠️ Sheets erro:', err.message);
+        if (!['AbortError', 'fetch failed'].some(f => (err.name || err.message || '').includes(f))) {
+            console.error('⚠️ Sheets erro:', err.message);
+        }
         return false;
     }
 }
 
 function queueChatToSheets(entry) {
     if (!sheetsEnabled()) return;
-
-    // Busca MOTD do servidor
     let motd = '';
     const srv = botData.servers.find(s => s.key === entry.serverKey);
-    if (srv && srv.motd) {
-        motd = cleanMotdText(srv.motd);
-    }
+    if (srv && srv.motd) motd = cleanMotdText(srv.motd);
 
     sheetsBatch.push({
         data: entry.date || new Date().toLocaleDateString('pt-BR'),
@@ -108,20 +128,14 @@ async function flushSheetsBatch() {
     sheetsSending = true;
     const batch = sheetsBatch.splice(0, sheetsBatch.length);
 
-    const success = await sendToSheets({
-        type: 'batch',
-        messages: batch
-    });
+    const success = await sendToSheets({ type: 'batch', messages: batch });
 
     if (success) {
         console.log(`📊 Sheets: ${batch.length} msgs salvas`);
     } else {
-        if (sheetsBatch.length < 500) {
-            sheetsBatch.unshift(...batch);
-        }
+        if (sheetsBatch.length < 500) sheetsBatch.unshift(...batch);
         console.error(`❌ Sheets: falhou, ${batch.length} msgs pendentes`);
     }
-
     sheetsSending = false;
 }
 
@@ -131,8 +145,7 @@ function sendLogToSheets(tipo, mensagem) {
         type: 'log',
         data: new Date().toLocaleDateString('pt-BR'),
         hora: new Date().toLocaleTimeString('pt-BR', { hour12: false }),
-        tipo,
-        mensagem,
+        tipo, mensagem,
     });
 }
 
@@ -142,8 +155,7 @@ function sendServerToSheets(serverKey, status, players, maxPlayers, version, mot
         type: 'server',
         data: new Date().toLocaleDateString('pt-BR'),
         hora: new Date().toLocaleTimeString('pt-BR', { hour12: false }),
-        ip: serverKey,
-        status,
+        ip: serverKey, status,
         jogadores: (players || []).length,
         max: maxPlayers || 0,
         versao: version || '?',
@@ -151,18 +163,16 @@ function sendServerToSheets(serverKey, status, players, maxPlayers, version, mot
     });
 }
 
-// Flush periódico
-setInterval(() => {
-    if (sheetsBatch.length > 0) flushSheetsBatch();
-}, 30000);
+setInterval(() => { if (sheetsBatch.length > 0) flushSheetsBatch(); }, 30000);
 
-// ========== DISCORD WEBHOOKS (opcional) ==========
+// ========== DISCORD WEBHOOKS ==========
 const webhookQueue = [];
 let processingWebhooks = false;
 
 async function sendWebhook(url, data) {
     if (!url) return;
     webhookQueue.push({ url, data });
+    if (webhookQueue.length > 100) webhookQueue.splice(0, webhookQueue.length - 100);
     drainWebhookQueue();
 }
 
@@ -175,7 +185,8 @@ async function drainWebhookQueue() {
             const resp = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                signal: AbortSignal.timeout(10000),
             });
             if (resp.status === 429) {
                 const body = await resp.json().catch(() => ({}));
@@ -193,8 +204,8 @@ function sendChatToDiscord(serverKey, username, message) {
     if (!WEBHOOK_CHAT) return;
     sendWebhook(WEBHOOK_CHAT, {
         username: username || 'Unknown',
-        avatar_url: `https://mc-heads.net/avatar/${username}/32`,
-        content: message.substring(0, 2000),
+        avatar_url: `https://mc-heads.net/avatar/${encodeURIComponent(username || 'Steve')}/32`,
+        content: (message || '').substring(0, 2000),
         embeds: [{ color: 0x6366f1, footer: { text: `🖥️ ${serverKey}` } }]
     });
 }
@@ -308,19 +319,30 @@ function updateAnalytics() {
 
 // ========== TIMERS ==========
 const analyticsTimer = setInterval(updateAnalytics, 60000);
-const serverStatusTimer = setInterval(() => { syncServerStatus(); io.emit('serverUpdate', botData.servers); }, 10000);
-const botsUpdateTimer = setInterval(() => { io.emit('botsUpdate', botData.bots); }, 5000);
+const serverStatusTimer = setInterval(() => {
+    syncServerStatus();
+    io.emit('serverUpdate', botData.servers);
+}, 10000);
+const botsUpdateTimer = setInterval(() => {
+    io.emit('botsUpdate', botData.bots);
+}, 5000);
 
 // ========== PROCESS SERVER ==========
 function processNewServer(s) {
     if (!s || !s.key) return;
     serverLastSeen[s.key] = Date.now();
     const idx = botData.servers.findIndex(x => x.key === s.key);
-    if (idx >= 0) botData.servers[idx] = { ...botData.servers[idx], ...s };
-    else {
-        botData.servers.push(s);
+    if (idx >= 0) {
+        botData.servers[idx] = { ...botData.servers[idx], ...s, lastSeen: Date.now() };
+    } else {
+        botData.servers.push({ ...s, lastSeen: Date.now() });
         sendLogToDiscord('🎯', `Novo servidor: ${s.key}`);
         sendLogToSheets('servidor', `Novo: ${s.key}`);
+    }
+    // Limita servidores armazenados
+    if (botData.servers.length > 500) {
+        botData.servers.sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+        botData.servers = botData.servers.slice(0, 500);
     }
 }
 
@@ -342,12 +364,14 @@ let totalChatMessages = 0;
 // ========== ROUTES ==========
 app.get('/', (req, res) => res.json({
     status: 'online',
+    version: '6.0',
     uptime: getUptime(),
     botConectado: !!botSocket,
     bots: botData.stats.botsAtivos,
     msgs: botData.chatDatabase.length,
     totalMsgs: totalChatMessages,
     servers: botData.servers.length,
+    webClients: io.engine.clientsCount,
     webhooks: { chat: WEBHOOK_CHAT ? '✅' : '❌', logs: WEBHOOK_LOGS ? '✅' : '❌' },
     sheets: sheetsEnabled() ? '✅' : '❌',
     sheetsPending: sheetsBatch.length,
@@ -356,13 +380,21 @@ app.get('/', (req, res) => res.json({
 
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: getUptime() }));
 
+app.get('/stats', (req, res) => res.json({
+    bots: botData.stats.botsAtivos,
+    servers: botData.servers.length,
+    messages: botData.chatDatabase.length,
+    uptime: getUptime(),
+}));
+
 // ========== WEB AUTH ==========
 const authenticatedSockets = new Set();
 function isAuthenticated(socket) { return !WEB_PASSWORD || authenticatedSockets.has(socket.id); }
 
 function getInitData() {
     return {
-        stats: botData.stats, bots: botData.bots,
+        stats: botData.stats,
+        bots: botData.bots,
         logs: botData.logs.slice(-50),
         chatDatabase: botData.chatDatabase.slice(-200),
         servers: botData.servers,
@@ -389,8 +421,8 @@ io.on('connection', (socket) => {
             if (Array.isArray(data.bots)) botData.bots = data.bots;
             if (Array.isArray(data.logs)) botData.logs = data.logs.slice(-MAX_LOGS);
             if (Array.isArray(data.chatDatabase)) {
-                const existing = new Set(botData.chatDatabase.map(m => m.timestamp));
-                const newMsgs = data.chatDatabase.filter(m => !existing.has(m.timestamp));
+                const existingTs = new Set(botData.chatDatabase.map(m => `${m.timestamp}-${m.serverKey}-${m.username}`));
+                const newMsgs = data.chatDatabase.filter(m => !existingTs.has(`${m.timestamp}-${m.serverKey}-${m.username}`));
                 botData.chatDatabase.push(...newMsgs);
                 if (botData.chatDatabase.length > MAX_CHAT_MESSAGES) {
                     botData.chatDatabase = botData.chatDatabase.slice(-MAX_CHAT_MESSAGES);
@@ -411,6 +443,7 @@ io.on('connection', (socket) => {
 
         socket.on('chatMessage', (data) => {
             if (!data?.serverKey) return;
+            data.id = `${data.timestamp}-${data.serverKey}-${(data.username || '').substring(0, 16)}`;
             botData.chatDatabase.push(data);
             if (botData.chatDatabase.length > MAX_CHAT_MESSAGES) botData.chatDatabase.shift();
             totalChatMessages++;
@@ -431,13 +464,18 @@ io.on('connection', (socket) => {
             if (!Array.isArray(data)) return;
             botData.bots = data;
             const now = Date.now();
-            data.forEach(b => { const k = b.serverKey || b.server || b.key; if (k) serverLastSeen[k] = now; });
+            data.forEach(b => {
+                const k = b.serverKey || b.server || b.key;
+                if (k) serverLastSeen[k] = now;
+            });
             syncServerStatus();
             io.emit('botsUpdate', data);
             io.emit('serverUpdate', botData.servers);
         });
 
-        socket.on('statsUpdate', (d) => { if (d) { botData.stats = d; io.emit('statsUpdate', d); } });
+        socket.on('statsUpdate', (d) => {
+            if (d) { botData.stats = d; io.emit('statsUpdate', d); }
+        });
 
         socket.on('disconnect', (reason) => {
             console.log(`🔌 Bot saiu: ${reason}`);
@@ -452,11 +490,15 @@ io.on('connection', (socket) => {
 
     // === WEB ===
     totalWebConnections++;
-    console.log(`🌐 Web conectou (#${totalWebConnections})`);
+    console.log(`🌐 Web #${totalWebConnections} (total: ${io.engine.clientsCount})`);
 
     if (WEB_PASSWORD) socket.emit('requireAuth');
 
     socket.on('authenticate', (password, callback) => {
+        if (!checkRateLimit(socket.id, 'auth', 10)) {
+            if (typeof callback === 'function') callback({ success: false, error: 'Rate limit' });
+            return;
+        }
         const ok = !WEB_PASSWORD || password === WEB_PASSWORD;
         if (ok) {
             authenticatedSockets.add(socket.id);
@@ -476,6 +518,7 @@ io.on('connection', (socket) => {
         socket.emit('botStatus', !!botSocket);
     }
 
+    // === COMANDOS COM RATE LIMIT ===
     const cmds = [
         'chat', 'command', 'announce', 'addMsg', 'delMsg',
         'setIntervalo', 'setUsername', 'connect_server',
@@ -486,7 +529,21 @@ io.on('connection', (socket) => {
 
     cmds.forEach(cmd => {
         socket.on(cmd, (d) => {
-            if (!isAuthenticated(socket)) { socket.emit('toast', '⛔ Não autenticado!'); return; }
+            if (!isAuthenticated(socket)) {
+                socket.emit('toast', '⛔ Não autenticado!');
+                return;
+            }
+            if (!checkRateLimit(socket.id, cmd, cmd === 'refresh' ? 10 : 20)) {
+                socket.emit('toast', '⏳ Aguarde...');
+                return;
+            }
+
+            // Limpa chat no relay também
+            if (cmd === 'clearChatDatabase') {
+                botData.chatDatabase = [];
+                io.emit('chatMessages', []);
+            }
+
             if (botSocket) botSocket.emit(cmd, d);
             else socket.emit('toast', '⚠️ Bot offline!');
         });
@@ -494,14 +551,24 @@ io.on('connection', (socket) => {
 
     socket.on('getChatMessages', (f) => {
         if (!isAuthenticated(socket)) return;
+        if (!checkRateLimit(socket.id, 'getChatMessages', 15)) return;
+
         let r = botData.chatDatabase;
         if (f?.serverKey && f.serverKey !== 'all') r = r.filter(m => m.serverKey === f.serverKey);
-        if (f?.search) { const s = f.search.toLowerCase(); r = r.filter(m => (m.username || '').toLowerCase().includes(s) || (m.message || '').toLowerCase().includes(s)); }
+        if (f?.search) {
+            const s = f.search.toLowerCase();
+            r = r.filter(m =>
+                (m.username || '').toLowerCase().includes(s) ||
+                (m.message || '').toLowerCase().includes(s)
+            );
+        }
         socket.emit('chatMessages', r.slice(-500));
     });
 
     socket.on('getAnalytics', (t) => {
         if (!isAuthenticated(socket)) return;
+        if (!checkRateLimit(socket.id, 'getAnalytics', 10)) return;
+
         const now = Date.now();
         let start = 0;
         if (t === '1h') start = now - 3600000;
@@ -549,7 +616,7 @@ server_http.listen(PORT, () => {
     const warnings = validateConfig();
     console.log('');
     console.log('╔══════════════════════════════════════════╗');
-    console.log('║          RELAY SERVER v5.0               ║');
+    console.log('║          RELAY SERVER v6.0               ║');
     console.log('╠══════════════════════════════════════════╣');
     console.log(`║ 🌐 Porta: ${PORT}`);
     console.log(`║ 🔒 Auth: ${WEB_PASSWORD ? '✅' : '⚠️'}`);
@@ -559,6 +626,6 @@ server_http.listen(PORT, () => {
     console.log('╚══════════════════════════════════════════╝');
     if (warnings.length > 0) { console.log(''); warnings.forEach(w => console.log(`   ⚠️ ${w}`)); }
     console.log('');
-    sendLogToDiscord('🚀', `Relay iniciado! Porta ${PORT}`);
+    sendLogToDiscord('🚀', `Relay v6.0 iniciado! Porta ${PORT}`);
     sendLogToSheets('relay', `Iniciado na porta ${PORT}`);
 });
