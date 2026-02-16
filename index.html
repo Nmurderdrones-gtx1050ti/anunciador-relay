@@ -3,918 +3,888 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Central Radmin VPN - Painel de Controle</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <title>Bot Anunciador v8.0 — Painel</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a3e;
+            --bg-card: #1e1e42;
+            --bg-hover: #2a2a5e;
+            --bg-input: #252550;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-glow: rgba(99,102,241,0.3);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #2d2d6a;
+            --sidebar-width: 220px;
+            --topbar-height: 52px;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #0a0e1a; color: #e2e8f0; overflow: hidden; height: 100vh; }
-        #app { display: flex; height: 100vh; width: 100vw; }
-        .sidebar { width: 260px; min-width: 260px; background: #0f1322; border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; height: 100vh; transition: all 0.3s; }
-        .sidebar.collapsed { width: 68px; min-width: 68px; }
-        .sidebar-header { padding: 20px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .sidebar-logo { width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white; flex-shrink: 0; }
-        .sidebar-brand { display: flex; flex-direction: column; }
-        .sidebar-brand-name { font-size: 14px; font-weight: 700; color: #f1f5f9; white-space: nowrap; }
-        .sidebar-brand-sub { font-size: 10px; color: #64748b; white-space: nowrap; }
-        .sidebar.collapsed .sidebar-brand, .sidebar.collapsed .nav-label, .sidebar.collapsed .nav-item-text, .sidebar.collapsed .connection-section, .sidebar.collapsed .sidebar-footer-text, .sidebar.collapsed .nav-badge { display: none; }
-        .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
-        .nav-section { margin-bottom: 8px; }
-        .nav-label { font-size: 10px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px 6px; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: #94a3b8; font-size: 13px; font-weight: 500; position: relative; user-select: none; }
-        .nav-item:hover { background: rgba(255,255,255,0.04); color: #cbd5e1; }
-        .nav-item.active { background: rgba(99,102,241,0.12); color: #818cf8; }
-        .nav-item.active::before { content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: #6366f1; border-radius: 0 3px 3px 0; }
-        .nav-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .nav-icon svg { width: 18px; height: 18px; }
-        .nav-badge { margin-left: auto; background: #6366f1; color: white; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; min-width: 22px; text-align: center; }
-        .connection-section { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
-        .connection-status { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .status-dot.online { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); animation: pulse 2s infinite; }
-        .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .status-text { font-size: 12px; color: #94a3b8; }
-        .status-text strong { color: #e2e8f0; }
-        .relay-input-group { display: flex; gap: 6px; }
-        .relay-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 7px 10px; font-size: 11px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; }
-        .relay-input:focus { border-color: #6366f1; }
-        .relay-btn { background: #6366f1; color: white; border: none; border-radius: 6px; padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
-        .relay-btn:hover { background: #5558e6; transform: translateY(-1px); }
-        .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
-        .sidebar-toggle { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #64748b; font-size: 12px; transition: all 0.15s; background: none; border: none; width: 100%; font-family: 'Inter', sans-serif; }
-        .sidebar-toggle:hover { background: rgba(255,255,255,0.04); color: #94a3b8; }
-        .sidebar-toggle svg { width: 16px; height: 16px; }
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #0a0e1a; }
-        .topbar { height: 56px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(15,19,34,0.8); backdrop-filter: blur(10px); flex-shrink: 0; }
-        .topbar-title { font-size: 16px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
-        .topbar-right { display: flex; align-items: center; gap: 8px; }
-        .topbar-status { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 11px; color: #94a3b8; }
-        .topbar-uptime { font-size: 11px; color: #475569; }
-        .page-content { flex: 1; overflow-y: auto; padding: 24px; scroll-behavior: smooth; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
-        .stat-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 18px; transition: all 0.25s; }
-        .stat-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-        .stat-label { font-size: 11px; color: #64748b; font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
-        .stat-value { font-size: 26px; font-weight: 800; color: #f1f5f9; }
-        .stat-value.green { color: #22c55e; }
-        .stat-value.purple { color: #818cf8; }
-        .stat-value.yellow { color: #f59e0b; }
-        .servers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
-        .server-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.25s; }
-        .server-card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
-        .server-card-header { padding: 18px 20px 14px; display: flex; justify-content: space-between; align-items: flex-start; }
-        .server-card-info { flex: 1; min-width: 0; }
-        .server-card-info h3 { font-size: 14px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .server-motd { font-size: 12px; color: #6366f1; font-weight: 500; }
-        .server-status-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; flex-shrink: 0; margin-left: 8px; }
-        .server-status-badge.online { background: rgba(34,197,94,0.15); color: #22c55e; }
-        .server-status-badge.offline { background: rgba(239,68,68,0.15); color: #ef4444; }
-        .server-card-body { padding: 0 20px 14px; }
-        .server-detail-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: #94a3b8; }
-        .server-detail-row .detail-icon { width: 14px; height: 14px; flex-shrink: 0; display: flex; align-items: center; }
-        .server-detail-row .detail-icon svg { width: 14px; height: 14px; color: #64748b; }
-        .server-card-footer { border-top: 1px solid rgba(255,255,255,0.06); display: flex; }
-        .server-card-action { flex: 1; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.15s; background: none; border: none; font-family: 'Inter', sans-serif; }
-        .server-card-action:hover { background: rgba(255,255,255,0.03); color: #94a3b8; }
-        .server-card-action + .server-card-action { border-left: 1px solid rgba(255,255,255,0.06); }
-        .server-card-action svg { width: 14px; height: 14px; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; animation: slideUp 0.3s; overflow: hidden; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h2 { font-size: 18px; font-weight: 700; }
-        .modal-close { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.15s; }
-        .modal-close:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
-        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
-        .modal-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-        .modal-info-item { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px 16px; }
-        .modal-info-item label { font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; display: block; margin-bottom: 4px; }
-        .modal-info-item span { font-size: 14px; font-weight: 600; color: #e2e8f0; }
-        .modal-section-title { font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .modal-section-title svg { width: 16px; height: 16px; }
-        .players-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-        .player-tag { background: rgba(99,102,241,0.1); color: #818cf8; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-        .player-tag img { width: 16px; height: 16px; border-radius: 2px; }
-        .modal-chat { background: rgba(0,0,0,0.2); border-radius: 10px; height: 200px; overflow-y: auto; padding: 12px; }
-        .modal-chat-msg { margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
-        .modal-chat-msg .chat-time { color: #475569; margin-right: 6px; }
-        .modal-chat-msg .chat-user { color: #6366f1; font-weight: 600; margin-right: 4px; }
-        .modal-chat-msg .chat-text { color: #cbd5e1; }
-        .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
-        .chat-container { display: flex; flex-direction: column; height: 100%; }
-        .chat-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-        .chat-search { flex: 1; min-width: 200px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 14px 9px 36px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 12px center; }
-        .chat-search:focus { border-color: #6366f1; }
-        .filter-select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; cursor: pointer; min-width: 180px; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: calc(100% - 12px) center; padding-right: 32px; }
-        .filter-select option { background: #1e293b; color: #e2e8f0; }
-        .export-btn { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 16px; font-size: 13px; color: #94a3b8; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; font-weight: 500; }
-        .export-btn:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
-        .export-btn svg { width: 15px; height: 15px; }
-        .chat-messages { flex: 1; background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow-y: auto; padding: 4px; }
-        .chat-msg-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; border-radius: 8px; transition: background 0.1s; }
-        .chat-msg-item:hover { background: rgba(255,255,255,0.02); }
-        .chat-msg-avatar { width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 700; color: #818cf8; overflow: hidden; }
-        .chat-msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .chat-msg-content { flex: 1; min-width: 0; }
-        .chat-msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; flex-wrap: wrap; }
-        .chat-msg-user { font-size: 13px; font-weight: 600; color: #e2e8f0; }
-        .chat-msg-server-tag { font-size: 10px; padding: 1px 7px; border-radius: 4px; background: rgba(99,102,241,0.1); color: #818cf8; font-weight: 500; }
-        .chat-msg-time { font-size: 11px; color: #475569; margin-left: auto; }
-        .chat-msg-text { font-size: 13px; color: #94a3b8; line-height: 1.5; word-break: break-word; }
-        .chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 300px; color: #475569; }
-        .chat-empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5; }
-        .chat-empty p { font-size: 14px; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .section-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
-        .section-actions { display: flex; gap: 8px; }
-        .bots-list { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
-        .bot-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 12px; transition: background 0.15s; }
-        .bot-item:last-child { border-bottom: none; }
-        .bot-item:hover { background: rgba(255,255,255,0.02); }
-        .bot-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(34,197,94,0.1); display: flex; align-items: center; justify-content: center; }
-        .bot-icon svg { width: 18px; height: 18px; color: #22c55e; }
-        .bot-info { flex: 1; min-width: 0; }
-        .bot-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
-        .bot-server { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .bot-motd { font-size: 10px; color: #818cf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .bot-status-indicator { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
-        .bots-empty { padding: 40px; text-align: center; color: #475569; font-size: 13px; }
-        .dash-section { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-        .dash-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
-        .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
-        .input-field { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; }
-        .input-field:focus { border-color: #6366f1; }
-        .btn-primary { background: #6366f1; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
-        .btn-primary:hover { background: #5558e6; transform: translateY(-1px); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
-        .btn-danger:hover { background: rgba(239,68,68,0.25); }
-        .btn-secondary { background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
-        .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
-        .btn-warn { background: rgba(245,158,11,0.15); color: #f59e0b; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
-        .btn-warn:hover { background: rgba(245,158,11,0.25); }
-        .logs-container { background: #0a0e1a; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11px; line-height: 1.6; color: #64748b; }
-        .log-entry { padding: 2px 0; }
-        .log-entry .log-emoji { margin-right: 4px; }
-        .log-entry .log-time { color: #475569; margin-right: 6px; }
-        .log-entry.info { color: #38bdf8; }
-        .log-entry.success { color: #22c55e; }
-        .log-entry.error { color: #ef4444; }
-        .log-entry.warn { color: #f59e0b; }
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-        .setting-group { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; }
-        .setting-group h3 { font-size: 14px; font-weight: 700; margin-bottom: 16px; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
-        .setting-group h3 svg { width: 16px; height: 16px; }
-        .setting-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-        .setting-row:last-child { margin-bottom: 0; }
-        .setting-row label { font-size: 12px; color: #64748b; font-weight: 500; }
-        .blacklist-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .blacklist-tag { background: rgba(239,68,68,0.1); color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-        .blacklist-tag button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: 0.6; }
-        .blacklist-tag button:hover { opacity: 1; }
-        .messages-list { margin-top: 10px; }
-        .message-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 6px; margin-bottom: 4px; font-size: 13px; color: #94a3b8; }
-        .message-item button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; opacity: 0.6; flex-shrink: 0; }
-        .message-item button:hover { opacity: 1; }
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: 1fr; } }
-        .dashboard-full { grid-column: 1 / -1; }
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-        .toast { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 20px; font-size: 13px; color: #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.4); animation: toastIn 0.3s; min-width: 250px; pointer-events: auto; }
-        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .mc-0{color:#000}.mc-1{color:#0000AA}.mc-2{color:#00AA00}.mc-3{color:#00AAAA}.mc-4{color:#AA0000}.mc-5{color:#AA00AA}.mc-6{color:#FFAA00}.mc-7{color:#AAA}.mc-8{color:#555}.mc-9{color:#55F}.mc-a{color:#5F5}.mc-b{color:#5FF}.mc-c{color:#F55}.mc-d{color:#F5F}.mc-e{color:#FF5}.mc-f{color:#FFF}
-        .mc-l{font-weight:bold}.mc-o{font-style:italic}.mc-n{text-decoration:underline}.mc-m{text-decoration:line-through}
-        .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-        @media (max-width: 1000px) { .analytics-grid { grid-template-columns: 1fr; } }
-        .chart-card { background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; }
-        .chart-card h3 { font-size: 14px; font-weight: 700; color: #f1f5f9; margin-bottom: 16px; }
-        .chart-card canvas { max-height: 250px; }
-        .analytics-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
-        .analytics-stat { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px; text-align: center; }
-        .analytics-stat .val { font-size: 24px; font-weight: 800; color: #818cf8; }
-        .analytics-stat .lbl { font-size: 11px; color: #64748b; margin-top: 4px; }
-        .top-server-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
-        .top-server-row:last-child { border-bottom: none; }
-        .top-server-name { color: #e2e8f0; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .top-server-val { color: #818cf8; font-weight: 700; margin-left: 12px; }
-        .server-section-label { font-size: 13px; font-weight: 700; color: #94a3b8; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
-        .server-section-label .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .highlight { background: rgba(99,102,241,0.3); border-radius: 2px; padding: 0 1px; }
-        .login-bg { position: fixed; inset: 0; background: #0a0e1a; display: flex; align-items: center; justify-content: center; z-index: 3000; }
-        .login-card { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 90%; max-width: 400px; animation: slideUp 0.3s; overflow: hidden; }
-        .login-card-header { padding: 30px 30px 0; text-align: center; }
-        .login-card-body { padding: 24px 30px 30px; }
-        .login-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #ef4444; margin-bottom: 12px; text-align: center; animation: shake 0.4s; }
-        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
-        .login-footer { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; font-size: 11px; color: #475569; }
-        ::-webkit-scrollbar { width: 6px; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; height: 100vh; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
-        .no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; color: #475569; text-align: center; }
-        .no-data-placeholder svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
-        .no-data-placeholder p { font-size: 14px; margin-bottom: 4px; }
-        .no-data-placeholder span { font-size: 12px; color: #374151; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* LOGIN */
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .login-overlay.hidden { display: none; }
+        .login-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 36px; width: 360px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .login-box h2 { margin-bottom: 6px; font-size: 22px; }
+        .login-box p { color: var(--text-secondary); margin-bottom: 20px; font-size: 13px; }
+        .login-box .ig { margin-bottom: 14px; text-align: left; }
+        .login-box .ig label { display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 500; }
+        .login-box input { width: 100%; padding: 9px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; }
+        .login-box input:focus { border-color: var(--accent); }
+        .login-box button { width: 100%; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 6px; }
+        .login-box button:hover { background: var(--accent-hover); }
+        .login-error { color: var(--danger); font-size: 12px; margin-top: 10px; display: none; }
+
+        /* LAYOUT */
+        .app { display: flex; height: 100vh; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; }
+        .sb-header { padding: 14px; border-bottom: 1px solid var(--border); text-align: center; }
+        .sb-header h1 { font-size: 15px; font-weight: 700; background: linear-gradient(135deg, var(--accent), #a855f7); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+        .sb-header .ver { font-size: 10px; color: var(--text-muted); }
+        .sb-nav { flex: 1; padding: 6px; overflow-y: auto; }
+        .nav-sec { font-size: 9px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 10px 10px 4px; }
+        .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; color: var(--text-secondary); cursor: pointer; font-size: 12px; font-weight: 500; margin-bottom: 1px; transition: all 0.15s; }
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent); color: white; box-shadow: 0 2px 8px var(--accent-glow); }
+        .nav-item i { width: 16px; text-align: center; font-size: 12px; }
+        .nav-item .badge { margin-left: auto; background: var(--danger); color: white; font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 600; }
+        .sb-footer { padding: 10px 14px; border-top: 1px solid var(--border); font-size: 10px; }
+        .sb-footer .user-info { display: flex; align-items: center; gap: 6px; padding: 6px; background: var(--bg-input); border-radius: 6px; margin-bottom: 6px; }
+        .sb-footer .role { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 600; }
+        .sb-footer .role.admin { background: var(--accent); color: white; }
+        .sb-footer .role.viewer { background: var(--warning); color: #000; }
+        .sb-footer .role.client { background: var(--success); color: white; }
+        .sb-footer .logout-btn { width: 100%; padding: 5px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 5px; color: var(--text-secondary); cursor: pointer; font-size: 10px; }
+        .sb-footer .logout-btn:hover { background: var(--danger); color: white; }
+
+        /* MAIN */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        .topbar { height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; }
+        .topbar-title { font-size: 15px; font-weight: 600; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .status-dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
+        .status-dot.offline { background: var(--danger); }
+        .topbar-stat { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+        .content { flex: 1; overflow-y: auto; padding: 16px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+        .stat-card:hover { border-color: var(--accent); }
+        .stat-card .si { font-size: 18px; margin-bottom: 4px; }
+        .stat-card .sv { font-size: 22px; font-weight: 700; }
+        .stat-card .sl { font-size: 11px; color: var(--text-secondary); }
+
+        /* PANELS */
+        .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+        .panel-h { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 13px; }
+        .panel-b { padding: 14px; }
+        .panel-b.np { padding: 0; }
+
+        /* GRID */
+        .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 14px; }
+        .dash-left { min-width: 0; }
+        .dash-right { min-width: 0; }
+
+        /* BUTTONS */
+        .btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); cursor: pointer; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+        .btn:hover { background: var(--bg-hover); border-color: var(--accent); }
+        .btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+        .btn.primary:hover { background: var(--accent-hover); }
+        .btn.danger { background: var(--danger); border-color: var(--danger); color: white; }
+        .btn.success { background: var(--success); border-color: var(--success); color: white; }
+        .btn.sm { padding: 4px 8px; font-size: 10px; }
+        .btn:disabled, .btn.no-perm { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+        /* INPUTS */
+        .inp { padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 12px; outline: none; width: 100%; }
+        .inp:focus { border-color: var(--accent); }
+        .inp-row { display: flex; gap: 6px; margin-bottom: 10px; }
+        select.inp { cursor: pointer; }
+
+        /* BOTS */
+        .bot-card { display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); gap: 10px; }
+        .bot-card:hover { background: var(--bg-hover); }
+        .bot-card:last-child { border-bottom: none; }
+        .bot-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .bot-dot.on { background: var(--success); box-shadow: 0 0 5px var(--success); }
+        .bot-info { flex: 1; min-width: 0; }
+        .bot-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bot-srv { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bot-motd { font-size: 9px; color: var(--accent); font-style: italic; }
+        .bot-mini { display: flex; gap: 6px; font-size: 10px; color: var(--text-secondary); flex-shrink: 0; }
+        .bot-actions { display: flex; gap: 3px; flex-shrink: 0; }
+
+        /* CHAT */
+        .chat-container { display: flex; flex-direction: column; height: calc(100vh - var(--topbar-height) - 32px); }
+        .chat-toolbar { display: flex; gap: 6px; padding: 10px 0; flex-wrap: wrap; align-items: center; }
+        .chat-msgs { flex: 1; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+        .chat-msg { padding: 4px 8px; border-radius: 5px; margin-bottom: 3px; font-size: 12px; line-height: 1.4; }
+        .chat-msg:hover { background: var(--bg-hover); }
+        .chat-msg .ct { color: var(--text-muted); font-size: 10px; }
+        .chat-msg .cs { color: var(--accent); font-size: 10px; cursor: pointer; }
+        .chat-msg .cm { color: var(--text-muted); font-style: italic; font-size: 10px; }
+        .chat-msg .cu { color: var(--success); font-weight: 600; }
+        .chat-msg .cx { color: var(--text-primary); }
+        .chat-msg.mentioned { background: rgba(99,102,241,0.12); border-left: 3px solid var(--accent); }
+        .chat-msg .sentiment-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px; }
+        .chat-msg .sentiment-dot.positive { background: var(--success); }
+        .chat-msg .sentiment-dot.negative { background: var(--danger); }
+        .chat-input { display: flex; gap: 6px; padding: 10px 0; }
+
+        /* SERVER CARDS */
+        .srv-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+        .srv-card:hover { border-color: var(--accent); }
+        .srv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+        .srv-name { font-weight: 600; font-size: 12px; }
+        .srv-motd { font-size: 11px; color: var(--text-secondary); font-style: italic; margin-bottom: 4px; }
+        .srv-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 10px; color: var(--text-muted); }
+        .srv-tag { font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .srv-tag.survival { background: #22c55e22; color: var(--success); }
+        .srv-tag.pvp { background: #ef444422; color: var(--danger); }
+        .srv-tag.criativo { background: #3b82f622; color: var(--info); }
+        .srv-tag.minigame { background: #f59e0b22; color: var(--warning); }
+        .srv-tag.smp { background: #a855f722; color: #a855f7; }
+        .srv-tag.lojinha { background: #ec489922; color: #ec4899; }
+        .rep-bar { width: 100%; height: 3px; background: var(--bg-input); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+        .rep-bar .fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+        /* LOGS */
+        .log-e { padding: 4px 8px; font-size: 11px; font-family: monospace; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .log-t { color: var(--text-muted); }
+
+        /* MSG LIST */
+        .msg-item { display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); gap: 8px; }
+        .msg-idx { font-size: 10px; color: var(--text-muted); min-width: 20px; }
+        .msg-txt { flex: 1; font-size: 12px; word-break: break-word; }
+
+        /* BLACKLIST */
+        .bl-item { display: flex; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--border); gap: 8px; font-size: 12px; }
+        .bl-type { font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .bl-type.perm { background: #ef444422; color: var(--danger); }
+        .bl-type.temp { background: #f59e0b22; color: var(--warning); }
+
+        /* LEARNING */
+        .word-cloud { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; }
+        .word-tag { padding: 3px 8px; border-radius: 5px; font-size: 11px; background: var(--bg-input); border: 1px solid var(--border); }
+        .word-tag:hover { border-color: var(--accent); }
+        .word-tag .cnt { color: var(--text-muted); font-size: 9px; margin-left: 3px; }
+
+        /* TERMINAL */
+        .term-screen { background: #0a0a1a; border: 1px solid var(--border); border-radius: 10px; font-family: monospace; font-size: 11px; color: #c8d6e5; height: calc(100vh - 320px); overflow-y: auto; padding: 10px; }
+        .term-line { padding: 1px 0; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
+        .term-line .tt { color: #576574; }
+        .term-line.err .tv { color: #ee5a24; }
+        .term-line.ok .tv { color: #2ed573; }
+        .term-line.warn .tv { color: #ffa502; }
+
+        /* SYS INFO */
+        .sys-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 14px; }
+        .sys-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; }
+        .sys-card .sv { font-size: 18px; font-weight: 700; color: var(--accent); }
+        .sys-card .sl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+        /* CHART */
+        .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 100px; padding-top: 6px; }
+        .chart-bar { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; min-width: 8px; transition: height 0.5s; position: relative; cursor: pointer; }
+        .chart-bar:hover { background: var(--accent-hover); }
+        .chart-bar .bl { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-muted); white-space: nowrap; }
+        .chart-bar .bv { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-secondary); }
+
+        /* TOP SERVER CHAT */
+        .tsc { max-height: 350px; overflow-y: auto; }
+        .tsc-h { padding: 8px 12px; background: var(--bg-input); border-bottom: 1px solid var(--border); font-size: 11px; }
+        .tsc-m { padding: 3px 12px; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+
+        /* PLAYER PROFILE */
+        .player-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+        .player-card:hover { border-color: var(--accent); }
+        .player-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .player-avatar { width: 32px; height: 32px; border-radius: 4px; }
+        .player-name { font-size: 13px; font-weight: 600; }
+        .player-role { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 600; background: var(--accent); color: white; }
+        .player-stats { display: flex; gap: 10px; font-size: 10px; color: var(--text-muted); flex-wrap: wrap; }
+        .player-toxic { color: var(--danger); font-weight: 600; }
+
+        /* KEYS */
+        .key-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+        .key-card:hover { border-color: var(--accent); }
+        .key-value { font-family: monospace; font-size: 11px; color: var(--accent); background: var(--bg-input); padding: 4px 8px; border-radius: 4px; user-select: all; }
+        .key-meta { display: flex; gap: 8px; font-size: 10px; color: var(--text-muted); margin-top: 6px; flex-wrap: wrap; }
+
+        /* ADS */
+        .ad-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+        .ad-progress { width: 100%; height: 4px; background: var(--bg-input); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+        .ad-progress .fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 1s; }
+
+        /* TOAST */
+        .toast-c { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 6px; }
+        .toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: 7px; padding: 8px 14px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; max-width: 320px; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 50px; }
+            .nav-item span, .nav-sec, .sb-header h1, .sb-header .ver, .sb-footer .user-info span, .nav-item .badge { display: none; }
+            .nav-item { justify-content: center; padding: 8px; }
+            .dash-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div id="app"></div>
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-        // ===== MOTD PARSER =====
-        function parseMotd(motd) {
-            if (!motd) return [{ text: '', classes: [] }];
-            if (typeof motd === 'object') {
-                if (motd.text !== undefined) {
-                    let parts = parseMotdString(String(motd.text || ''));
-                    if (motd.extra) motd.extra.forEach(e => { parts = parts.concat(parseMotd(e)); });
-                    return parts;
-                }
-                if (motd.translate) return parseMotdString(motd.translate);
-                return parseMotdString(JSON.stringify(motd));
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <h2>🤖 Bot Anunciador</h2>
+        <p>v8.0 — Login</p>
+        <div class="ig"><label>Usuário / Key</label><input type="text" id="loginUser" placeholder="Usuário ou API Key" autocomplete="off"></div>
+        <div class="ig"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha" autocomplete="off"></div>
+        <button onclick="doLogin()" id="loginBtn">Entrar</button>
+        <div class="login-error" id="loginError"></div>
+    </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app" style="display:none;">
+    <div class="sidebar">
+        <div class="sb-header"><h1>Bot Anunciador</h1><div class="ver">v8.0</div></div>
+        <div class="sb-nav">
+            <div class="nav-sec">Principal</div>
+            <div class="nav-item active" data-page="dashboard" onclick="nav('dashboard')"><i class="fas fa-home"></i><span>Dashboard</span></div>
+            <div class="nav-item" data-page="bots" onclick="nav('bots')"><i class="fas fa-robot"></i><span>Bots</span><span class="badge" id="botsCount">0</span></div>
+            <div class="nav-item" data-page="chat" onclick="nav('chat')"><i class="fas fa-comments"></i><span>Chat</span></div>
+            <div class="nav-item" data-page="learning" onclick="nav('learning')"><i class="fas fa-brain"></i><span>Aprendizado</span></div>
+            <div class="nav-sec">Gerenciar</div>
+            <div class="nav-item" data-page="servers" onclick="nav('servers')"><i class="fas fa-server"></i><span>Servidores</span></div>
+            <div class="nav-item" data-page="players" onclick="nav('players')"><i class="fas fa-users"></i><span>Players</span></div>
+            <div class="nav-item" data-page="messages" onclick="nav('messages')"><i class="fas fa-bullhorn"></i><span>Mensagens</span></div>
+            <div class="nav-item" data-page="blacklist" onclick="nav('blacklist')"><i class="fas fa-ban"></i><span>Blacklist</span></div>
+            <div class="nav-sec">Análise</div>
+            <div class="nav-item" data-page="analytics" onclick="nav('analytics')"><i class="fas fa-chart-bar"></i><span>Analytics</span></div>
+            <div class="nav-item" data-page="terminal" onclick="nav('terminal')"><i class="fas fa-terminal"></i><span>Terminal</span></div>
+            <div class="nav-item" data-page="logs" onclick="nav('logs')"><i class="fas fa-list-alt"></i><span>Logs</span></div>
+            <div class="nav-sec admin-only">Admin</div>
+            <div class="nav-item admin-only" data-page="keys" onclick="nav('keys')"><i class="fas fa-key"></i><span>Keys/Ads</span></div>
+            <div class="nav-item" data-page="settings" onclick="nav('settings')"><i class="fas fa-cog"></i><span>Config</span></div>
+        </div>
+        <div class="sb-footer">
+            <div class="user-info"><i class="fas fa-user" style="color:var(--accent);font-size:11px;"></i><span id="sbUser">—</span><span class="role" id="sbRole">—</span></div>
+            <button class="logout-btn" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        </div>
+    </div>
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar-title" id="pageTitle">Dashboard</div>
+            <div class="topbar-right">
+                <div class="topbar-stat"><span class="status-dot" id="botDot"></span><span id="botText">Offline</span></div>
+                <div class="topbar-stat"><i class="fas fa-clock"></i><span id="uptime">0m</span></div>
+                <div class="topbar-stat"><i class="fas fa-memory"></i><span id="memText">—</span></div>
+            </div>
+        </div>
+        <div class="content">
+
+            <!-- DASHBOARD -->
+            <div class="page active" id="p-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="si">🤖</div><div class="sv" id="sBots">0</div><div class="sl">Bots Ativos</div></div>
+                    <div class="stat-card"><div class="si">🖥️</div><div class="sv" id="sServers">0</div><div class="sl">Servidores</div></div>
+                    <div class="stat-card"><div class="si">💬</div><div class="sv" id="sMsgs">0</div><div class="sl">Mensagens</div></div>
+                    <div class="stat-card"><div class="si">🚫</div><div class="sv" id="sBl">0</div><div class="sl">Blacklist</div></div>
+                    <div class="stat-card"><div class="si">👥</div><div class="sv" id="sPlayers">0</div><div class="sl">Players</div></div>
+                    <div class="stat-card"><div class="si">📢</div><div class="sv" id="sAds">0</div><div class="sl">Anúncios Ativos</div></div>
+                </div>
+                <div class="dash-grid">
+                    <div class="dash-left">
+                        <div class="panel"><div class="panel-h"><span>🏆 Top 3 Servidores</span></div><div class="panel-b np" id="topSrvPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Aguardando...</div></div></div>
+                        <div class="panel"><div class="panel-h"><span>🤖 Bots Ativos</span><div><button class="btn sm primary admin-only" onclick="cmd('announce')"><i class="fas fa-bullhorn"></i></button> <button class="btn sm danger admin-only" onclick="cmd('restartBots')"><i class="fas fa-redo"></i></button></div></div><div class="panel-b np" id="botsPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Nenhum bot</div></div></div>
+                        <div class="panel"><div class="panel-h"><span>📋 Logs</span></div><div class="panel-b np" id="dashLogs" style="max-height:180px;overflow-y:auto;"></div></div>
+                    </div>
+                    <div class="dash-right">
+                        <div class="panel"><div class="panel-h"><span>💬 Chat Popular</span></div><div class="panel-b np"><div class="tsc" id="tscPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Aguardando...</div></div></div></div>
+                        <div class="panel"><div class="panel-h"><span>🔗 Conectar</span></div><div class="panel-b"><div class="inp-row"><input class="inp admin-only" id="cIp" placeholder="ip:porta"><button class="btn primary admin-only" onclick="connectSrv()"><i class="fas fa-plug"></i></button></div></div></div>
+                        <div class="panel"><div class="panel-h"><span>📊 Pico Horário</span></div><div class="panel-b"><div class="chart-bars" id="peakChart" style="height:70px;"></div><div style="height:18px;"></div></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTS -->
+            <div class="page" id="p-bots">
+                <div class="inp-row"><input class="inp admin-only" id="cIp2" placeholder="ip:porta" style="max-width:260px;"><button class="btn primary admin-only" onclick="connectSrv2()"><i class="fas fa-plug"></i> Conectar</button><button class="btn danger admin-only" onclick="cmd('disconnect_server','all')"><i class="fas fa-power-off"></i> Todos</button></div>
+                <div class="panel"><div class="panel-h"><span>🤖 Bots</span></div><div class="panel-b np" id="botsFull"></div></div>
+            </div>
+
+            <!-- CHAT -->
+            <div class="page" id="p-chat">
+                <div class="chat-container">
+                    <div class="chat-toolbar">
+                        <select class="inp" id="chatFilter" style="max-width:220px;" onchange="filterChat()"><option value="all">Todos servidores</option></select>
+                        <select class="inp" id="chatSType" style="max-width:110px;"><option value="all">Tudo</option><option value="player">Jogador</option><option value="message">Mensagem</option></select>
+                        <input class="inp" id="chatSearch" placeholder="Pesquisar..." style="max-width:200px;" oninput="filterChat()">
+                        <button class="btn sm" onclick="filterChat()"><i class="fas fa-search"></i></button>
+                        <button class="btn sm" onclick="dlChat()"><i class="fas fa-download"></i> Baixar</button>
+                        <button class="btn sm danger admin-only" onclick="cmd('clearChatDatabase')"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="chat-msgs" id="chatMsgs"></div>
+                    <div class="chat-input">
+                        <select class="inp admin-only" id="chatSendSrv" style="max-width:180px;"><option value="all">Todos</option></select>
+                        <input class="inp admin-only" id="chatSendMsg" placeholder="Mensagem..." onkeydown="if(event.key==='Enter')sendChat()">
+                        <button class="btn primary admin-only" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+                        <input class="inp admin-only" id="chatSendCmd" placeholder="/cmd" style="max-width:150px;" onkeydown="if(event.key==='Enter')sendCmd()">
+                        <button class="btn admin-only" onclick="sendCmd()"><i class="fas fa-terminal"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEARNING -->
+            <div class="page" id="p-learning">
+                <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));">
+                    <div class="stat-card"><div class="si">🧠</div><div class="sv" id="lTotal">0</div><div class="sl">Analisadas</div></div>
+                    <div class="stat-card"><div class="si">📝</div><div class="sv" id="lMin">0%</div><div class="sl">Minúscula</div></div>
+                    <div class="stat-card"><div class="si">🔤</div><div class="sv" id="lAcento">0%</div><div class="sl">Acento</div></div>
+                    <div class="stat-card"><div class="si">✂️</div><div class="sv" id="lAbrev">0%</div><div class="sl">Abreviações</div></div>
+                </div>
+                <div class="inp-row"><button class="btn primary" onclick="reqLearn()"><i class="fas fa-sync"></i> Atualizar</button><button class="btn success" onclick="exportLearn()"><i class="fas fa-download"></i> Exportar DB</button></div>
+                <div class="panel"><div class="panel-h"><span>🗣️ Gírias</span></div><div class="panel-b"><div class="word-cloud" id="giriasC"></div></div></div>
+                <div class="panel"><div class="panel-h"><span>💬 Expressões</span></div><div class="panel-b"><div class="word-cloud" id="exprC"></div></div></div>
+                <div class="panel"><div class="panel-h"><span>📜 Frases</span></div><div class="panel-b np" id="frasesP"></div></div>
+            </div>
+
+            <!-- SERVERS -->
+            <div class="page" id="p-servers">
+                <div class="inp-row">
+                    <select class="inp" id="srvCatF" style="max-width:160px;" onchange="renderSrvs()"><option value="all">Todas</option><option value="survival">Survival</option><option value="pvp">PvP</option><option value="criativo">Criativo</option><option value="minigame">Minigame</option><option value="smp">SMP</option><option value="lojinha">Lojinha</option><option value="outro">Outro</option></select>
+                    <select class="inp" id="srvStatF" style="max-width:130px;" onchange="renderSrvs()"><option value="all">Todos</option><option value="online">Online</option><option value="offline">Offline</option></select>
+                    <input class="inp" id="srvSearch" placeholder="Pesquisar..." style="max-width:220px;" oninput="renderSrvs()">
+                </div>
+                <div id="srvsPanel"></div>
+            </div>
+
+            <!-- PLAYERS -->
+            <div class="page" id="p-players">
+                <div class="inp-row">
+                    <input class="inp" id="playerSearch" placeholder="Pesquisar jogador..." style="max-width:260px;" oninput="searchPlayers()">
+                    <button class="btn" onclick="searchPlayers()"><i class="fas fa-search"></i></button>
+                    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);"><input type="checkbox" id="playerToxicOnly" onchange="searchPlayers()"> Só tóxicos</label>
+                </div>
+                <div id="playersPanel"></div>
+            </div>
+
+            <!-- MESSAGES -->
+            <div class="page" id="p-messages">
+                <div class="panel"><div class="panel-h"><span>📣 Anúncios</span></div><div class="panel-b"><div class="inp-row"><input class="inp admin-only" id="newMsg" placeholder="Nova mensagem..."><button class="btn primary admin-only" onclick="addMsg()"><i class="fas fa-plus"></i></button></div></div><div class="panel-b np" id="msgsPanel"></div></div>
+                <div class="panel"><div class="panel-h"><span>⚙️ Config</span></div><div class="panel-b"><div class="inp-row"><label style="font-size:12px;min-width:100px;display:flex;align-items:center;">Intervalo(s):</label><input type="number" class="inp admin-only" id="intInp" min="10" style="max-width:100px;"><button class="btn primary admin-only" onclick="setInt()">Salvar</button></div><div class="inp-row"><label style="font-size:12px;min-width:100px;display:flex;align-items:center;">Username:</label><input class="inp admin-only" id="unameInp" style="max-width:180px;"><button class="btn primary admin-only" onclick="setUname()">Salvar</button></div></div></div>
+            </div>
+
+            <!-- BLACKLIST -->
+            <div class="page" id="p-blacklist">
+                <div class="inp-row"><input class="inp admin-only" id="blInp" placeholder="ip:porta" style="max-width:260px;"><button class="btn primary admin-only" onclick="addBl()"><i class="fas fa-plus"></i></button><button class="btn danger admin-only" onclick="cmd('clearBlacklist')"><i class="fas fa-trash"></i> Limpar</button></div>
+                <div class="panel"><div class="panel-h"><span>🚫 Permanente</span></div><div class="panel-b np" id="blPerm"></div></div>
+                <div class="panel"><div class="panel-h"><span>⏳ Temporária</span></div><div class="panel-b np" id="blTemp"></div></div>
+            </div>
+
+            <!-- ANALYTICS -->
+            <div class="page" id="p-analytics">
+                <div class="inp-row"><button class="btn sm" onclick="loadAn('1h')">1H</button><button class="btn sm primary" onclick="loadAn('24h')">24H</button><button class="btn sm" onclick="loadAn('7d')">7D</button></div>
+                <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));"><div class="stat-card"><div class="si">💬</div><div class="sv" id="anMsgs">0</div><div class="sl">Msgs Período</div></div></div>
+                <div class="panel"><div class="panel-h"><span>📊 Msgs/Hora</span></div><div class="panel-b"><div class="chart-bars" id="anMsgChart" style="height:100px;"></div><div style="height:20px;"></div></div></div>
+                <div class="panel"><div class="panel-h"><span>👥 Players</span></div><div class="panel-b"><div class="chart-bars" id="anPlayChart" style="height:100px;"></div><div style="height:20px;"></div></div></div>
+                <div class="panel"><div class="panel-h"><span>🏆 Top Servers</span></div><div class="panel-b np" id="anTopSrv"></div></div>
+            </div>
+
+            <!-- TERMINAL -->
+            <div class="page" id="p-terminal">
+                <div class="sys-grid" id="sysGrid">
+                    <div class="sys-card"><div class="sv" id="sysUp">—</div><div class="sl">Uptime</div></div>
+                    <div class="sys-card"><div class="sv" id="sysMem">—</div><div class="sl">Heap</div></div>
+                    <div class="sys-card"><div class="sv" id="sysRss">—</div><div class="sl">RSS</div></div>
+                    <div class="sys-card"><div class="sv" id="sysBots">0</div><div class="sl">Bots</div></div>
+                    <div class="sys-card"><div class="sv" id="sysChat">0</div><div class="sl">Chat</div></div>
+                    <div class="sys-card"><div class="sv" id="sysSrv">0</div><div class="sl">Servers</div></div>
+                    <div class="sys-card"><div class="sv" id="sysNode">—</div><div class="sl">Node</div></div>
+                    <div class="sys-card"><div class="sv" id="sysPlat">—</div><div class="sl">OS</div></div>
+                </div>
+                <div class="inp-row"><button class="btn primary" onclick="reqSys()"><i class="fas fa-sync"></i> Info</button><button class="btn danger admin-only" onclick="restartBot()"><i class="fas fa-power-off"></i> Reiniciar Bot</button><button class="btn" onclick="clearTerm()"><i class="fas fa-eraser"></i> Limpar</button></div>
+                <div class="panel" style="margin-top:10px;"><div class="panel-h"><span><i class="fas fa-terminal"></i> Console</span><span style="font-size:10px;color:var(--text-muted);" id="termCount">0</span></div><div class="panel-b np"><div class="term-screen" id="termScreen"><div class="term-line"><span class="tv">Aguardando bot...</span></div></div></div></div>
+            </div>
+
+            <!-- LOGS -->
+            <div class="page" id="p-logs">
+                <div class="panel"><div class="panel-h"><span>📋 Logs</span><button class="btn sm" onclick="cmd('refresh')"><i class="fas fa-sync"></i></button></div><div class="panel-b np" id="logsP" style="max-height:calc(100vh - 180px);overflow-y:auto;"></div></div>
+            </div>
+
+            <!-- KEYS (admin) -->
+            <div class="page" id="p-keys">
+                <div class="panel"><div class="panel-h"><span>🔑 Criar Nova Key</span></div><div class="panel-b">
+                    <div class="inp-row"><label style="font-size:12px;min-width:80px;">Label:</label><input class="inp" id="keyLabel" placeholder="Nome do cliente" style="max-width:200px;"></div>
+                    <div class="inp-row"><label style="font-size:12px;min-width:80px;">Duração(h):</label><input type="number" class="inp" id="keyDuration" placeholder="24" min="1" style="max-width:100px;"></div>
+                    <div class="inp-row"><label style="font-size:12px;min-width:80px;">Anúncio:</label><input class="inp" id="keyAdMsg" placeholder="Mensagem do anúncio pago"></div>
+                    <button class="btn primary" onclick="createKey()"><i class="fas fa-plus"></i> Criar Key</button>
+                </div></div>
+                <div class="panel"><div class="panel-h"><span>📋 Keys Ativas</span></div><div class="panel-b np" id="keysPanel"></div></div>
+                <div class="panel"><div class="panel-h"><span>📢 Anúncios Pagos</span></div><div class="panel-b np" id="adsPanel"></div></div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div class="page" id="p-settings">
+                <div class="panel"><div class="panel-h"><span>⚙️ Info</span></div><div class="panel-b">
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border);"><span>Relay</span><span style="color:var(--accent);" id="setRelay">—</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border);"><span>Bot</span><span style="color:var(--accent);" id="setBot">—</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border);"><span>Papel</span><span style="color:var(--accent);" id="setRole">—</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;"><span>Versão</span><span style="color:var(--accent);">8.0</span></div>
+                </div></div>
+                <div class="panel"><div class="panel-h"><span>💾 Dados</span></div><div class="panel-b"><div class="inp-row"><button class="btn admin-only" onclick="cmd('saveChat')"><i class="fas fa-save"></i> Salvar</button><button class="btn" onclick="dlChat()"><i class="fas fa-download"></i> Chat</button><button class="btn" onclick="exportLearn()"><i class="fas fa-brain"></i> Learning</button></div></div></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="toast-c" id="toastC"></div>
+<script>
+// ========== STATE ==========
+let socket=null,currentUser=null,currentRole=null,currentPage='dashboard',botOnline=false;
+let allBots=[],allServers=[],allChat=[],allLogs=[],stats={},analyticsData={},learningData={},topServerChat={},sessionToken=null;
+const RELAY=window.location.origin;
+
+// ========== LOGIN ==========
+function doLogin(){
+    const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value.trim();
+    if(!u)return;
+    document.getElementById('loginBtn').disabled=true;
+    document.getElementById('loginError').style.display='none';
+    if(socket){socket.disconnect();socket=null;}
+    socket=io(RELAY,{reconnection:true,reconnectionDelay:2000});
+    socket.on('connect',()=>{
+        socket.emit('authenticate',{username:u,password:p||u},(r)=>{
+            if(r.success){
+                currentUser=r.username;currentRole=r.role;sessionToken=r.sessionToken;
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('app').style.display='flex';
+                document.getElementById('sbUser').textContent=currentUser;
+                const rl=r.role==='admin'?'👑 Admin':r.role==='viewer'?'👁️ Viewer':'🔑 Client';
+                document.getElementById('sbRole').textContent=rl;
+                document.getElementById('sbRole').className='role '+r.role;
+                document.getElementById('setRole').textContent=rl;
+                document.getElementById('setRelay').textContent=RELAY;
+                applyPerms();
+                startKeepAlive();
+                toast('✅ Login!');
+                if(r.role==='client'&&r.keyData)showClientInfo(r.keyData);
+            }else{
+                document.getElementById('loginError').style.display='block';
+                document.getElementById('loginError').textContent=r.error||'Erro!';
+                document.getElementById('loginBtn').disabled=false;
             }
-            return parseMotdString(String(motd));
-        }
-
-        function parseMotdString(str) {
-            const parts = []; let current = { text: '', classes: [] }; let i = 0;
-            while (i < str.length) {
-                if (str[i] === '§' && i + 1 < str.length) {
-                    if (current.text) parts.push({ ...current });
-                    const code = str[i + 1].toLowerCase();
-                    if (code === 'r') current = { text: '', classes: [] };
-                    else if ('0123456789abcdef'.includes(code)) current = { text: '', classes: ['mc-' + code] };
-                    else if ('lmnok'.includes(code)) current = { text: '', classes: [...current.classes, 'mc-' + code] };
-                    else current = { text: '', classes: [...current.classes] };
-                    i += 2;
-                } else { current.text += str[i]; i++; }
-            }
-            if (current.text) parts.push(current);
-            return parts;
-        }
-
-        function MotdText({ motd }) {
-            const parts = parseMotd(motd);
-            if (!parts.length || (parts.length === 1 && !parts[0].text)) return <span style={{color:'#64748b'}}>Sem MOTD</span>;
-            return <span>{parts.map((p, i) => <span key={i} className={p.classes.join(' ')}>{p.text}</span>)}</span>;
-        }
-
-        // ===== ICONS =====
-        const I = {
-            Dashboard: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
-            Server: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg>,
-            Chat: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-            Settings: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
-            Analytics: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
-            Bot: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>,
-            Users: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-            Eye: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
-            Download: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-            ChevronLeft: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
-            ChevronRight: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
-            Globe: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
-            Shield: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-            Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg>,
-            Plug: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v6"/><path d="M6 8h12"/><path d="M8 8v4a4 4 0 0 0 8 0V8"/><path d="M12 16v6"/></svg>,
-            MsgEmpty: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg>,
-            Clock: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-        };
-
-        // ===== SERVER POPUP =====
-        function ServerPopup({ server, onClose, chatMessages, socket }) {
-            const serverChat = useMemo(() =>
-                (chatMessages || []).filter(m => m.serverKey === server.key).slice(-30),
-                [chatMessages, server.key]
-            );
-            const chatEndRef = useRef(null);
-            useEffect(() => { if(chatEndRef.current) chatEndRef.current.scrollTop = chatEndRef.current.scrollHeight; }, [serverChat]);
-
-            return (
-                <div className="modal-overlay" onClick={onClose}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2><MotdText motd={server.motd} /></h2>
-                            <button className="modal-close" onClick={onClose}>×</button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="modal-info-grid">
-                                <div className="modal-info-item"><label>IP</label><span>{server.key}</span></div>
-                                <div className="modal-info-item"><label>Versão</label><span>{server.version || '?'}</span></div>
-                                <div className="modal-info-item"><label>Jogadores</label><span>{(server.players||[]).length}/{server.maxPlayers||'?'}</span></div>
-                                <div className="modal-info-item"><label>Status</label><span style={{color: server.status==='online'?'#22c55e':'#ef4444'}}>{server.status==='online'?'● Online':'● Offline'}</span></div>
-                                <div className="modal-info-item" style={{gridColumn:'1/-1'}}><label>MOTD</label><span><MotdText motd={server.motd}/></span></div>
-                            </div>
-                            <div className="modal-section-title"><I.Users/> Jogadores ({(server.players||[]).length})</div>
-                            <div className="players-list">
-                                {(server.players||[]).length > 0 ? (server.players||[]).map((p,i) => {
-                                    const name = typeof p==='string'?p:p.username||p.name||'?';
-                                    return (
-                                        <span key={i} className="player-tag">
-                                            <img src={`https://mc-heads.net/avatar/${encodeURIComponent(name)}/16`} alt="" onError={e=>{e.target.style.display='none'}}/>
-                                            {name}
-                                        </span>
-                                    );
-                                }) : <span style={{color:'#475569',fontSize:13}}>Nenhum jogador</span>}
-                            </div>
-                            <div className="modal-section-title"><I.Chat/> Chat</div>
-                            <div className="modal-chat" ref={chatEndRef}>
-                                {serverChat.length>0 ? serverChat.map((msg,i) => (
-                                    <div key={i} className="modal-chat-msg">
-                                        <span className="chat-time">[{new Date(msg.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}]</span>
-                                        <span className="chat-user">{msg.username}:</span>
-                                        <span className="chat-text">{msg.message}</span>
-                                    </div>
-                                )) : <div style={{color:'#475569',textAlign:'center',padding:20,fontSize:13}}>Sem mensagens</div>}
-                            </div>
-                            <div className="modal-actions">
-                                <button className="btn-primary" onClick={() => {if(socket) socket.emit('connect_server',server.key); onClose();}}>Conectar Bot</button>
-                                <button className="btn-danger" onClick={() => {if(socket) socket.emit('disconnect_server',server.key); onClose();}}>Desconectar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // ===== LOG ENTRY =====
-        function LogEntry({ log }) {
-            if (typeof log === 'string') return <div className="log-entry">{log}</div>;
-            const emoji = log.emoji || '';
-            const time = log.time || '';
-            const msg = log.msg || log.text || log.message || JSON.stringify(log);
-            let cls = 'info';
-            if (/[✅📣]/.test(emoji)) cls = 'success';
-            else if (/[❌🚫⛔]/.test(emoji)) cls = 'error';
-            else if (/[⚠🔌🔄]/.test(emoji)) cls = 'warn';
-            return <div className={`log-entry ${cls}`}><span className="log-time">[{time}]</span> <span className="log-emoji">{emoji}</span> {msg}</div>;
-        }
-
-        // ===== DASHBOARD =====
-        const DashboardPage = React.memo(function DashboardPage({ stats, bots, logs, servers, socket, setLogs }) {
-            const [chatFilter, setChatFilter] = useState('all');
-            const [chatMsg, setChatMsg] = useState('');
-            const [cmdMsg, setCmdMsg] = useState('');
-            const [connectIp, setConnectIp] = useState('');
-            const logsEndRef = useRef(null);
-
-            useEffect(() => { if (logsEndRef.current) logsEndRef.current.scrollTop = logsEndRef.current.scrollHeight; }, [logs]);
-
-            const sendChat = useCallback(() => {
-                if(!chatMsg.trim()||!socket) return;
-                socket.emit('chat',{message:chatMsg,serverKey:chatFilter});
-                setChatMsg('');
-            }, [chatMsg, chatFilter, socket]);
-
-            const sendCmd = useCallback(() => {
-                if(!cmdMsg.trim()||!socket) return;
-                socket.emit('command',{command:cmdMsg,serverKey:chatFilter});
-                setCmdMsg('');
-            }, [cmdMsg, chatFilter, socket]);
-
-            const getServerForBot = useCallback((bot) => {
-                const key = bot.serverKey || bot.server;
-                return (servers || []).find(s => s.key === key);
-            }, [servers]);
-
-            return (
-                <div>
-                    <div className="stats-grid">
-                        <div className="stat-card"><div className="stat-label">Bots Ativos</div><div className="stat-value green">{stats.botsAtivos||0}</div></div>
-                        <div className="stat-card"><div className="stat-label">Total Conectados</div><div className="stat-value purple">{stats.totalBots||0}</div></div>
-                        <div className="stat-card"><div className="stat-label">Servidores</div><div className="stat-value">{(servers||[]).length}</div></div>
-                        <div className="stat-card"><div className="stat-label">Blacklist</div><div className="stat-value yellow">{stats.blacklistSize||0}</div></div>
-                        <div className="stat-card"><div className="stat-label">Intervalo</div><div className="stat-value">{stats.intervalo||0}s</div></div>
-                    </div>
-                    <div className="dashboard-grid">
-                        <div>
-                            <div className="section-header">
-                                <span className="section-title">Bots Conectados</span>
-                                <div className="section-actions">
-                                    <button className="btn-danger" onClick={() => socket&&socket.emit('restartBots')}>Desconectar</button>
-                                    <button className="btn-secondary" onClick={() => socket&&socket.emit('refresh')}>🔄</button>
-                                </div>
-                            </div>
-                            <div className="bots-list">
-                                {(!bots||bots.length===0) ? <div className="bots-empty">Nenhum bot conectado</div> : bots.map((b,i) => {
-                                    const srv = getServerForBot(b);
-                                    return (
-                                        <div key={b.key||i} className="bot-item">
-                                            <div className="bot-icon"><I.Bot/></div>
-                                            <div className="bot-info">
-                                                <div className="bot-name">{b.username||b.name||'?'}</div>
-                                                <div className="bot-server">{b.serverKey||b.server||'?'} {b.versao?`(v${b.versao})`:''}</div>
-                                                <div className="bot-motd">{srv ? <MotdText motd={srv.motd}/> : ''}</div>
-                                            </div>
-                                            <div className="bot-status-indicator"/>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="dash-section">
-                                <h3><I.Chat/> Chat & Comandos</h3>
-                                <select className="filter-select" value={chatFilter} onChange={e=>setChatFilter(e.target.value)} style={{width:'100%',marginBottom:10}}>
-                                    <option value="all">Todos os Servidores</option>
-                                    {bots&&bots.map((b,i)=><option key={b.key||i} value={b.serverKey||b.server}>{b.serverKey||b.server}</option>)}
-                                </select>
-                                <div className="input-row">
-                                    <input className="input-field" placeholder="Mensagem..." value={chatMsg} onChange={e=>setChatMsg(e.target.value)} onKeyDown={e=>e.key==='Enter'&&sendChat()}/>
-                                    <button className="btn-primary" onClick={sendChat}>Enviar</button>
-                                </div>
-                                <div className="input-row">
-                                    <input className="input-field" placeholder="/comando" value={cmdMsg} onChange={e=>setCmdMsg(e.target.value)} onKeyDown={e=>e.key==='Enter'&&sendCmd()}/>
-                                    <button className="btn-secondary" onClick={sendCmd}>Executar</button>
-                                </div>
-                                <button className="btn-warn" style={{width:'100%',marginTop:6}} onClick={()=>socket&&socket.emit('announce')}>⚡ Forçar Anúncio</button>
-                            </div>
-                            <div className="dash-section">
-                                <h3><I.Plug/> Conectar Bot</h3>
-                                <div className="input-row">
-                                    <input className="input-field" placeholder="IP:Porta" value={connectIp} onChange={e=>setConnectIp(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&connectIp&&socket){socket.emit('connect_server',connectIp);setConnectIp('');}}}/>
-                                    <button className="btn-primary" onClick={()=>{if(connectIp&&socket){socket.emit('connect_server',connectIp);setConnectIp('');}}}>Conectar</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="dashboard-full">
-                            <div className="dash-section">
-                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-                                    <h3 style={{marginBottom:0}}>📋 Logs ({logs.length})</h3>
-                                    <button className="btn-secondary" style={{padding:'5px 12px',fontSize:11}} onClick={()=>setLogs([])}>Limpar</button>
-                                </div>
-                                <div className="logs-container" ref={logsEndRef}>
-                                    {logs.length===0 ? <div style={{color:'#475569',textAlign:'center',padding:20}}>Aguardando logs...</div>
-                                    : logs.map((log,i) => <LogEntry key={i} log={log}/>)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
         });
+    });
+    socket.on('connect_error',()=>{
+        document.getElementById('loginError').style.display='block';
+        document.getElementById('loginError').textContent='Erro de conexão!';
+        document.getElementById('loginBtn').disabled=false;
+    });
+    socket.on('requireAuth',()=>{});
+    socket.on('sessionExpired',()=>{toast('⏰ Sessão expirou!');doLogout();});
+    setupEvents();
+}
 
-        // ===== SERVERS =====
-        const ServersPage = React.memo(function ServersPage({ servers, bots, chatMessages, socket }) {
-            const [selectedServer, setSelectedServer] = useState(null);
-            const [searchTerm, setSearchTerm] = useState('');
+function doLogout(){if(socket){socket.disconnect();socket=null;}currentUser=null;currentRole=null;sessionToken=null;document.getElementById('loginOverlay').classList.remove('hidden');document.getElementById('app').style.display='none';document.getElementById('loginBtn').disabled=false;document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';}
 
-            const botServerKeys = useMemo(() => new Set((bots||[]).map(b => b.serverKey || b.server)), [bots]);
+function applyPerms(){
+    if(currentRole==='viewer'||currentRole==='client'){
+        document.querySelectorAll('.admin-only').forEach(el=>{el.classList.add('no-perm');el.title='Sem permissão';});
+    }else{document.querySelectorAll('.admin-only').forEach(el=>{el.classList.remove('no-perm');el.title='';});}
+}
 
-            const filteredServers = useMemo(() => {
-                let srvs = servers || [];
-                if (searchTerm.trim()) {
-                    const s = searchTerm.toLowerCase();
-                    srvs = srvs.filter(srv => srv.key.toLowerCase().includes(s) || String(srv.motd||'').toLowerCase().includes(s));
-                }
-                return srvs;
-            }, [servers, searchTerm]);
+function startKeepAlive(){
+    setInterval(()=>{if(socket&&sessionToken)socket.emit('keepAlive',{sessionToken},(r)=>{if(r&&!r.valid){toast('⏰ Sessão expirou!');doLogout();}});},30000);
+}
 
-            const onlineServers = useMemo(() => filteredServers.filter(s => s.status === 'online' || botServerKeys.has(s.key)), [filteredServers, botServerKeys]);
-            const offlineServers = useMemo(() => filteredServers.filter(s => s.status !== 'online' && !botServerKeys.has(s.key)), [filteredServers, botServerKeys]);
+function showClientInfo(kd){
+    const rem=kd.remainingMs||0;
+    const h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);
+    toast(`🔑 Bem-vindo ${kd.label}! Tempo restante: ${h}h ${m}m`);
+}
 
-            const renderCard = useCallback((server) => {
-                const isOnline = server.status === 'online' || botServerKeys.has(server.key);
-                return (
-                    <div key={server.key} className="server-card" onClick={() => setSelectedServer(server)}>
-                        <div className="server-card-header">
-                            <div className="server-card-info"><h3><MotdText motd={server.motd}/></h3><div className="server-motd">{server.key}</div></div>
-                            <span className={`server-status-badge ${isOnline?'online':'offline'}`}>{isOnline?'Online':'Offline'}</span>
-                        </div>
-                        <div className="server-card-body">
-                            <div className="server-detail-row"><span className="detail-icon"><I.Globe/></span><span>{server.key}</span></div>
-                            <div className="server-detail-row"><span className="detail-icon"><I.Users/></span><span>Jogadores: {(server.players||[]).length}/{server.maxPlayers||'?'}</span></div>
-                            <div className="server-detail-row"><span className="detail-icon"><I.Gamepad/></span><span>Versão: {server.version||'?'}</span></div>
-                        </div>
-                        <div className="server-card-footer">
-                            <button className="server-card-action" onClick={e=>{e.stopPropagation();setSelectedServer(server);}}><I.Eye/> Detalhes</button>
-                            <button className="server-card-action" onClick={e=>{e.stopPropagation();socket&&socket.emit('connect_server',server.key);}}><I.Plug/> Conectar</button>
-                        </div>
-                    </div>
-                );
-            }, [botServerKeys, socket]);
+// ========== EVENTS ==========
+function setupEvents(){
+    socket.on('init',(d)=>{
+        if(d.stats){stats=d.stats;updateStats();}
+        if(d.bots){allBots=d.bots;renderBots();}
+        if(d.logs){allLogs=d.logs;renderLogs();}
+        if(d.chatDatabase){allChat=d.chatDatabase;renderChat();updateChatFilter();}
+        if(d.servers){allServers=d.servers;renderSrvs();}
+        if(d.topServerChat){topServerChat=d.topServerChat;renderTSC();}
+    });
+    socket.on('botStatus',(on)=>{botOnline=on;document.getElementById('botDot').className='status-dot '+(on?'online':'offline');document.getElementById('botText').textContent=on?'Online':'Offline';document.getElementById('setBot').textContent=on?'🟢 Online':'🔴 Offline';});
+    socket.on('statsUpdate',(d)=>{stats=d;updateStats();});
+    socket.on('botsUpdate',(d)=>{allBots=d||[];renderBots();document.getElementById('botsCount').textContent=allBots.filter(b=>b.conectado).length;});
+    socket.on('serverUpdate',(d)=>{if(Array.isArray(d))allServers=d;else if(d?.key){const i=allServers.findIndex(s=>s.key===d.key);if(i>=0)allServers[i]={...allServers[i],...d};else allServers.push(d);}renderSrvs();updateChatFilter();});
+    socket.on('chatMessage',(m)=>{allChat.push(m);if(allChat.length>5000)allChat.shift();appendChat(m);updateChatFilter();});
+    socket.on('chatMessages',(m)=>{allChat=m||[];renderChat();});
+    socket.on('log',(e)=>{allLogs.push(e);if(allLogs.length>200)allLogs.shift();appendLog(e);});
+    socket.on('topServerChat',(d)=>{topServerChat=d;renderTSC();});
+    socket.on('learningData',(d)=>{learningData=d;renderLearn();});
+    socket.on('learningExport',(d)=>{dlJSON(d,'learning-db.json');});
+    socket.on('analyticsData',(d)=>{renderAnalytics(d);});
+    socket.on('fullChat',(d)=>{dlJSON({exportado:new Date().toISOString(),total:d.length,msgs:d},'chat.json');});
+    socket.on('chatDownload',(d)=>{dlJSON(d,'chat.json');});
+    socket.on('playersDBData',(d)=>{renderPlayersResult(d);});
+    socket.on('botSystemInfo',(d)=>{updateSysInfo(d);});
+    socket.on('botConsoleLog',(e)=>{appendTerm(e);});
+    socket.on('toast',(m)=>toast(m));
+    socket.on('systemAlert',(a)=>{toast(`🚨 ${a.message}`);});
+    socket.on('disconnect',()=>{document.getElementById('botDot').className='status-dot offline';document.getElementById('botText').textContent='Desconectado';});
+    socket.on('reconnect',()=>{if(sessionToken)socket.emit('keepAlive',{sessionToken},(r)=>{if(!r?.valid)doLogout();else toast('🔄 Reconectado!');});});
+}
 
-            return (
-                <div>
-                    <div className="section-header">
-                        <span className="section-title">Servidores ({(servers||[]).length})</span>
-                        <div className="section-actions">
-                            <input className="chat-search" style={{minWidth:150}} placeholder="Buscar servidor..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
-                            <button className="btn-secondary" onClick={()=>socket&&socket.emit('refresh')}>🔄 Atualizar</button>
-                        </div>
-                    </div>
-                    {filteredServers.length === 0 ? (
-                        <div className="no-data-placeholder"><I.Server/><p>Nenhum servidor {searchTerm?'encontrado':'detectado'}.</p><span>{searchTerm?'Tente outro termo':'Aguardando detecção LAN...'}</span></div>
-                    ) : (
-                        <>
-                            {onlineServers.length > 0 && <><div className="server-section-label"><span className="dot" style={{background:'#22c55e'}}/> Online ({onlineServers.length})</div><div className="servers-grid">{onlineServers.map(renderCard)}</div></>}
-                            {offlineServers.length > 0 && <><div className="server-section-label"><span className="dot" style={{background:'#ef4444'}}/> Offline ({offlineServers.length})</div><div className="servers-grid">{offlineServers.map(renderCard)}</div></>}
-                        </>
-                    )}
-                    {selectedServer && <ServerPopup server={selectedServer} onClose={()=>setSelectedServer(null)} chatMessages={chatMessages} socket={socket}/>}
-                </div>
-            );
-        });
+// ========== NAV ==========
+function nav(p){
+    currentPage=p;
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+    document.getElementById('p-'+p)?.classList.add('active');
+    document.querySelector(`.nav-item[data-page="${p}"]`)?.classList.add('active');
+    const t={dashboard:'Dashboard',bots:'Bots',chat:'Chat',learning:'Aprendizado',servers:'Servidores',players:'Players',messages:'Mensagens',blacklist:'Blacklist',analytics:'Analytics',terminal:'Terminal',logs:'Logs',keys:'Keys/Ads',settings:'Config'};
+    document.getElementById('pageTitle').textContent=t[p]||p;
+    if(p==='analytics')loadAn('24h');
+    if(p==='learning')reqLearn();
+    if(p==='chat')filterChat();
+    if(p==='terminal')reqSys();
+    if(p==='keys')loadKeys();
+    if(p==='players')searchPlayers();
+}
 
-        // ===== CHAT =====
-        const ChatPage = React.memo(function ChatPage({ chatMessages, socket }) {
-            const [search, setSearch] = useState('');
-            const [serverFilter, setServerFilter] = useState('all');
-            const chatEndRef = useRef(null);
-            const [autoScroll, setAutoScroll] = useState(true);
+// ========== STATS ==========
+function updateStats(){
+    document.getElementById('sBots').textContent=stats.botsAtivos||0;
+    document.getElementById('sMsgs').textContent=allChat.length;
+    document.getElementById('sBl').textContent=stats.blacklistSize||0;
+    const on=allServers.filter(s=>s.status==='online');
+    document.getElementById('sServers').textContent=on.length;
+    let tp=0;allServers.forEach(s=>{if(s.players&&Array.isArray(s.players))tp+=s.players.length;});
+    document.getElementById('sPlayers').textContent=tp;
+    if(stats.intervalo)document.getElementById('intInp').value=stats.intervalo;
+    if(stats.username)document.getElementById('unameInp').value=stats.username;
+    renderMsgs();renderBl();renderTopSrv();renderPeakMini();
+}
 
-            const filtered = useMemo(() => {
-                let msgs = chatMessages || [];
-                if (serverFilter !== 'all') msgs = msgs.filter(m => m.serverKey === serverFilter);
-                if (search.trim()) {
-                    const s = search.toLowerCase();
-                    msgs = msgs.filter(m =>
-                        (m.username||'').toLowerCase().includes(s) ||
-                        (m.message||'').toLowerCase().includes(s) ||
-                        (m.serverKey||'').toLowerCase().includes(s)
-                    );
-                }
-                return msgs.slice(-300);
-            }, [chatMessages, search, serverFilter]);
+// ========== RENDER BOTS ==========
+function renderBots(){
+    const bp=document.getElementById('botsPanel'),fp=document.getElementById('botsFull');
+    const bl=allBots.filter(b=>b.conectado);
+    const empty='<div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Nenhum bot</div>';
+    if(!bl.length){bp.innerHTML=empty;fp.innerHTML=empty;return;}
+    const rc=b=>{
+        const isA=currentRole==='admin';
+        const pt=b.protocolType&&b.protocolType!=='vanilla'?` [${b.protocolType}]`:'';
+        return`<div class="bot-card"><div class="bot-dot on"></div><div class="bot-info"><div class="bot-name">${esc(b.username||'?')}${pt}</div><div class="bot-srv">${esc(b.key)} (v${b.versao||'?'})</div>${b.motd?`<div class="bot-motd">${esc(b.motd)}</div>`:''}</div><div class="bot-mini">${b.hp!=null?`<span>❤${Math.round(b.hp)}</span>`:''} ${b.players?`<span>👥${b.players.length}</span>`:''}</div><div class="bot-actions">${isA?`<button class="btn sm" onclick="cmd('jump','${b.key}')"><i class="fas fa-arrow-up"></i></button><button class="btn sm danger" onclick="cmd('disconnect_server','${b.key}')"><i class="fas fa-power-off"></i></button>`:''}</div></div>`;
+    };
+    bp.innerHTML=bl.slice(0,5).map(rc).join('');
+    fp.innerHTML=bl.map(rc).join('');
+}
 
-            const uniqueServers = useMemo(() => [...new Set((chatMessages||[]).map(m=>m.serverKey))], [chatMessages]);
+// ========== RENDER CHAT ==========
+function renderChat(){const c=document.getElementById('chatMsgs');const msgs=getFiltered().slice(-500);c.innerHTML=msgs.map(fmtChat).join('');c.scrollTop=c.scrollHeight;}
 
-            useEffect(() => {
-                if(chatEndRef.current && autoScroll) chatEndRef.current.scrollTop = chatEndRef.current.scrollHeight;
-            }, [filtered, autoScroll]);
+function appendChat(m){
+    const c=document.getElementById('chatMsgs');
+    const f=document.getElementById('chatFilter').value,s=document.getElementById('chatSearch').value.toLowerCase(),st=document.getElementById('chatSType').value;
+    if(f!=='all'&&m.serverKey!==f)return;
+    if(s){if(st==='player'&&!(m.username||'').toLowerCase().includes(s))return;if(st==='message'&&!(m.message||'').toLowerCase().includes(s))return;if(st==='all'&&!(m.username||'').toLowerCase().includes(s)&&!(m.message||'').toLowerCase().includes(s))return;}
+    const atBot=c.scrollTop+c.clientHeight>=c.scrollHeight-40;
+    c.insertAdjacentHTML('beforeend',fmtChat(m));
+    while(c.children.length>500)c.removeChild(c.firstChild);
+    if(atBot)c.scrollTop=c.scrollHeight;
+}
 
-            const handleScroll = useCallback((e) => {
-                const el = e.target;
-                const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
-                setAutoScroll(atBottom);
-            }, []);
+function fmtChat(m){
+    const bn=(stats.username||'Anunciador').toLowerCase();
+    const men=m.botMentioned||(m.message||'').toLowerCase().includes(bn);
+    const srv=allServers.find(s=>s.key===m.serverKey);
+    const motd=m.motd||(srv?cleanMotd(srv.motd):'');
+    const sentDot=m.sentiment==='positive'?'<span class="sentiment-dot positive"></span>':m.sentiment==='negative'?'<span class="sentiment-dot negative"></span>':'';
+    return`<div class="chat-msg${men?' mentioned':''}">${sentDot}<span class="ct">${m.time||''}</span> <span class="cs" onclick="filterBySrv('${esc(m.serverKey)}')">[${esc(m.serverKey)}${motd?' <span class="cm">'+esc(motd)+'</span>':''}]</span> <span class="cu">${esc(m.username||'?')}</span>: <span class="cx">${esc(m.message||'')}</span></div>`;
+}
 
-            const exportCSV = useCallback(() => {
-                const header = 'Hora,Usuário,Mensagem,Servidor\n';
-                const rows = filtered.map(m=>`"${new Date(m.timestamp).toLocaleString('pt-BR')}","${m.username}","${(m.message||'').replace(/"/g,'""')}","${m.serverKey}"`).join('\n');
-                const blob = new Blob([header+rows],{type:'text/csv;charset=utf-8'});
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `chat_${Date.now()}.csv`; a.click();
-            }, [filtered]);
+function filterBySrv(k){document.getElementById('chatFilter').value=k;filterChat();}
+function filterChat(){if(!socket)return;const sk=document.getElementById('chatFilter').value,s=document.getElementById('chatSearch').value,st=document.getElementById('chatSType').value;socket.emit('getChatMessages',{serverKey:sk,search:s,searchType:st});}
+function getFiltered(){const f=document.getElementById('chatFilter')?.value||'all',s=(document.getElementById('chatSearch')?.value||'').toLowerCase(),st=document.getElementById('chatSType')?.value||'all';let m=allChat;if(f!=='all')m=m.filter(x=>x.serverKey===f);if(s)m=m.filter(x=>{if(st==='player')return(x.username||'').toLowerCase().includes(s);if(st==='message')return(x.message||'').toLowerCase().includes(s);return(x.username||'').toLowerCase().includes(s)||(x.message||'').toLowerCase().includes(s);});return m;}
 
-            const highlightText = useCallback((text, q) => {
-                if (!q.trim() || !text) return text;
-                try {
-                    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi');
-                    return String(text).split(re).map((p,i) => re.test(p) ? <span key={i} className="highlight">{p}</span> : p);
-                } catch { return text; }
-            }, []);
+function updateChatFilter(){
+    const sel=document.getElementById('chatFilter'),send=document.getElementById('chatSendSrv');
+    const cur=sel.value;
+    const keys=[...new Set([...allChat.map(m=>m.serverKey),...allBots.filter(b=>b.conectado).map(b=>b.key)].filter(Boolean))];
+    let o='<option value="all">Todos</option>';
+    keys.forEach(k=>{const srv=allServers.find(s=>s.key===k);const motd=srv?cleanMotd(srv.motd):'';o+=`<option value="${esc(k)}">${esc(motd?k+' — '+motd:k)}</option>`;});
+    sel.innerHTML=o;sel.value=cur||'all';
+    let so='<option value="all">Todos</option>';
+    allBots.filter(b=>b.conectado).forEach(b=>{so+=`<option value="${esc(b.key)}">${esc(b.key)}</option>`;});
+    send.innerHTML=so;
+}
 
-            return (
-                <div className="chat-container" style={{height:'calc(100vh - 104px)'}}>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-                        <span className="section-title">Chat ({filtered.length})</span>
-                        <div className="section-actions">
-                            {!autoScroll && <button className="btn-secondary" style={{fontSize:11,padding:'6px 12px'}} onClick={()=>setAutoScroll(true)}>↓ Auto-scroll</button>}
-                            <button className="btn-danger" style={{fontSize:11,padding:'6px 12px'}} onClick={()=>socket&&socket.emit('clearChatDatabase')}>Limpar DB</button>
-                        </div>
-                    </div>
-                    <div className="chat-toolbar">
-                        <input className="chat-search" placeholder="Buscar..." value={search} onChange={e=>setSearch(e.target.value)}/>
-                        <select className="filter-select" value={serverFilter} onChange={e=>setServerFilter(e.target.value)}>
-                            <option value="all">Todos</option>
-                            {uniqueServers.map(k=><option key={k} value={k}>{k}</option>)}
-                        </select>
-                        <button className="export-btn" onClick={exportCSV}><I.Download/> CSV</button>
-                    </div>
-                    <div className="chat-messages" ref={chatEndRef} onScroll={handleScroll}>
-                        {filtered.length===0 ? <div className="chat-empty"><I.MsgEmpty/><p>Sem mensagens{search?' para esta busca':''}</p></div>
-                        : filtered.map((msg,i) => (
-                            <div key={msg.id||`${msg.timestamp}-${i}`} className="chat-msg-item">
-                                <div className="chat-msg-avatar">
-                                    <img src={`https://mc-heads.net/avatar/${encodeURIComponent(msg.username||'Steve')}/32`}
-                                         alt="" onError={e=>{e.target.style.display='none'; e.target.parentNode.textContent=(msg.username||'??').substring(0,2).toUpperCase();}}/>
-                                </div>
-                                <div className="chat-msg-content">
-                                    <div className="chat-msg-header">
-                                        <span className="chat-msg-user">{highlightText(msg.username||'?',search)}</span>
-                                        <span className="chat-msg-server-tag">{msg.serverKey}</span>
-                                        <span className="chat-msg-time">{new Date(msg.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
-                                    </div>
-                                    <div className="chat-msg-text">{highlightText(msg.message||'',search)}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        });
+function sendChat(){if(currentRole!=='admin')return;const m=document.getElementById('chatSendMsg').value.trim(),s=document.getElementById('chatSendSrv').value;if(!m)return;socket.emit('chat',{serverKey:s,message:m});document.getElementById('chatSendMsg').value='';}
+function sendCmd(){if(currentRole!=='admin')return;const c=document.getElementById('chatSendCmd').value.trim(),s=document.getElementById('chatSendSrv').value;if(!c)return;socket.emit('command',{serverKey:s,command:c});document.getElementById('chatSendCmd').value='';}
 
-        // ===== ANALYTICS =====
-        const AnalyticsPage = React.memo(function AnalyticsPage({ chatMessages, servers, bots, analytics, socket }) {
-            const playersChartRef = useRef(null);
-            const msgsChartRef = useRef(null);
-            const playersChartInstance = useRef(null);
-            const msgsChartInstance = useRef(null);
-            const [timeRange, setTimeRange] = useState('24h');
+// ========== SERVERS ==========
+function renderSrvs(){
+    const p=document.getElementById('srvsPanel');
+    const cf=document.getElementById('srvCatF')?.value||'all',sf=document.getElementById('srvStatF')?.value||'all',q=(document.getElementById('srvSearch')?.value||'').toLowerCase();
+    let srvs=allServers;
+    if(cf!=='all')srvs=srvs.filter(s=>(s.categoria||'desconhecido')===cf);
+    if(sf!=='all')srvs=srvs.filter(s=>s.status===sf);
+    if(q)srvs=srvs.filter(s=>s.key.toLowerCase().includes(q)||(cleanMotd(s.motd)||'').toLowerCase().includes(q));
+    srvs.sort((a,b)=>{if(a.status==='online'&&b.status!=='online')return-1;if(b.status==='online'&&a.status!=='online')return 1;return(b.players?.length||0)-(a.players?.length||0);});
+    if(!srvs.length){p.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-muted);">Nenhum</div>';return;}
+    p.innerHTML=srvs.map(s=>{
+        const motd=cleanMotd(s.motd),cat=s.categoria||'desconhecido',rep=s.reputation||50;
+        const sc=s.status==='online'?'var(--success)':s.status==='banned'?'var(--danger)':'var(--text-muted)';
+        const rc=rep>70?'var(--success)':rep>40?'var(--warning)':'var(--danger)';
+        const pc=s.players?.length||s.onlinePlayers||0;
+        const isA=currentRole==='admin';
+        return`<div class="srv-card"><div class="srv-head"><div><span class="srv-name" style="color:${sc}">● ${esc(s.key)}</span> <span class="srv-tag ${cat}">${cat}</span>${(s.tags||[]).map(t=>`<span class="srv-tag">${esc(t)}</span>`).join('')}</div><div>${isA?`<button class="btn sm" onclick="addTag('${esc(s.key)}')"><i class="fas fa-tag"></i></button><button class="btn sm" onclick="setCat('${esc(s.key)}')"><i class="fas fa-folder"></i></button><button class="btn sm" onclick="scanSrv('${esc(s.key)}')"><i class="fas fa-search"></i></button>`:''}<span style="font-size:10px;color:var(--text-muted);">👥${pc}/${s.maxPlayers||'?'}</span></div></div>${motd?`<div class="srv-motd">"${esc(motd)}"</div>`:''}<div class="srv-meta"><span>📡${s.version||'?'}</span><span>📊${s.status}</span>${s.ping?`<span>🏓${s.ping}ms</span>`:''}<span>⭐${rep}</span></div><div class="rep-bar"><div class="fill" style="width:${rep}%;background:${rc}"></div></div></div>`;
+    }).join('');
+}
 
-            useEffect(() => { if(socket) socket.emit('getAnalytics', timeRange); }, [timeRange, socket]);
+// ========== PLAYERS ==========
+function searchPlayers(){
+    const q=document.getElementById('playerSearch').value.trim();
+    const toxic=document.getElementById('playerToxicOnly').checked;
+    socket.emit('getPlayersDB',{search:q,toxic:toxic||undefined});
+}
 
-            const totalPlayers = useMemo(() => {
-                let t=0; (servers||[]).forEach(s => { if(s.players) t+=s.players.length; }); return t;
-            }, [servers]);
-            const totalMsgs = (chatMessages||[]).length;
-            const onlineCount = (servers||[]).filter(s => s.status === 'online').length;
-            const topServers = (analytics && analytics.topServers) || [];
+function renderPlayersResult(players){
+    const p=document.getElementById('playersPanel');
+    if(!players||!players.length){p.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-muted);">Nenhum jogador encontrado</div>';return;}
+    p.innerHTML=players.map(pl=>{
+        const roles=(pl.roles||[]).map(r=>`<span class="player-role">${r}</span>`).join(' ');
+        const peak=pl.peakHour||'?';
+        const lastDate=pl.lastSeen?new Date(pl.lastSeen).toLocaleString('pt-BR'):'?';
+        const sentTotal=(pl.sentiment?.positive||0)+(pl.sentiment?.negative||0)+(pl.sentiment?.neutral||0);
+        const sentPct=sentTotal>0?Math.round((pl.sentiment.positive/sentTotal)*100):50;
+        return`<div class="player-card"><div class="player-head"><img class="player-avatar" src="https://mc-heads.net/avatar/${esc(pl.username)}/32" onerror="this.src='https://mc-heads.net/avatar/Steve/32'"><div><div class="player-name">${esc(pl.username)} ${roles} ${pl.toxic?'<span class="player-toxic">☠ TÓXICO</span>':''}</div><div style="font-size:10px;color:var(--text-muted);">Visto: ${lastDate}</div></div></div><div class="player-stats"><span>💬 ${pl.messageCount||0} msgs</span><span>🖥️ ${(pl.servers||[]).length} servers</span><span>⏰ Pico: ${peak}h</span><span>😊 ${sentPct}% positivo</span><span>🗓️ Desde: ${pl.firstSeen?new Date(pl.firstSeen).toLocaleDateString('pt-BR'):'?'}</span></div>${pl.messages&&pl.messages.length>0?`<div style="margin-top:8px;font-size:11px;color:var(--text-secondary);">Últimas msgs:<br>${pl.messages.slice(-3).map(m=>`<div style="padding:2px 0;"><span style="color:var(--text-muted);">[${esc(m.server||'')}]</span> ${esc(m.text||'')}</div>`).join('')}</div>`:''}</div>`;
+    }).join('');
+}
 
-            useEffect(() => {
-                const canvas = playersChartRef.current;
-                if (!canvas) return;
-                if (playersChartInstance.current) { playersChartInstance.current.destroy(); playersChartInstance.current = null; }
-                const data = (analytics && analytics.playersOverTime) || [];
-                if (data.length === 0) return;
-                playersChartInstance.current = new Chart(canvas, {
-                    type: 'line',
-                    data: {
-                        labels: data.map(d => new Date(d.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})),
-                        datasets: [{ label: 'Jogadores', data: data.map(d => d.total), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4, pointRadius: 0 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#475569', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true } } }
-                });
-                return () => { if(playersChartInstance.current) { playersChartInstance.current.destroy(); playersChartInstance.current = null; } };
-            }, [analytics]);
+// ========== TOP SERVER PANEL ==========
+function renderTopSrv(){
+    const p=document.getElementById('topSrvPanel');
+    const ss={};allChat.forEach(m=>{if(!m.serverKey)return;if(!ss[m.serverKey])ss[m.serverKey]={msgs:0,pl:new Set()};ss[m.serverKey].msgs++;if(m.username)ss[m.serverKey].pl.add(m.username);});
+    const top=Object.entries(ss).map(([k,d])=>({key:k,msgs:d.msgs,pl:d.pl.size})).sort((a,b)=>b.msgs-a.msgs).slice(0,3);
+    if(!top.length){p.innerHTML='<div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Aguardando...</div>';return;}
+    const medals=['🥇','🥈','🥉'];
+    p.innerHTML=top.map((s,i)=>{const srv=allServers.find(x=>x.key===s.key);const motd=srv?cleanMotd(srv.motd):'';return`<div class="bot-card"><div style="font-size:18px;">${medals[i]}</div><div class="bot-info"><div class="bot-name">${esc(s.key)}</div>${motd?`<div class="bot-motd">${esc(motd)}</div>`:''}</div><div class="bot-mini"><span>💬${s.msgs}</span><span>👥${s.pl}</span></div></div>`;}).join('');
+}
 
-            useEffect(() => {
-                const canvas = msgsChartRef.current;
-                if (!canvas) return;
-                if (msgsChartInstance.current) { msgsChartInstance.current.destroy(); msgsChartInstance.current = null; }
-                const data = (analytics && analytics.messagesPerHour) || [];
-                if (data.length === 0) return;
-                const sorted = [...data].sort((a,b) => a.hour - b.hour);
-                msgsChartInstance.current = new Chart(canvas, {
-                    type: 'bar',
-                    data: {
-                        labels: sorted.map(d => `${String(d.hour).padStart(2,'0')}:00`),
-                        datasets: [{ label: 'Mensagens', data: sorted.map(d => d.count), backgroundColor: 'rgba(99,102,241,0.5)', borderColor: '#6366f1', borderWidth: 1, borderRadius: 4 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true } } }
-                });
-                return () => { if(msgsChartInstance.current) { msgsChartInstance.current.destroy(); msgsChartInstance.current = null; } };
-            }, [analytics]);
+function renderTSC(){
+    const p=document.getElementById('tscPanel');
+    if(!topServerChat.serverKey){p.innerHTML='<div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Nenhum</div>';return;}
+    let h=`<div class="tsc-h"><strong>${esc(topServerChat.serverKey)}</strong>${topServerChat.motd?' — <em>'+esc(topServerChat.motd)+'</em>':''}<span style="float:right;">👥${topServerChat.players||0}</span></div>`;
+    const msgs=topServerChat.messages||[];
+    h+=msgs.slice(-25).map(m=>`<div class="tsc-m"><span style="color:var(--text-muted);font-size:9px;">${m.time||''}</span> <span style="color:var(--success);font-weight:600;">${esc(m.username||'?')}</span>: ${esc(m.message||'')}</div>`).join('');
+    p.innerHTML=h;p.scrollTop=p.scrollHeight;
+}
 
-            return (
-                <div>
-                    <div className="section-header">
-                        <span className="section-title">Analytics</span>
-                        <div className="section-actions">
-                            {['1h','24h','7d'].map(r => <button key={r} className={r===timeRange?'btn-primary':'btn-secondary'} style={{padding:'6px 14px',fontSize:12}} onClick={()=>setTimeRange(r)}>{r}</button>)}
-                        </div>
-                    </div>
-                    <div className="analytics-stat-grid">
-                        <div className="analytics-stat"><div className="val">{totalPlayers}</div><div className="lbl">Jogadores Agora</div></div>
-                        <div className="analytics-stat"><div className="val">{onlineCount}</div><div className="lbl">Servidores Online</div></div>
-                        <div className="analytics-stat"><div className="val">{(bots||[]).length}</div><div className="lbl">Bots Ativos</div></div>
-                        <div className="analytics-stat"><div className="val">{totalMsgs}</div><div className="lbl">Total Mensagens</div></div>
-                    </div>
-                    <div className="analytics-grid">
-                        <div className="chart-card"><h3>Jogadores ao Longo do Tempo</h3><div style={{height:250}}><canvas ref={playersChartRef}/></div></div>
-                        <div className="chart-card"><h3>Mensagens por Hora</h3><div style={{height:250}}><canvas ref={msgsChartRef}/></div></div>
-                        <div className="chart-card"><h3>Top Servidores</h3>
-                            {topServers.length===0 ? <div style={{color:'#475569',textAlign:'center',padding:20,fontSize:13}}>Sem dados</div>
-                            : topServers.map((s,i) => <div key={i} className="top-server-row"><span style={{color:'#475569',marginRight:8,fontSize:11}}>#{i+1}</span><span className="top-server-name">{s.serverKey}</span><span className="top-server-val">{s.messages} msgs</span><span style={{color:'#64748b',fontSize:11,marginLeft:8}}>{s.uniquePlayers} players</span></div>)}
-                        </div>
-                        <div className="chart-card"><h3>Status</h3>
-                            <div style={{display:'flex',gap:20,justifyContent:'center',padding:20}}>
-                                <div style={{textAlign:'center'}}><div style={{fontSize:36,fontWeight:800,color:'#22c55e'}}>{onlineCount}</div><div style={{fontSize:12,color:'#64748b'}}>Online</div></div>
-                                <div style={{textAlign:'center'}}><div style={{fontSize:36,fontWeight:800,color:'#ef4444'}}>{(servers||[]).length - onlineCount}</div><div style={{fontSize:12,color:'#64748b'}}>Offline</div></div>
-                                <div style={{textAlign:'center'}}><div style={{fontSize:36,fontWeight:800,color:'#818cf8'}}>{(servers||[]).length}</div><div style={{fontSize:12,color:'#64748b'}}>Total</div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        });
+function renderPeakMini(){
+    const c=document.getElementById('peakChart');
+    const hrs={};allChat.forEach(m=>{if(!m.timestamp)return;const h=new Date(m.timestamp).getHours();hrs[h]=(hrs[h]||0)+1;});
+    const data=[];for(let i=0;i<24;i++)data.push({hour:i,count:hrs[i]||0});
+    renderBars(c,data,'hour','count',h=>h+'h');
+}
+// ========== LOGS ==========
+function renderLogs(){
+    const p=document.getElementById('logsP'),dp=document.getElementById('dashLogs');
+    const h=allLogs.slice(-100).reverse().map(l=>`<div class="log-e"><span class="log-t">[${l.time||''}]</span> ${l.emoji||''} ${esc(l.msg||'')}</div>`).join('');
+    p.innerHTML=h;
+    dp.innerHTML=allLogs.slice(-10).reverse().map(l=>`<div class="log-e"><span class="log-t">[${l.time||''}]</span> ${l.emoji||''} ${esc(l.msg||'')}</div>`).join('');
+}
+function appendLog(e){
+    const p=document.getElementById('logsP'),dp=document.getElementById('dashLogs');
+    const h=`<div class="log-e"><span class="log-t">[${e.time||''}]</span> ${e.emoji||''} ${esc(e.msg||'')}</div>`;
+    p.insertAdjacentHTML('afterbegin',h);while(p.children.length>100)p.removeChild(p.lastChild);
+    dp.insertAdjacentHTML('afterbegin',h);while(dp.children.length>10)dp.removeChild(dp.lastChild);
+}
 
-        // ===== SETTINGS =====
-        function SettingsPage({ stats, socket }) {
-            const [username, setUsername] = useState(stats.username || 'Anunciador');
-            const [intervalo, setIntervalo] = useState(stats.intervalo || 180);
-            const [newBl, setNewBl] = useState('');
-            const [newMsg, setNewMsg] = useState('');
-            useEffect(() => { setUsername(stats.username||'Anunciador'); setIntervalo(stats.intervalo||180); }, [stats]);
-            const bl = stats.blacklistItems || [];
-            const msgs = stats.mensagens || [];
-            return (
-                <div>
-                    <div className="section-header"><span className="section-title">Configurações</span></div>
-                    <div className="settings-grid">
-                        <div className="setting-group">
-                            <h3><I.Settings/> Geral</h3>
-                            <div className="setting-row"><label>Username do Bot</label><div className="input-row"><input className="input-field" value={username} onChange={e=>setUsername(e.target.value)}/><button className="btn-primary" onClick={()=>socket&&socket.emit('setUsername',username)}>Salvar</button></div></div>
-                            <div className="setting-row"><label>Intervalo de Anúncio (segundos)</label><div className="input-row"><input className="input-field" type="number" min="10" value={intervalo} onChange={e=>setIntervalo(Number(e.target.value))}/><button className="btn-primary" onClick={()=>socket&&socket.emit('setIntervalo',intervalo)}>Salvar</button></div></div>
-                        </div>
-                        <div className="setting-group">
-                            <h3><I.Shield/> Blacklist ({bl.length})</h3>
-                            <div className="input-row"><input className="input-field" placeholder="IP:Porta" value={newBl} onChange={e=>setNewBl(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newBl.trim()&&socket){socket.emit('addBlacklist',newBl.trim());setNewBl('');}}}/><button className="btn-primary" onClick={()=>{if(newBl.trim()&&socket){socket.emit('addBlacklist',newBl.trim());setNewBl('');}}}>+</button></div>
-                            <div className="blacklist-items">
-                                {bl.map((item,i) => <span key={i} className="blacklist-tag">{item}<button onClick={()=>socket&&socket.emit('removeBlacklist',item)}>×</button></span>)}
-                                {bl.length===0 && <span style={{fontSize:12,color:'#475569'}}>Vazio</span>}
-                            </div>
-                            {bl.length>0 && <button className="btn-danger" style={{marginTop:10,padding:'6px 14px',fontSize:12}} onClick={()=>socket&&socket.emit('clearBlacklist')}>Limpar Tudo</button>}
-                        </div>
-                        <div className="setting-group" style={{gridColumn:'1/-1'}}>
-                            <h3><I.Chat/> Mensagens de Anúncio ({msgs.length})</h3>
-                            <div className="input-row"><input className="input-field" placeholder="Nova mensagem de anúncio..." value={newMsg} onChange={e=>setNewMsg(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}/><button className="btn-primary" onClick={()=>{if(newMsg.trim()&&socket){socket.emit('addMsg',newMsg.trim());setNewMsg('');}}}>Adicionar</button></div>
-                            <div className="messages-list">
-                                {msgs.map((m,i) => <div key={i} className="message-item"><span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m}</span><button onClick={()=>socket&&socket.emit('delMsg',i)}>×</button></div>)}
-                                {msgs.length===0 && <span style={{fontSize:12,color:'#475569',padding:8}}>Nenhuma mensagem configurada</span>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+// ========== MESSAGES ==========
+function renderMsgs(){
+    const p=document.getElementById('msgsPanel');
+    const msgs=stats.mensagens||[];
+    if(!msgs.length){p.innerHTML='<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma</div>';return;}
+    const isA=currentRole==='admin';
+    p.innerHTML=msgs.map((m,i)=>`<div class="msg-item"><span class="msg-idx">#${i+1}</span><span class="msg-txt">${esc(m)}</span>${isA?`<button class="btn sm danger" onclick="delMsg(${i})"><i class="fas fa-trash"></i></button>`:''}</div>`).join('');
+}
 
-        // ===== MAIN APP =====
-        function App() {
-            const [page, setPage] = useState('dashboard');
-            const [collapsed, setCollapsed] = useState(false);
-            const [relayUrl, setRelayUrl] = useState('https://anunciador-relay.onrender.com');
-            const [connected, setConnected] = useState(false);
-            const [botOnline, setBotOnline] = useState(false);
-            const [socket, setSocket] = useState(null);
-            const [stats, setStats] = useState({botsAtivos:0,totalBots:0,blacklistSize:0,blacklistItems:[],mensagens:[],intervalo:180,username:'Anunciador'});
-            const [bots, setBots] = useState([]);
-            const [logs, setLogs] = useState([]);
-            const [chatMessages, setChatMessages] = useState([]);
-            const [servers, setServers] = useState([]);
-            const [analytics, setAnalytics] = useState({playersOverTime:[],messagesPerHour:[],topServers:[]});
-            const [toasts, setToasts] = useState([]);
-            const [authenticated, setAuthenticated] = useState(false);
-            const [needsAuth, setNeedsAuth] = useState(false);
-            const [loginPassword, setLoginPassword] = useState('');
-            const [loginError, setLoginError] = useState('');
-            const [loginLoading, setLoginLoading] = useState(false);
+// ========== BLACKLIST ==========
+function renderBl(){
+    const pp=document.getElementById('blPerm'),tp=document.getElementById('blTemp');
+    const items=stats.blacklistItems||[],temp=stats.tempBlacklistItems||[];
+    const isA=currentRole==='admin';
+    pp.innerHTML=items.length?items.map(k=>`<div class="bl-item"><span class="bl-type perm">Perm</span><span style="flex:1;">${esc(k)}</span>${isA?`<button class="btn sm" onclick="cmd('removeBlacklist','${esc(k)}')"><i class="fas fa-times"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Vazio</div>';
+    tp.innerHTML=temp.length?temp.map(t=>`<div class="bl-item"><span class="bl-type temp">⏳${t.remainingMin||'?'}m</span><span style="flex:1;">${esc(t.key)}</span><span style="font-size:10px;color:var(--text-muted);">${esc(t.reason||'')}</span>${isA?`<button class="btn sm" onclick="cmd('removeBlacklist','${esc(t.key)}')"><i class="fas fa-times"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Vazio</div>';
+}
 
-            const socketRef = useRef(null);
+// ========== LEARNING ==========
+function renderLearn(){
+    if(!learningData?.totalMensagens)return;
+    document.getElementById('lTotal').textContent=learningData.totalMensagens||0;
+    document.getElementById('lMin').textContent=(learningData.padroes?.percentMinuscula||0)+'%';
+    document.getElementById('lAcento').textContent=(learningData.padroes?.percentAcento||0)+'%';
+    document.getElementById('lAbrev').textContent=(learningData.padroes?.percentAbreviacao||0)+'%';
+    document.getElementById('giriasC').innerHTML=(learningData.topGirias||[]).map(([w,c])=>`<span class="word-tag">${esc(w)} <span class="cnt">(${c})</span></span>`).join('');
+    document.getElementById('exprC').innerHTML=(learningData.topExpressoes||[]).map(e=>`<span class="word-tag">${esc(e.texto)} <span class="cnt">(${e.count})</span></span>`).join('');
+    const fp=document.getElementById('frasesP');
+    const fr=learningData.topFrases||[];
+    fp.innerHTML=fr.length?fr.map(f=>`<div class="msg-item"><span class="msg-txt">"${esc(f.texto)}"</span><span style="font-size:10px;color:var(--text-muted);">×${f.count}</span></div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma</div>';
+}
+function reqLearn(){if(socket)socket.emit('getLearningData');}
+function exportLearn(){if(socket)socket.emit('exportLearningDB');}
 
-            const addToast = useCallback((msg) => {
-                const id = Date.now() + Math.random();
-                setToasts(p => [...p.slice(-4), {id, text: msg}]);
-                setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
-            }, []);
+// ========== ANALYTICS ==========
+function loadAn(p){if(socket)socket.emit('getAnalytics',p);}
+function renderAnalytics(d){
+    document.getElementById('anMsgs').textContent=d.totalMessages||0;
+    const md=[];for(let i=0;i<24;i++){const e=(d.messagesPerHour||[]).find(x=>x.hour===i);md.push({hour:i,count:e?e.count:0});}
+    renderBars(document.getElementById('anMsgChart'),md,'hour','count',h=>h+'h');
+    const pd=(d.playersOverTime||[]).slice(-48);
+    if(pd.length>0){const s=[];const step=Math.max(1,Math.floor(pd.length/24));for(let i=0;i<pd.length;i+=step){const dt=new Date(pd[i].timestamp);s.push({label:dt.getHours()+':'+String(dt.getMinutes()).padStart(2,'0'),count:pd[i].total});}renderBars(document.getElementById('anPlayChart'),s,'label','count');}
+    const tp=document.getElementById('anTopSrv');
+    const top=d.topServers||[];
+    tp.innerHTML=top.length?top.map((s,i)=>`<div class="bot-card"><div style="min-width:20px;font-weight:700;color:var(--accent);">#${i+1}</div><div class="bot-info"><div class="bot-name">${esc(s.serverKey)}</div></div><div class="bot-mini"><span>💬${s.messages}</span><span>👥${s.uniquePlayers}</span></div></div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Sem dados</div>';
+}
 
-            const handleLogin = useCallback(() => {
-                if (!socketRef.current || !loginPassword.trim()) return;
-                setLoginLoading(true); setLoginError('');
-                socketRef.current.emit('authenticate', loginPassword, (response) => {
-                    setLoginLoading(false);
-                    if (response && response.success) {
-                        setAuthenticated(true); setNeedsAuth(false);
-                        addToast('✅ Login realizado!');
-                    } else {
-                        setLoginError('❌ Senha incorreta!');
-                    }
-                });
-            }, [loginPassword, addToast]);
+// ========== BAR CHART ==========
+function renderBars(c,data,lk,vk,fmt){
+    if(!data||!data.length){c.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:11px;">Sem dados</div>';return;}
+    const mx=Math.max(...data.map(d=>d[vk]||0),1);
+    c.innerHTML=data.map(d=>{const v=d[vk]||0;const h=Math.max(2,(v/mx)*100);const l=fmt?fmt(d[lk]):d[lk];return`<div class="chart-bar" style="height:${h}%" title="${l}: ${v}">${v>0?`<div class="bv">${v}</div>`:''}<div class="bl">${l}</div></div>`;}).join('');
+}
 
-            const connectRelay = useCallback((url) => {
-                const targetUrl = url || relayUrl;
-                if (socketRef.current) { socketRef.current.removeAllListeners(); socketRef.current.disconnect(); }
+// ========== TERMINAL ==========
+function updateSysInfo(d){
+    if(d.uptime)document.getElementById('sysUp').textContent=d.uptime;
+    if(d.memory){if(d.memory.heapUsed)document.getElementById('sysMem').textContent=d.memory.heapUsed+'MB';if(d.memory.rss)document.getElementById('sysRss').textContent=d.memory.rss+'MB';}
+    if(d.botsAtivos!==undefined)document.getElementById('sysBots').textContent=d.botsAtivos;
+    if(d.chatMessages!==undefined)document.getElementById('sysChat').textContent=d.chatMessages;
+    if(d.servidores!==undefined)document.getElementById('sysSrv').textContent=d.servidores;
+    if(d.nodeVersion)document.getElementById('sysNode').textContent=d.nodeVersion;
+    if(d.platform)document.getElementById('sysPlat').textContent=d.platform;
+    if(d.memory?.heapUsed)document.getElementById('memText').textContent=d.memory.heapUsed+'MB';
+    if(d.uptime)document.getElementById('uptime').textContent=d.uptime;
+}
 
-                const s = io(targetUrl, { transports: ['websocket','polling'], reconnection: true, reconnectionDelay: 3000, reconnectionDelayMax: 15000, timeout: 15000 });
-                socketRef.current = s;
-                setSocket(s);
+function appendTerm(e){
+    const s=document.getElementById('termScreen');if(!s)return;
+    const t=e.text||'';
+    let cls='';if(t.includes('❌')||t.includes('FATAL'))cls=' err';else if(t.includes('✅'))cls=' ok';else if(t.includes('⚠'))cls=' warn';
+    const l=document.createElement('div');l.className='term-line'+cls;l.innerHTML=`<span class="tt">[${esc(e.time||'')}]</span> <span class="tv">${esc(t)}</span>`;
+    s.appendChild(l);while(s.children.length>800)s.removeChild(s.firstChild);
+    s.scrollTop=s.scrollHeight;
+    document.getElementById('termCount').textContent=s.children.length+' linhas';
+}
+function clearTerm(){document.getElementById('termScreen').innerHTML='<div class="term-line"><span class="tv">Limpo.</span></div>';}
+function reqSys(){if(socket)socket.emit('getBotSystemInfo');}
+function restartBot(){
+    if(currentRole!=='admin')return;
+    if(!confirm('⚠️ Reiniciar o bot? Todos os bots serão desconectados.'))return;
+    socket.emit('restartBotProcess');
+    appendTerm({time:new Date().toLocaleTimeString('pt-BR',{hour12:false}),text:'🔄 Reinício enviado...'});
+}
 
-                s.on('connect', () => { setConnected(true); addToast('✅ Conectado ao relay!'); });
-                s.on('disconnect', () => { setConnected(false); });
-                s.on('connect_error', () => setConnected(false));
-                s.on('requireAuth', () => { setNeedsAuth(true); setAuthenticated(false); });
+// ========== KEYS ==========
+function loadKeys(){
+    if(!socket||currentRole!=='admin')return;
+    socket.emit('getKeys',(keys)=>{renderKeys(keys);});
+    socket.emit('getAds',(ads)=>{renderAds(ads);});
+}
 
-                s.on('init', (d) => {
-                    if(d.stats) setStats(d.stats);
-                    if(d.bots) setBots(d.bots);
-                    if(d.logs) setLogs(d.logs);
-                    if(d.chatDatabase) setChatMessages(prev => {
-                        const existingTs = new Set(prev.map(m => m.timestamp));
-                        const newMsgs = d.chatDatabase.filter(m => !existingTs.has(m.timestamp));
-                        const combined = [...prev, ...newMsgs];
-                        return combined.slice(-2000);
-                    });
-                    if(d.servers) setServers(d.servers);
-                    if(d.analytics) setAnalytics(d.analytics);
-                    setAuthenticated(true); setNeedsAuth(false);
-                });
+function createKey(){
+    const label=document.getElementById('keyLabel').value.trim();
+    const dur=parseInt(document.getElementById('keyDuration').value)||24;
+    const msg=document.getElementById('keyAdMsg').value.trim();
+    if(!label){toast('⚠️ Label obrigatório!');return;}
+    socket.emit('createKey',{label,durationHours:dur,adMessage:msg},(r)=>{
+        if(r.success){
+            toast(`✅ Key criada: ${r.key}`);
+            document.getElementById('keyLabel').value='';
+            document.getElementById('keyDuration').value='';
+            document.getElementById('keyAdMsg').value='';
+            loadKeys();
+        }else toast('❌ Erro ao criar key');
+    });
+}
 
-                s.on('botStatus', (v) => setBotOnline(v));
-                s.on('statsUpdate', (d) => setStats(d));
-                s.on('botsUpdate', (d) => setBots(d||[]));
-                s.on('log', (e) => setLogs(p => [...p.slice(-199), e]));
-                s.on('chatMessage', (m) => setChatMessages(p => [...p.slice(-1999), m]));
-                s.on('serverUpdate', (d) => setServers(d||[]));
-                s.on('toast', (m) => addToast(m));
-                s.on('chatMessages', (m) => setChatMessages(m));
-                s.on('analyticsData', (d) => setAnalytics(d));
-            }, [relayUrl, addToast]);
+function renderKeys(keys){
+    const p=document.getElementById('keysPanel');
+    if(!keys||!keys.length){p.innerHTML='<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma key</div>';return;}
+    p.innerHTML=keys.map(k=>{
+        const exp=k.expiresAt?new Date(k.expiresAt).toLocaleString('pt-BR'):'∞';
+        const active=k.active;
+        return`<div class="key-card"><div style="display:flex;justify-content:space-between;align-items:center;"><strong>${esc(k.label||'?')}</strong><span style="font-size:10px;color:${active?'var(--success)':'var(--danger)'};">${active?'✅ Ativa':'❌ Inativa'}</span></div><div class="key-value">${esc(k.fullKey||k.key)}</div><div class="key-meta"><span>📅 Criada: ${new Date(k.createdAt).toLocaleDateString('pt-BR')}</span><span>⏰ Expira: ${exp}</span><span>👤 Por: ${esc(k.createdBy||'?')}</span></div><div style="margin-top:8px;display:flex;gap:4px;">${active?`<button class="btn sm danger" onclick="revokeKey('${k.id}')">Revogar</button>`:''}<button class="btn sm" onclick="deleteKey('${k.id}')">Deletar</button><button class="btn sm" onclick="copyKey('${esc(k.fullKey||k.key)}')">Copiar</button></div></div>`;
+    }).join('');
+}
 
-            const disconnectRelay = useCallback(() => {
-                if(socketRef.current) { socketRef.current.removeAllListeners(); socketRef.current.disconnect(); socketRef.current = null; }
-                setSocket(null); setConnected(false); setBotOnline(false);
-                setAuthenticated(false); setNeedsAuth(false);
-            }, []);
+function renderAds(ads){
+    const p=document.getElementById('adsPanel');
+    if(!ads||!ads.length){p.innerHTML='<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhum anúncio</div>';document.getElementById('sAds').textContent='0';return;}
+    const active=ads.filter(a=>a.status==='active');
+    document.getElementById('sAds').textContent=active.length;
+    p.innerHTML=ads.map(a=>{
+        const pct=a.totalMs>0?Math.max(0,Math.min(100,(a.remainingMs/a.totalMs)*100)):0;
+        const rem=a.remainingMs>0?`${Math.floor(a.remainingMs/3600000)}h ${Math.floor((a.remainingMs%3600000)/60000)}m`:'Expirado';
+        const sc=a.status==='active'?'var(--success)':a.status==='expired'?'var(--danger)':'var(--text-muted)';
+        return`<div class="ad-card"><div style="display:flex;justify-content:space-between;"><strong style="font-size:12px;">${esc(a.label||'?')}</strong><span style="font-size:10px;color:${sc};">${a.status}</span></div><div style="font-size:11px;color:var(--text-secondary);margin:4px 0;">"${esc(a.message||'')}"</div><div style="font-size:10px;color:var(--text-muted);">⏳ ${rem}</div><div class="ad-progress"><div class="fill" style="width:${pct}%"></div></div></div>`;
+    }).join('');
+}
 
-            useEffect(() => {
-                connectRelay();
-                return () => {
-                    if(socketRef.current) { socketRef.current.removeAllListeners(); socketRef.current.disconnect(); }
-                };
-            }, []);
+function revokeKey(id){if(confirm('Revogar key?'))socket.emit('revokeKey',id,(r)=>{if(r.success){toast('✅ Revogada');loadKeys();}});}
+function deleteKey(id){if(confirm('Deletar key permanentemente?'))socket.emit('deleteKey',id,(r)=>{if(r.success){toast('✅ Deletada');loadKeys();}});}
+function copyKey(k){navigator.clipboard?.writeText(k);toast('📋 Copiada!');}
 
-            const titles = {dashboard:'Dashboard',servers:'Servidores',chat:'Chat',analytics:'Analytics',settings:'Configurações'};
-            const navItems = [
-                {id:'dashboard',label:'Dashboard',icon:I.Dashboard},
-                {id:'servers',label:'Servidores',icon:I.Server,badge:(servers||[]).length},
-                {id:'chat',label:'Chat',icon:I.Chat,badge:(chatMessages||[]).length},
-                {id:'analytics',label:'Analytics',icon:I.Analytics},
-                {id:'settings',label:'Configurações',icon:I.Settings},
-            ];
+// ========== ACTIONS ==========
+function cmd(c,d){if(currentRole!=='admin'&&!['refresh'].includes(c)){toast('⛔ Sem permissão!');return;}if(socket)socket.emit(c,d);}
+function connectSrv(){const ip=document.getElementById('cIp').value.trim();if(!ip)return;socket.emit('connect_server',ip);document.getElementById('cIp').value='';toast(`🔗 Conectando...`);}
+function connectSrv2(){const ip=document.getElementById('cIp2').value.trim();if(!ip)return;socket.emit('connect_server',ip);document.getElementById('cIp2').value='';toast(`🔗 Conectando...`);}
+function addMsg(){const m=document.getElementById('newMsg').value.trim();if(!m)return;socket.emit('addMsg',m);document.getElementById('newMsg').value='';}
+function delMsg(i){socket.emit('delMsg',i);}
+function setInt(){const v=document.getElementById('intInp').value;if(v)socket.emit('setIntervalo',parseInt(v));}
+function setUname(){const v=document.getElementById('unameInp').value.trim();if(v)socket.emit('setUsername',v);}
+function addBl(){const v=document.getElementById('blInp').value.trim();if(!v)return;socket.emit('addBlacklist',v);document.getElementById('blInp').value='';}
+function addTag(k){const t=prompt('Tag:');if(t)socket.emit('addServerTag',{serverKey:k,tag:t.trim()});}
+function setCat(k){const c=prompt('Categoria (survival,pvp,criativo,minigame,smp,lojinha,outro):');if(c)socket.emit('setServerCategory',{serverKey:k,categoria:c.trim()});}
+function scanSrv(k){socket.emit('scanVulnerabilities',k);toast(`🔍 Scan: ${k}`);}
+function dlChat(){if(socket)socket.emit('downloadChat');}
 
-            // ===== LOGIN SCREEN =====
-            if (needsAuth && !authenticated) {
-                return (
-                    <><div className="toast-container">{toasts.map(t=><div key={t.id} className="toast">{t.text}</div>)}</div>
-                    <div className="login-bg">
-                        <div className="login-card">
-                            <div className="login-card-header">
-                                <div className="sidebar-logo" style={{width:60,height:60,fontSize:20,margin:'0 auto 12px',borderRadius:14}}>CRV</div>
-                                <div style={{fontSize:16,fontWeight:700,color:'#f1f5f9'}}>Central Radmin VPN</div>
-                                <div style={{fontSize:12,color:'#64748b',marginTop:4}}>Painel de Controle v6.0</div>
-                            </div>
-                            <div className="login-card-body">
-                                <div style={{marginBottom:12}}>
-                                    <label style={{fontSize:12,color:'#64748b',fontWeight:500,display:'block',marginBottom:6}}>Senha do Painel</label>
-                                    <input className="input-field" type="password" placeholder="Digite a senha..." value={loginPassword}
-                                        onChange={e => {setLoginPassword(e.target.value);setLoginError('');}}
-                                        onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                                        style={{width:'100%',padding:'12px 16px',fontSize:14}} autoFocus/>
-                                </div>
-                                {loginError && <div className="login-error">{loginError}</div>}
-                                <button className="btn-primary" onClick={handleLogin} disabled={loginLoading || !loginPassword.trim()}
-                                    style={{width:'100%',padding:'12px',fontSize:14}}>
-                                    {loginLoading ? '⏳ Verificando...' : '🔓 Entrar'}
-                                </button>
-                                <div className="login-footer">
-                                    <div className={`status-dot ${connected?'online':'offline'}`} style={{width:6,height:6}}/>
-                                    {connected ? 'Conectado ao relay' : 'Desconectado'}
-                                </div>
-                            </div>
-                        </div>
-                    </div></>
-                );
-            }
+// ========== HELPERS ==========
+function esc(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function cleanMotd(m){if(!m)return'';if(typeof m==='object'){if(m.text!==undefined){let r=cleanMotd(m.text);if(m.extra)r+=m.extra.map(e=>cleanMotd(e)).join('');return r;}return m.translate||'';}return String(m).replace(/§[0-9a-fk-or]/gi,'').trim();}
+function toast(m){const c=document.getElementById('toastC');const t=document.createElement('div');t.className='toast';t.textContent=m;c.appendChild(t);setTimeout(()=>t.remove(),4000);}
+function dlJSON(d,f){const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);toast(`📥 ${f}`);}
 
-            // ===== MAIN APP =====
-            return (
-                <><div className="toast-container">{toasts.map(t=><div key={t.id} className="toast">{t.text}</div>)}</div>
-                <div className={`sidebar ${collapsed?'collapsed':''}`}>
-                    <div className="sidebar-header"><div className="sidebar-logo">CRV</div><div className="sidebar-brand"><span className="sidebar-brand-name">Central Radmin VPN</span><span className="sidebar-brand-sub">Painel v6.0</span></div></div>
-                    <div className="sidebar-nav"><div className="nav-section"><div className="nav-label">Menu</div>
-                        {navItems.map(item => (
-                            <div key={item.id} className={`nav-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
-                                <span className="nav-icon"><item.icon/></span><span className="nav-item-text">{item.label}</span>
-                                {item.badge!==undefined && item.badge>0 && !collapsed && <span className="nav-badge">{item.badge>999?'999+':item.badge}</span>}
-                            </div>
-                        ))}
-                    </div></div>
-                    <div className="connection-section">
-                        <div className="connection-status"><div className={`status-dot ${connected?'online':'offline'}`}/><span className="status-text">Relay: <strong>{connected?'Online':'Offline'}</strong></span></div>
-                        <div className="connection-status"><div className={`status-dot ${botOnline?'online':'offline'}`}/><span className="status-text">Bot: <strong>{botOnline?'Online':'Offline'}</strong></span></div>
-                        <div className="relay-input-group"><input className="relay-input" value={relayUrl} onChange={e=>setRelayUrl(e.target.value)} placeholder="URL do Relay"/><button className="relay-btn" onClick={connected?disconnectRelay:()=>connectRelay()}>{connected?'Sair':'Conectar'}</button></div>
-                    </div>
-                    <div className="sidebar-footer"><button className="sidebar-toggle" onClick={()=>setCollapsed(!collapsed)}>{collapsed?<I.ChevronRight/>:<I.ChevronLeft/>}<span className="sidebar-footer-text">Recolher</span></button></div>
-                </div>
-                <div className="main-content">
-                    <div className="topbar">
-                        <span className="topbar-title">{titles[page]}</span>
-                        <div className="topbar-right">
-                            <div className="topbar-status"><div className={`status-dot ${botOnline?'online':'offline'}`}/>{botOnline?`Bot (${stats.botsAtivos||0})`:'Bot Off'}</div>
-                            <div className="topbar-status"><div className={`status-dot ${connected?'online':'offline'}`}/>{connected?'Relay ✓':'Relay ✗'}</div>
-                        </div>
-                    </div>
-                    <div className="page-content">
-                        {page==='dashboard' && <DashboardPage stats={stats} bots={bots} logs={logs} servers={servers} socket={socket} setLogs={setLogs}/>}
-                        {page==='servers' && <ServersPage servers={servers} bots={bots} chatMessages={chatMessages} socket={socket}/>}
-                        {page==='chat' && <ChatPage chatMessages={chatMessages} socket={socket}/>}
-                        {page==='analytics' && <AnalyticsPage chatMessages={chatMessages} servers={servers} bots={bots} analytics={analytics} socket={socket}/>}
-                        {page==='settings' && <SettingsPage stats={stats} socket={socket}/>}
-                    </div>
-                </div></>
-            );
-        }
+// ========== KEYBOARD ==========
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('loginOverlay').classList.contains('hidden'))doLogin();});
 
-        ReactDOM.render(<App/>, document.getElementById('app'));
-    </script>
+// ========== PERIODIC ==========
+setInterval(()=>{
+    if(socket?.connected){socket.emit('getTopServerChat');}
+    document.getElementById('sMsgs').textContent=allChat.length;
+},15000);
+
+setInterval(()=>{if(currentPage==='keys'&&currentRole==='admin')loadKeys();},30000);
+</script>
 </body>
 </html>
