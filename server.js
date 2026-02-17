@@ -1,4 +1,4 @@
-// server.js - v8.0 (MEGA UPDATE - Monetização + Segurança + Features)
+// server.js - v9.0 (MEGA UPDATE)
 const express = require('express');
 const http = require('http');
 const crypto = require('crypto');
@@ -28,7 +28,7 @@ function loadEnv() {
 loadEnv();
 
 // ========== CRYPTO UTILS ==========
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.createHash('sha256').update(process.env.SECRET_KEY || 'CRVf998@+').digest();
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.createHash('sha256').update(process.env.SECRET_KEY || crypto.randomBytes(32).toString('hex')).digest();
 const IV_LENGTH = 16;
 
 function encrypt(text) {
@@ -58,27 +58,31 @@ function hashPassword(password) {
 }
 
 function verifyPassword(password, stored) {
-    const [salt, hash] = stored.split(':');
-    const verify = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-    return hash === verify;
+    try {
+        const [salt, hash] = stored.split(':');
+        const verify = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+        return hash === verify;
+    } catch { return false; }
 }
 
-function generateKey() {
-    return 'KEY-' + crypto.randomBytes(16).toString('hex').toUpperCase();
-}
-
-function generateSessionToken() {
-    return crypto.randomBytes(32).toString('hex');
-}
+function generateKey() { return 'KEY-' + crypto.randomBytes(16).toString('hex').toUpperCase(); }
+function generateSessionToken() { return crypto.randomBytes(32).toString('hex'); }
 
 // ========== CONFIG ==========
 const PORT = parseInt(process.env.PORT) || 3000;
-const SECRET_KEY = process.env.SECRET_KEY || 'CRVf998@+';
+const SECRET_KEY = process.env.SECRET_KEY;
+
+if (!SECRET_KEY) {
+    console.error('❌ FATAL: SECRET_KEY não definida no .env!');
+    console.error('Crie um arquivo .env com: SECRET_KEY=sua_chave_secreta');
+    process.exit(1);
+}
+
 const WEBHOOK_CHAT = process.env.WEBHOOK_CHAT || '';
 const WEBHOOK_LOGS = process.env.WEBHOOK_LOGS || '';
 const GOOGLE_SHEETS_URL = process.env.GOOGLE_SHEETS_URL || '';
 const SERVER_START_TIME = Date.now();
-const SESSION_DURATION = 60 * 1000; // 1 minuto session
+const SESSION_DURATION = 5 * 60 * 1000; // 5 minutos session (era 1 min)
 
 // ========== DATA DIR ==========
 const DATA_DIR = path.join(__dirname, 'data');
@@ -90,75 +94,60 @@ const PLAYERS_DB_FILE = path.join(DATA_DIR, 'players-db.json');
 
 try { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
 
-// ========== USERS SYSTEM ==========
-let usersDB = [];
+// ========== SAFE FILE OPS ==========
+const saveLocks = new Map();
 
-function loadUsers() {
+function safeWriteFile(filepath, data) {
+    if (saveLocks.get(filepath)) return;
+    saveLocks.set(filepath, true);
     try {
-        if (fs.existsSync(USERS_FILE)) {
-            usersDB = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-        }
-    } catch {}
-
-    if (usersDB.length === 0) {
-        usersDB = [
-            {
-                id: crypto.randomUUID(),
-                username: process.env.USER1_NAME || 'CRV',
-                passwordHash: hashPassword(process.env.USER1_PASS || 'CRV21'),
-                role: 'admin',
-                createdAt: Date.now(),
-            },
-            {
-                id: crypto.randomUUID(),
-                username: process.env.USER2_NAME || 'CRVA',
-                passwordHash: hashPassword(process.env.USER2_PASS || 'CRVA11'),
-                role: 'viewer',
-                createdAt: Date.now(),
-            }
-        ];
-        saveUsers();
+        const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        const tmpPath = filepath + '.tmp';
+        fs.writeFileSync(tmpPath, content);
+        fs.renameSync(tmpPath, filepath);
+    } catch (err) {
+        console.error(`⚠️ Erro salvando ${filepath}: ${err.message}`);
+    } finally {
+        saveLocks.set(filepath, false);
     }
 }
 
-function saveUsers() {
-    try { fs.writeFileSync(USERS_FILE, JSON.stringify(usersDB, null, 2)); } catch {}
+function safeReadFile(filepath, defaultValue) {
+    try {
+        if (!fs.existsSync(filepath)) return defaultValue;
+        return JSON.parse(fs.readFileSync(filepath, 'utf8'));
+    } catch { return defaultValue; }
 }
 
-loadUsers();
+// ========== USERS SYSTEM ==========
+let usersDB = safeReadFile(USERS_FILE, []);
+
+if (usersDB.length === 0) {
+    usersDB = [
+        {
+            id: crypto.randomUUID(),
+            username: process.env.USER1_NAME || 'CRV',
+            passwordHash: hashPassword(process.env.USER1_PASS || 'CRV21'),
+            role: 'admin',
+            createdAt: Date.now(),
+        },
+        {
+            id: crypto.randomUUID(),
+            username: process.env.USER2_NAME || 'CRVA',
+            passwordHash: hashPassword(process.env.USER2_PASS || 'CRVA11'),
+            role: 'viewer',
+            createdAt: Date.now(),
+        }
+    ];
+    safeWriteFile(USERS_FILE, usersDB);
+}
 
 // ========== API KEYS SYSTEM ==========
-let apiKeys = [];
+let apiKeys = safeReadFile(KEYS_FILE, []);
 
-function loadKeys() {
-    try {
-        if (fs.existsSync(KEYS_FILE)) apiKeys = JSON.parse(fs.readFileSync(KEYS_FILE, 'utf8'));
-    } catch {}
-}
+// ========== ADS SYSTEM ==========
+let adsDB = safeReadFile(ADS_FILE, []);
 
-function saveKeys() {
-    try { fs.writeFileSync(KEYS_FILE, JSON.stringify(apiKeys, null, 2)); } catch {}
-}
-
-loadKeys();
-
-// ========== ADS SYSTEM (Anúncios pagos com timer) ==========
-let adsDB = [];
-
-function loadAds() {
-    try {
-        if (fs.existsSync(ADS_FILE)) adsDB = JSON.parse(fs.readFileSync(ADS_FILE, 'utf8'));
-    } catch {}
-}
-
-function saveAds() {
-    try { fs.writeFileSync(ADS_FILE, JSON.stringify(adsDB, null, 2)); } catch {}
-}
-
-loadAds();
-
-// Timer de anúncios - só conta quando bot online
-let botOnlineTime = 0;
 let lastBotOnlineCheck = null;
 
 function updateAdTimers() {
@@ -184,7 +173,7 @@ setInterval(() => {
     if (botSocket) {
         if (!lastBotOnlineCheck) lastBotOnlineCheck = Date.now();
         updateAdTimers();
-        saveAds();
+        safeWriteFile(ADS_FILE, adsDB);
     } else {
         lastBotOnlineCheck = null;
     }
@@ -195,32 +184,23 @@ function getActiveAds() {
 }
 
 // ========== PLAYERS DATABASE ==========
-let playersDB = {};
-
-function loadPlayersDB() {
-    try {
-        if (fs.existsSync(PLAYERS_DB_FILE)) playersDB = JSON.parse(fs.readFileSync(PLAYERS_DB_FILE, 'utf8'));
-    } catch {}
-}
+let playersDB = safeReadFile(PLAYERS_DB_FILE, {});
 
 function savePlayersDB() {
-    try {
-        const keys = Object.keys(playersDB);
-        if (keys.length > 50000) {
-            const sorted = keys.sort((a, b) => (playersDB[b].lastSeen || 0) - (playersDB[a].lastSeen || 0));
-            const newDB = {};
-            sorted.slice(0, 30000).forEach(k => newDB[k] = playersDB[k]);
-            playersDB = newDB;
-        }
-        fs.writeFileSync(PLAYERS_DB_FILE, JSON.stringify(playersDB, null, 2));
-    } catch {}
+    const keys = Object.keys(playersDB);
+    if (keys.length > 50000) {
+        const sorted = keys.sort((a, b) => (playersDB[b].lastSeen || 0) - (playersDB[a].lastSeen || 0));
+        const newDB = {};
+        sorted.slice(0, 30000).forEach(k => newDB[k] = playersDB[k]);
+        playersDB = newDB;
+    }
+    safeWriteFile(PLAYERS_DB_FILE, playersDB);
 }
 
-loadPlayersDB();
 setInterval(savePlayersDB, 5 * 60 * 1000);
 
 // ========== SESSIONS ==========
-const sessions = new Map(); // token -> { userId, username, role, expiresAt, keyId? }
+const sessions = new Map();
 
 function createSession(userId, username, role, keyId = null) {
     const token = generateSessionToken();
@@ -239,34 +219,22 @@ function validateSession(token) {
         sessions.delete(token);
         return null;
     }
-    // Renova sessão
     session.expiresAt = Date.now() + SESSION_DURATION;
     return session;
 }
 
-// Limpa sessões expiradas
 setInterval(() => {
     const now = Date.now();
     sessions.forEach((s, k) => { if (now > s.expiresAt) sessions.delete(k); });
 }, 30000);
 
 // ========== CHAT PERSISTENCE ==========
-let persistedChat = [];
-
-try {
-    if (fs.existsSync(CHAT_PERSIST_FILE)) {
-        persistedChat = JSON.parse(fs.readFileSync(CHAT_PERSIST_FILE, 'utf8'));
-        console.log(`📂 Chat persistido: ${persistedChat.length} mensagens`);
-    }
-} catch (err) {
-    console.log('⚠️ Erro ao carregar chat persistido:', err.message);
-}
+let persistedChat = safeReadFile(CHAT_PERSIST_FILE, []);
+console.log(`📂 Chat persistido: ${persistedChat.length} mensagens`);
 
 function savePersistedChat() {
-    try {
-        if (persistedChat.length > 50000) persistedChat = persistedChat.slice(-50000);
-        fs.writeFileSync(CHAT_PERSIST_FILE, JSON.stringify(persistedChat));
-    } catch {}
+    if (persistedChat.length > 50000) persistedChat = persistedChat.slice(-50000);
+    safeWriteFile(CHAT_PERSIST_FILE, persistedChat);
 }
 
 setInterval(savePersistedChat, 5 * 60 * 1000);
@@ -288,38 +256,7 @@ setInterval(() => {
     rateLimits.forEach((v, k) => { if (now > v.resetAt + 60000) rateLimits.delete(k); });
 }, 300000);
 
-// ========== MESSAGE QUEUE SYSTEM ==========
-class MessageQueue {
-    constructor() {
-        this.queues = new Map(); // serverKey -> [messages]
-        this.processing = new Set();
-        this.stats = { totalProcessed: 0, totalFailed: 0, totalRetries: 0 };
-    }
-
-    enqueue(serverKey, message, priority = 5) {
-        if (!this.queues.has(serverKey)) this.queues.set(serverKey, []);
-        const queue = this.queues.get(serverKey);
-        queue.push({ message, priority, addedAt: Date.now(), retries: 0 });
-        queue.sort((a, b) => a.priority - b.priority);
-        if (queue.length > 100) queue.splice(100);
-    }
-
-    dequeue(serverKey) {
-        const queue = this.queues.get(serverKey);
-        if (!queue || queue.length === 0) return null;
-        return queue.shift();
-    }
-
-    getStats() {
-        let totalPending = 0;
-        this.queues.forEach(q => totalPending += q.length);
-        return { ...this.stats, totalPending, queues: this.queues.size };
-    }
-}
-
-const messageQueue = new MessageQueue();
-
-// ========== OBSERVABILITY (built-in) ==========
+// ========== OBSERVABILITY ==========
 class Observability {
     constructor() {
         this.metrics = {
@@ -330,8 +267,6 @@ class Observability {
             latency: [],
         };
         this.alerts = [];
-        this.healthChecks = [];
-
         setInterval(() => this.collect(), 10000);
         setInterval(() => this.checkAlerts(), 30000);
     }
@@ -339,10 +274,8 @@ class Observability {
     collect() {
         const now = Date.now();
         const mem = process.memoryUsage();
-
         this.metrics.memoryUsage.push({ timestamp: now, heapMB: Math.round(mem.heapUsed / 1048576), rssMB: Math.round(mem.rss / 1048576) });
         if (this.metrics.memoryUsage.length > 360) this.metrics.memoryUsage.shift();
-
         this.metrics.botConnections.push({ timestamp: now, connected: !!botSocket, bots: botData.bots.length });
         if (this.metrics.botConnections.length > 360) this.metrics.botConnections.shift();
     }
@@ -358,23 +291,12 @@ class Observability {
         if (this.metrics.errorsPerMinute.length > 1000) this.metrics.errorsPerMinute.shift();
     }
 
-    recordLatency(ms) {
-        this.metrics.latency.push({ timestamp: Date.now(), ms });
-        if (this.metrics.latency.length > 500) this.metrics.latency.shift();
-    }
-
     checkAlerts() {
         const mem = process.memoryUsage();
         const heapMB = mem.heapUsed / 1048576;
-
-        if (heapMB > 400) {
-            this.alert('warning', `RAM alta: ${Math.round(heapMB)}MB`);
-        }
-
+        if (heapMB > 400) this.alert('warning', `RAM alta: ${Math.round(heapMB)}MB`);
         const recentErrors = this.metrics.errorsPerMinute.filter(e => Date.now() - e.timestamp < 300000);
-        if (recentErrors.length > 50) {
-            this.alert('danger', `Muitos erros: ${recentErrors.length} nos últimos 5min`);
-        }
+        if (recentErrors.length > 50) this.alert('danger', `Muitos erros: ${recentErrors.length} nos últimos 5min`);
     }
 
     alert(level, message) {
@@ -392,76 +314,12 @@ class Observability {
             recentErrors: this.metrics.errorsPerMinute.filter(e => now - e.timestamp < 300000).length,
             memoryHistory: this.metrics.memoryUsage.slice(-60),
             botHistory: this.metrics.botConnections.slice(-60),
-            latencyAvg: this.metrics.latency.length > 0 ? Math.round(this.metrics.latency.reduce((a, b) => a + b.ms, 0) / this.metrics.latency.length) : 0,
             alerts: this.alerts.slice(-20),
-            queueStats: messageQueue.getStats(),
         };
     }
 }
 
 const observability = new Observability();
-
-// ========== SELF HEALING ==========
-class SelfHealing {
-    constructor() {
-        this.issues = [];
-        this.resolutions = [];
-        this.patterns = new Map();
-
-        setInterval(() => this.diagnose(), 60000);
-    }
-
-    diagnose() {
-        const mem = process.memoryUsage();
-        const heapMB = mem.heapUsed / 1048576;
-
-        // Memory leak detection
-        if (heapMB > 450) {
-            this.heal('memory_high', () => {
-                if (global.gc) { global.gc(); this.log('GC forçado'); }
-                if (botData.chatDatabase.length > 10000) {
-                    botData.chatDatabase = botData.chatDatabase.slice(-5000);
-                    this.log('Chat truncado para liberar memória');
-                }
-            });
-        }
-
-        // Stale bot detection
-        botData.bots.forEach(b => {
-            if (b.conectado && b.lastActivity && Date.now() - b.lastActivity > 300000) {
-                this.log(`Bot potencialmente travado: ${b.key}`);
-            }
-        });
-    }
-
-    heal(issueType, healFn) {
-        const recent = this.issues.filter(i => i.type === issueType && Date.now() - i.timestamp < 300000);
-        if (recent.length > 3) return; // Já tentou demais
-
-        try {
-            healFn();
-            this.resolutions.push({ type: issueType, timestamp: Date.now(), success: true });
-        } catch (err) {
-            this.resolutions.push({ type: issueType, timestamp: Date.now(), success: false, error: err.message });
-        }
-        this.issues.push({ type: issueType, timestamp: Date.now() });
-        if (this.issues.length > 100) this.issues.shift();
-        if (this.resolutions.length > 100) this.resolutions.shift();
-    }
-
-    log(msg) {
-        console.log(`🔧 [Self-Heal] ${msg}`);
-    }
-
-    getStatus() {
-        return {
-            recentIssues: this.issues.slice(-20),
-            recentResolutions: this.resolutions.slice(-20),
-        };
-    }
-}
-
-const selfHealing = new SelfHealing();
 
 // ========== GOOGLE SHEETS ==========
 const sheetsBatch = [];
@@ -473,11 +331,7 @@ function sheetsEnabled() { return GOOGLE_SHEETS_URL.length > 20; }
 function cleanMotdText(motd) {
     if (!motd) return '';
     if (typeof motd === 'object') {
-        if (motd.text !== undefined) {
-            let r = cleanMotdText(motd.text);
-            if (motd.extra) r += motd.extra.map(e => cleanMotdText(e)).join('');
-            return r;
-        }
+        if (motd.text !== undefined) { let r = cleanMotdText(motd.text); if (motd.extra) r += motd.extra.map(e => cleanMotdText(e)).join(''); return r; }
         return motd.translate || '';
     }
     return String(motd).replace(/§[0-9a-fk-or]/gi, '').trim();
@@ -491,11 +345,7 @@ async function sendToSheets(data) {
             body: JSON.stringify(data), redirect: 'follow', signal: AbortSignal.timeout(15000),
         });
         return resp.ok;
-    } catch (err) {
-        if (!['AbortError', 'fetch failed'].some(f => (err.name || err.message || '').includes(f)))
-            console.error('⚠️ Sheets erro:', err.message);
-        return false;
-    }
+    } catch { return false; }
 }
 
 function queueChatToSheets(entry) {
@@ -521,16 +371,6 @@ async function flushSheetsBatch() {
     if (success) console.log(`📊 Sheets: ${batch.length} msgs`);
     else if (sheetsBatch.length < 500) sheetsBatch.unshift(...batch);
     sheetsSending = false;
-}
-
-function sendLogToSheets(tipo, mensagem) {
-    if (!sheetsEnabled()) return;
-    sendToSheets({ type: 'log', data: new Date().toLocaleDateString('pt-BR'), hora: new Date().toLocaleTimeString('pt-BR', { hour12: false }), tipo, mensagem });
-}
-
-function sendServerToSheets(serverKey, status, players, maxPlayers, version, motd) {
-    if (!sheetsEnabled()) return;
-    sendToSheets({ type: 'server', data: new Date().toLocaleDateString('pt-BR'), hora: new Date().toLocaleTimeString('pt-BR', { hour12: false }), ip: serverKey, status, jogadores: (players || []).length, max: maxPlayers || 0, versao: version || '?', motd: cleanMotdText(motd) });
 }
 
 setInterval(() => { if (sheetsBatch.length > 0) flushSheetsBatch(); }, 30000);
@@ -570,7 +410,7 @@ function sendChatToDiscord(serverKey, username, message) {
         username: username || 'Unknown',
         avatar_url: `https://mc-heads.net/avatar/${encodeURIComponent(username || 'Steve')}/32`,
         content: (message || '').substring(0, 2000),
-        embeds: [{ color: 0x6366f1, footer: { text: `🖥️ ${serverKey}` } }]
+        embeds: [{ color: 0x6366f1, footer: { text: `🖥️ ${serverKey}` } }],
     });
 }
 
@@ -593,13 +433,31 @@ const MAX_CHAT_MESSAGES = 50000;
 const MAX_LOGS = 200;
 
 let botData = {
-    stats: { botsAtivos: 0, totalBots: 0, blacklistSize: 0, blacklistItems: [], tempBlacklistItems: [], mensagens: [], intervalo: 180, username: 'Anunciador' },
+    stats: { botsAtivos: 0, totalBots: 0, blacklistSize: 0, blacklistItems: [], tempBlacklistItems: [], mensagens: [], intervalo: 180, username: 'Anunciador', impressions: {}, silentServers: [] },
     bots: [], logs: [], chatDatabase: persistedChat, servers: [],
     analytics: { playersOverTime: [], messagesPerHour: [], topServers: [] },
-    vulnerabilities: [], serverHealth: {},
 };
 
 const serverLastSeen = {};
+
+// ========== DEDUP CHAT (corrige duplicação) ==========
+const recentMessageHashes = new Set();
+const MAX_HASH_CACHE = 5000;
+
+function getChatHash(msg) {
+    return `${msg.timestamp}-${msg.serverKey}-${(msg.username || '').substring(0, 16)}-${(msg.message || '').substring(0, 30)}`;
+}
+
+function isDuplicate(msg) {
+    const hash = getChatHash(msg);
+    if (recentMessageHashes.has(hash)) return true;
+    recentMessageHashes.add(hash);
+    if (recentMessageHashes.size > MAX_HASH_CACHE) {
+        const first = recentMessageHashes.values().next().value;
+        recentMessageHashes.delete(first);
+    }
+    return false;
+}
 
 // ========== SERVER STATUS ==========
 function syncServerStatus() {
@@ -611,9 +469,7 @@ function syncServerStatus() {
         const hasBot = botKeys.has(s.key);
         const recent = (now - lastSeen) < TIMEOUT;
         const hasPlayers = s.players && s.players.length > 0;
-        const was = s.status;
         s.status = (hasBot || recent || hasPlayers) ? 'online' : 'offline';
-        if (was !== s.status) sendServerToSheets(s.key, s.status, s.players, s.maxPlayers, s.version, s.motd);
     });
 }
 
@@ -674,38 +530,32 @@ function getTopServerChat() {
     const onlineServers = botData.servers.filter(s => s.status === 'online' && s.players && s.players.length > 0).sort((a, b) => (b.players?.length || 0) - (a.players?.length || 0));
     if (onlineServers.length === 0) return { serverKey: null, motd: '', messages: [] };
     const topServer = onlineServers[0];
-    return { serverKey: topServer.key, motd: cleanMotdText(topServer.motd), players: topServer.players?.length || 0, messages: botData.chatDatabase.filter(m => m.serverKey === topServer.key).slice(-50) };
+    return {
+        serverKey: topServer.key,
+        motd: cleanMotdText(topServer.motd),
+        players: topServer.players?.length || 0,
+        messages: botData.chatDatabase.filter(m => m.serverKey === topServer.key).slice(-50),
+    };
 }
 
-let totalWebConnections = 0;
-let totalChatMessages = 0;
-
 // ========== ROUTES ==========
-// Serve o painel web
 app.get('/', (req, res) => {
     const htmlPath = path.join(__dirname, 'index.html');
-    if (fs.existsSync(htmlPath)) {
-        res.sendFile(htmlPath);
-    } else {
-        res.json({ status: 'online', version: '8.0', error: 'index.html não encontrado!' });
-    }
+    if (fs.existsSync(htmlPath)) res.sendFile(htmlPath);
+    else res.json({ status: 'online', version: '9.0', error: 'index.html não encontrado!' });
 });
 
-// Health check
 app.get('/health', (req, res) => {
     res.json({
-        status: 'ok',
-        version: '8.0',
-        uptime: getUptime(),
-        botConectado: !!botSocket,
-        bots: botData.stats.botsAtivos,
-        msgs: botData.chatDatabase.length,
-        servers: botData.servers.length,
+        status: 'ok', version: '9.0', uptime: getUptime(),
+        botConectado: !!botSocket, bots: botData.stats.botsAtivos,
+        msgs: botData.chatDatabase.length, servers: botData.servers.length,
         memory: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
     });
 });
+
 // ========== AUTH ==========
-const authenticatedSockets = new Map(); // socketId -> { username, role, sessionToken, keyId? }
+const authenticatedSockets = new Map();
 
 function isAuthenticated(socket) { return authenticatedSockets.has(socket.id); }
 function isAdmin(socket) { const u = authenticatedSockets.get(socket.id); return u && u.role === 'admin'; }
@@ -722,7 +572,7 @@ function getInitData() {
 // ========== SOCKET.IO ==========
 io.on('connection', (socket) => {
 
-    // === BOT ===
+    // === BOT CONNECTION ===
     if (socket.handshake.auth?.key === SECRET_KEY && socket.handshake.auth?.type === 'bot') {
         console.log('🤖 Bot conectou!');
         if (botSocket) try { botSocket.disconnect(); } catch {}
@@ -737,36 +587,56 @@ io.on('connection', (socket) => {
             if (Array.isArray(data.bots)) botData.bots = data.bots;
             if (Array.isArray(data.logs)) botData.logs = data.logs.slice(-MAX_LOGS);
             if (Array.isArray(data.chatDatabase)) {
-                const existingTs = new Set(botData.chatDatabase.map(m => `${m.timestamp}-${m.serverKey}-${m.username}`));
-                const newMsgs = data.chatDatabase.filter(m => !existingTs.has(`${m.timestamp}-${m.serverKey}-${m.username}`));
-                botData.chatDatabase.push(...newMsgs);
-                persistedChat.push(...newMsgs);
+                data.chatDatabase.forEach(m => {
+                    if (!isDuplicate(m)) {
+                        botData.chatDatabase.push(m);
+                        persistedChat.push(m);
+                    }
+                });
                 if (botData.chatDatabase.length > MAX_CHAT_MESSAGES) botData.chatDatabase = botData.chatDatabase.slice(-MAX_CHAT_MESSAGES);
                 if (persistedChat.length > MAX_CHAT_MESSAGES) persistedChat = persistedChat.slice(-MAX_CHAT_MESSAGES);
             }
             if (Array.isArray(data.servers)) data.servers.forEach(processNewServer);
-            syncServerStatus(); updateAnalytics();
+            syncServerStatus();
+            updateAnalytics();
             io.emit('init', getInitData());
         });
 
-        socket.on('log', (e) => { if (!e) return; botData.logs.push(e); if (botData.logs.length > MAX_LOGS) botData.logs.shift(); io.emit('log', e); });
+        socket.on('log', (e) => {
+            if (!e) return;
+            botData.logs.push(e);
+            if (botData.logs.length > MAX_LOGS) botData.logs.shift();
+            io.emit('log', e);
+        });
 
         socket.on('chatMessage', (data) => {
             if (!data?.serverKey) return;
+            if (isDuplicate(data)) return; // ANTI-DUPLICAÇÃO
+
             data.id = `${data.timestamp}-${data.serverKey}-${(data.username || '').substring(0, 16)}`;
-            if (!data.motd) { const srv = botData.servers.find(s => s.key === data.serverKey); if (srv) data.motd = cleanMotdText(srv.motd); }
-            botData.chatDatabase.push(data); persistedChat.push(data);
+            if (!data.motd) {
+                const srv = botData.servers.find(s => s.key === data.serverKey);
+                if (srv) data.motd = cleanMotdText(srv.motd);
+            }
+
+            botData.chatDatabase.push(data);
+            persistedChat.push(data);
             if (botData.chatDatabase.length > MAX_CHAT_MESSAGES) botData.chatDatabase.shift();
             if (persistedChat.length > MAX_CHAT_MESSAGES) persistedChat.shift();
-            totalChatMessages++;
+
             observability.recordMessage();
-            io.emit('chatMessage', data); updateAnalytics();
-            sendChatToDiscord(data.serverKey, data.username, data.message);
+            io.emit('chatMessage', data);
+            updateAnalytics();
+
+            // Só manda pro Discord se não for mensagem do próprio bot
+            if (!data.isBotMessage) {
+                sendChatToDiscord(data.serverKey, data.username, data.message);
+            }
             queueChatToSheets(data);
             io.emit('topServerChat', getTopServerChat());
 
             // Update player DB
-            if (data.username) {
+            if (data.username && !data.isBotMessage) {
                 const pKey = data.username.toLowerCase();
                 if (!playersDB[pKey]) playersDB[pKey] = { username: data.username, firstSeen: Date.now(), lastSeen: Date.now(), servers: [], messageCount: 0, messages: [], hoursActive: {}, sentiment: { positive: 0, negative: 0, neutral: 0 }, toxic: false };
                 const p = playersDB[pKey];
@@ -777,29 +647,38 @@ io.on('connection', (socket) => {
                 if (p.messages.length > 200) p.messages = p.messages.slice(-200);
                 const hour = new Date().getHours();
                 p.hoursActive[hour] = (p.hoursActive[hour] || 0) + 1;
+                if (data.sentiment) p.sentiment[data.sentiment]++;
             }
         });
 
-        socket.on('serverUpdate', (d) => { if (Array.isArray(d)) d.forEach(processNewServer); else if (d?.key) processNewServer(d); syncServerStatus(); io.emit('serverUpdate', botData.servers); });
+        socket.on('serverUpdate', (d) => {
+            if (Array.isArray(d)) d.forEach(processNewServer);
+            else if (d?.key) processNewServer(d);
+            syncServerStatus();
+            io.emit('serverUpdate', botData.servers);
+        });
 
         socket.on('botsUpdate', (data) => {
             if (!Array.isArray(data)) return;
             botData.bots = data;
             const now = Date.now();
             data.forEach(b => { const k = b.serverKey || b.server || b.key; if (k) serverLastSeen[k] = now; });
-            syncServerStatus(); io.emit('botsUpdate', data); io.emit('serverUpdate', botData.servers);
+            syncServerStatus();
+            io.emit('botsUpdate', data);
+            io.emit('serverUpdate', botData.servers);
         });
 
         socket.on('statsUpdate', (d) => { if (d) { botData.stats = d; io.emit('statsUpdate', d); } });
 
         // Forward events
-        ['learningData', 'learningExport', 'reputationData', 'allReputations', 'fullChat', 'chatDownload', 'botSystemInfo', 'botConsoleLog', 'vulnerabilityReport', 'serverHealthUpdate', 'tabCompleteResult', 'playerRetentionData'].forEach(evt => {
+        ['learningData', 'learningExport', 'reputationData', 'allReputations', 'fullChat', 'chatDownload', 'botSystemInfo', 'botConsoleLog', 'vulnerabilityReport', 'serverHealthUpdate', 'tabCompleteResult', 'playerRetentionData', 'inventoryUpdate', 'chestContents', 'impressionsData', 'influentialPlayers'].forEach(evt => {
             socket.on(evt, (data) => io.emit(evt, data));
         });
 
         socket.on('disconnect', (reason) => {
             console.log(`🔌 Bot saiu: ${reason}`);
-            botSocket = null; lastBotOnlineCheck = null;
+            botSocket = null;
+            lastBotOnlineCheck = null;
             io.emit('botStatus', false);
             sendLogToDiscord('🔌', `Bot desconectou: ${reason}`);
         });
@@ -807,8 +686,7 @@ io.on('connection', (socket) => {
         return;
     }
 
-    // === WEB ===
-    totalWebConnections++;
+    // === WEB CLIENT ===
     socket.emit('requireAuth');
 
     socket.on('authenticate', ({ username, password }, callback) => {
@@ -834,13 +712,17 @@ io.on('connection', (socket) => {
         const key = apiKeys.find(k => k.key === password && k.active);
         if (key) {
             if (key.expiresAt && Date.now() > key.expiresAt) {
-                key.active = false; saveKeys();
+                key.active = false;
+                safeWriteFile(KEYS_FILE, apiKeys);
                 if (typeof callback === 'function') callback({ success: false, error: 'Key expirada!' });
                 return;
             }
             const token = createSession(key.id, key.label || 'Key User', 'client', key.id);
             authenticatedSockets.set(socket.id, { username: key.label || 'Key User', role: 'client', sessionToken: token, keyId: key.id });
             if (typeof callback === 'function') callback({ success: true, role: 'client', username: key.label, sessionToken: token, keyData: { label: key.label, expiresAt: key.expiresAt, message: key.adMessage, remainingMs: getKeyAdRemaining(key.id) } });
+            syncServerStatus();
+            socket.emit('init', getInitData());
+            socket.emit('botStatus', !!botSocket);
             console.log(`🔑 Key login: ${key.label}`);
             return;
         }
@@ -848,7 +730,6 @@ io.on('connection', (socket) => {
         if (typeof callback === 'function') callback({ success: false, error: 'Credenciais inválidas' });
     });
 
-    // Session keep-alive
     socket.on('keepAlive', ({ sessionToken }, callback) => {
         const session = validateSession(sessionToken);
         if (session) {
@@ -866,6 +747,7 @@ io.on('connection', (socket) => {
         'connect_server', 'disconnect_server', 'clearBlacklist', 'removeBlacklist',
         'jump', 'refresh', 'addBlacklist', 'restartBots', 'clearChatDatabase', 'saveChat',
         'addServerTag', 'setServerCategory', 'scanVulnerabilities', 'tabCompleteServer',
+        'removeLearnItem', 'setSilentServer', 'startMining', 'stopMining',
     ];
 
     adminCmds.forEach(cmd => {
@@ -873,61 +755,41 @@ io.on('connection', (socket) => {
             if (!isAuthenticated(socket)) { socket.emit('toast', '⛔ Não autenticado!'); return; }
             if (!isAdmin(socket)) { socket.emit('toast', '⛔ Sem permissão!'); return; }
             if (!checkRateLimit(socket.id, cmd, cmd === 'refresh' ? 10 : 20)) { socket.emit('toast', '⏳ Aguarde...'); return; }
-            if (cmd === 'clearChatDatabase') { botData.chatDatabase = []; persistedChat = []; savePersistedChat(); io.emit('chatMessages', []); }
+            if (cmd === 'clearChatDatabase') {
+                botData.chatDatabase = [];
+                persistedChat = [];
+                recentMessageHashes.clear();
+                savePersistedChat();
+                io.emit('chatMessages', []);
+            }
             if (botSocket) botSocket.emit(cmd, d);
-            else socket.emit('toast', '⚠️ Bot offline!');
+            else if (cmd !== 'clearChatDatabase' && cmd !== 'refresh') socket.emit('toast', '⚠️ Bot offline!');
         });
     });
 
-    // === KEY MANAGEMENT (admin only) ===
+    // === KEY MANAGEMENT ===
     socket.on('createKey', (data, callback) => {
         if (!isAdmin(socket)) { if (typeof callback === 'function') callback({ error: 'Sem permissão' }); return; }
-
         const key = {
-            id: crypto.randomUUID(),
-            key: generateKey(),
-            label: data.label || 'Cliente',
-            role: 'client',
-            active: true,
-            createdAt: Date.now(),
+            id: crypto.randomUUID(), key: generateKey(), label: data.label || 'Cliente', role: 'client', active: true, createdAt: Date.now(),
             expiresAt: data.durationHours ? Date.now() + (data.durationHours * 3600000) : null,
-            adMessage: data.adMessage || '',
-            adDurationMs: data.durationHours ? data.durationHours * 3600000 : 0,
-            adRemainingMs: data.durationHours ? data.durationHours * 3600000 : 0,
+            adMessage: data.adMessage || '', adDurationMs: data.durationHours ? data.durationHours * 3600000 : 0,
             createdBy: authenticatedSockets.get(socket.id)?.username || 'admin',
         };
-
         apiKeys.push(key);
-        saveKeys();
-
-        // Add ad if message provided
+        safeWriteFile(KEYS_FILE, apiKeys);
         if (data.adMessage) {
-            adsDB.push({
-                id: crypto.randomUUID(),
-                keyId: key.id,
-                message: data.adMessage,
-                totalMs: key.adDurationMs,
-                remainingMs: key.adDurationMs,
-                status: 'active',
-                createdAt: Date.now(),
-                label: key.label,
-            });
-            saveAds();
-
-            // Sync ad messages to bot
+            adsDB.push({ id: crypto.randomUUID(), keyId: key.id, message: data.adMessage, totalMs: key.adDurationMs, remainingMs: key.adDurationMs, status: 'active', createdAt: Date.now(), label: key.label });
+            safeWriteFile(ADS_FILE, adsDB);
             syncAdsToBot();
         }
-
         if (typeof callback === 'function') callback({ success: true, key: key.key, id: key.id });
-        console.log(`🔑 Nova key criada: ${key.label} (${data.durationHours || '∞'}h)`);
+        console.log(`🔑 Nova key: ${key.label} (${data.durationHours || '∞'}h)`);
     });
 
     socket.on('getKeys', (callback) => {
         if (!isAdmin(socket)) return;
-        if (typeof callback === 'function') callback(apiKeys.map(k => ({
-            ...k, key: k.key.substring(0, 8) + '...' + k.key.slice(-4),
-            fullKey: k.key,
-        })));
+        if (typeof callback === 'function') callback(apiKeys.map(k => ({ ...k, fullKey: k.key, key: k.key.substring(0, 8) + '...' + k.key.slice(-4) })));
     });
 
     socket.on('revokeKey', (keyId, callback) => {
@@ -935,10 +797,9 @@ io.on('connection', (socket) => {
         const key = apiKeys.find(k => k.id === keyId);
         if (key) {
             key.active = false;
-            saveKeys();
-            // Deactivate related ads
+            safeWriteFile(KEYS_FILE, apiKeys);
             adsDB.filter(a => a.keyId === keyId).forEach(a => a.status = 'revoked');
-            saveAds();
+            safeWriteFile(ADS_FILE, adsDB);
             syncAdsToBot();
             if (typeof callback === 'function') callback({ success: true });
         }
@@ -948,7 +809,9 @@ io.on('connection', (socket) => {
         if (!isAdmin(socket)) return;
         apiKeys = apiKeys.filter(k => k.id !== keyId);
         adsDB = adsDB.filter(a => a.keyId !== keyId);
-        saveKeys(); saveAds(); syncAdsToBot();
+        safeWriteFile(KEYS_FILE, apiKeys);
+        safeWriteFile(ADS_FILE, adsDB);
+        syncAdsToBot();
         if (typeof callback === 'function') callback({ success: true });
     });
 
@@ -957,7 +820,7 @@ io.on('connection', (socket) => {
         if (typeof callback === 'function') callback(adsDB);
     });
 
-    // === VIEWER + ADMIN COMMANDS ===
+    // === VIEWER/DATA COMMANDS ===
     socket.on('getChatMessages', (f) => {
         if (!isAuthenticated(socket)) return;
         if (!checkRateLimit(socket.id, 'getChatMessages', 15)) return;
@@ -969,6 +832,7 @@ io.on('connection', (socket) => {
             r = r.filter(m => {
                 if (searchType === 'player') return (m.username || '').toLowerCase().includes(s);
                 if (searchType === 'message') return (m.message || '').toLowerCase().includes(s);
+                if (searchType === 'sentiment') return m.sentiment === s;
                 return (m.username || '').toLowerCase().includes(s) || (m.message || '').toLowerCase().includes(s);
             });
         }
@@ -1000,8 +864,7 @@ io.on('connection', (socket) => {
 
     socket.on('getTopServerChat', () => { if (isAuthenticated(socket)) socket.emit('topServerChat', getTopServerChat()); });
 
-    // Learning/Reputation forwarding
-    ['getLearningData', 'exportLearningDB', 'getReputation', 'getAllReputations', 'getBotSystemInfo'].forEach(evt => {
+    ['getLearningData', 'exportLearningDB', 'getReputation', 'getAllReputations', 'getBotSystemInfo', 'getImpressions', 'getInfluentialPlayers'].forEach(evt => {
         socket.on(evt, (data) => { if (isAuthenticated(socket) && botSocket) botSocket.emit(evt, data); });
     });
 
@@ -1020,16 +883,13 @@ io.on('connection', (socket) => {
     socket.on('getPlayersDB', (filter, callback) => {
         if (!isAuthenticated(socket)) return;
         let players = Object.values(playersDB);
-        if (filter?.search) {
-            const s = filter.search.toLowerCase();
-            players = players.filter(p => p.username.toLowerCase().includes(s));
-        }
+        if (filter?.search) { const s = filter.search.toLowerCase(); players = players.filter(p => p.username.toLowerCase().includes(s)); }
         if (filter?.server) players = players.filter(p => p.servers.includes(filter.server));
         if (filter?.toxic) players = players.filter(p => p.toxic);
         players.sort((a, b) => b.lastSeen - a.lastSeen);
         const result = players.slice(0, 200).map(p => ({
             ...p, messages: p.messages.slice(-20),
-            peakHour: Object.entries(p.hoursActive).sort((a, b) => b[1] - a[1])[0]?.[0] || '?',
+            peakHour: Object.entries(p.hoursActive || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || '?',
         }));
         if (typeof callback === 'function') callback(result);
         else socket.emit('playersDBData', result);
@@ -1044,7 +904,7 @@ io.on('connection', (socket) => {
     // Observability
     socket.on('getObservability', (callback) => {
         if (!isAuthenticated(socket)) return;
-        const data = { ...observability.getMetrics(), selfHealing: selfHealing.getStatus() };
+        const data = observability.getMetrics();
         if (typeof callback === 'function') callback(data);
         else socket.emit('observabilityData', data);
     });
@@ -1056,13 +916,16 @@ io.on('connection', (socket) => {
             players: s.players?.length || 0, maxPlayers: s.maxPlayers || 0,
             version: s.version, categoria: s.categoria || 'desconhecido',
             tags: s.tags || [], reputation: s.reputation || 50,
+            plugins: s.plugins || [], serverSoftware: s.serverSoftware || null,
+            country: s.country || null, heatmap: s.heatmap || {},
+            peakPlayers: s.peakPlayers || 0,
         })));
     });
 
     socket.on('disconnect', () => authenticatedSockets.delete(socket.id));
 });
 
-// ========== SYNC ADS TO BOT ==========
+// ========== SYNC ADS ==========
 function syncAdsToBot() {
     if (!botSocket) return;
     const activeAds = getActiveAds();
@@ -1081,26 +944,19 @@ async function shutdown() {
     if (isShuttingDown) return;
     isShuttingDown = true;
     console.log('\n🛑 Desligando relay...');
-    
     try {
         clearInterval(analyticsTimer);
         clearInterval(serverStatusTimer);
         clearInterval(botsUpdateTimer);
         savePersistedChat();
-        saveKeys();
-        saveAds();
+        safeWriteFile(KEYS_FILE, apiKeys);
+        safeWriteFile(ADS_FILE, adsDB);
         savePlayersDB();
         await flushSheetsBatch();
         sendLogToDiscord('🛑', 'Relay desligando...');
-    } catch (err) {
-        console.error('Erro no shutdown:', err.message);
-    }
-    
+    } catch (err) { console.error('Erro shutdown:', err.message); }
     setTimeout(() => {
-        try {
-            io.close();
-            server_http.close();
-        } catch {}
+        try { io.close(); server_http.close(); } catch {}
         console.log('👋 Relay desligado!');
         process.exit(0);
     }, 2000);
@@ -1108,12 +964,8 @@ async function shutdown() {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', () => {
-    // Render envia SIGTERM no redeploy - só desliga se já estabilizou
-    if (Date.now() - SERVER_START_TIME > 30000) {
-        shutdown();
-    } else {
-        console.log('⏳ SIGTERM ignorado (inicializando...)');
-    }
+    if (Date.now() - SERVER_START_TIME > 30000) shutdown();
+    else console.log('⏳ SIGTERM ignorado (inicializando...)');
 });
 
 process.on('uncaughtException', (err) => {
@@ -1133,8 +985,8 @@ process.on('unhandledRejection', (reason) => {
 server_http.listen(PORT, '0.0.0.0', () => {
     console.log('');
     console.log('╔══════════════════════════════════════════╗');
-    console.log('║          RELAY SERVER v8.0               ║');
-    console.log('║     Monetização + Segurança + AI         ║');
+    console.log('║          RELAY SERVER v9.0               ║');
+    console.log('║     Monetização + Segurança + Full       ║');
     console.log('╠══════════════════════════════════════════╣');
     console.log(`║ 🌐 Porta: ${PORT}`);
     console.log(`║ 🔒 Usuários: ${usersDB.length}`);
@@ -1142,9 +994,23 @@ server_http.listen(PORT, '0.0.0.0', () => {
     console.log(`║ 📢 Anúncios ativos: ${getActiveAds().length}`);
     console.log(`║ 👥 Players DB: ${Object.keys(playersDB).length}`);
     console.log(`║ 💾 Chat persistido: ${persistedChat.length} msgs`);
+    console.log(`║ 🔐 SECRET_KEY: ${SECRET_KEY ? '✅ .env' : '❌ FALTANDO'}`);
     console.log(`║ 🔐 Criptografia: AES-256-CBC ✅`);
+    console.log(`║ ⏰ Sessão: ${SESSION_DURATION / 60000}min`);
     console.log('╚══════════════════════════════════════════╝');
     console.log('');
-    console.log('✅ Servidor pronto e ouvindo!');
-    sendLogToDiscord('🚀', `Relay v8.0 iniciado! Porta ${PORT}`);
+    console.log('✅ Servidor pronto!');
+    sendLogToDiscord('🚀', `Relay v9.0 iniciado! Porta ${PORT}`);
+
+    // ========== KEEP ALIVE (Render free tier) ==========
+    setInterval(() => {
+        fetch(`http://localhost:${PORT}/health`).catch(() => {});
+    }, 4 * 60 * 1000); // Ping a cada 4 minutos
+
+    // Keep alive externo (se tiver URL pública)
+    if (process.env.RENDER_EXTERNAL_URL) {
+        setInterval(() => {
+            fetch(`${process.env.RENDER_EXTERNAL_URL}/health`).catch(() => {});
+        }, 4 * 60 * 1000);
+    }
 });

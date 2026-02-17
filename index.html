@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot Anunciador v8.0 — Painel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bot Anunciador v9.0 — Painel</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -38,7 +38,7 @@
         /* LOGIN */
         .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .login-overlay.hidden { display: none; }
-        .login-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 36px; width: 360px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .login-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 36px; width: 360px; max-width: 95vw; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
         .login-box h2 { margin-bottom: 6px; font-size: 22px; }
         .login-box p { color: var(--text-secondary); margin-bottom: 20px; font-size: 13px; }
         .login-box .ig { margin-bottom: 14px; text-align: left; }
@@ -51,7 +51,7 @@
 
         /* LAYOUT */
         .app { display: flex; height: 100vh; }
-        .sidebar { width: var(--sidebar-width); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; transition: width 0.3s; }
         .sb-header { padding: 14px; border-bottom: 1px solid var(--border); text-align: center; }
         .sb-header h1 { font-size: 15px; font-weight: 700; background: linear-gradient(135deg, var(--accent), #a855f7); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
         .sb-header .ver { font-size: 10px; color: var(--text-muted); }
@@ -85,7 +85,7 @@
         .page.active { display: block; }
 
         /* CARDS */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
         .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
         .stat-card:hover { border-color: var(--accent); }
         .stat-card .si { font-size: 18px; margin-bottom: 4px; }
@@ -100,11 +100,10 @@
 
         /* GRID */
         .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 14px; }
-        .dash-left { min-width: 0; }
-        .dash-right { min-width: 0; }
+        .dash-left, .dash-right { min-width: 0; }
 
         /* BUTTONS */
-        .btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); cursor: pointer; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+        .btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); cursor: pointer; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; white-space: nowrap; }
         .btn:hover { background: var(--bg-hover); border-color: var(--accent); }
         .btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
         .btn.primary:hover { background: var(--accent-hover); }
@@ -116,7 +115,7 @@
         /* INPUTS */
         .inp { padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 12px; outline: none; width: 100%; }
         .inp:focus { border-color: var(--accent); }
-        .inp-row { display: flex; gap: 6px; margin-bottom: 10px; }
+        .inp-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
         select.inp { cursor: pointer; }
 
         /* BOTS */
@@ -129,7 +128,7 @@
         .bot-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .bot-srv { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .bot-motd { font-size: 9px; color: var(--accent); font-style: italic; }
-        .bot-mini { display: flex; gap: 6px; font-size: 10px; color: var(--text-secondary); flex-shrink: 0; }
+        .bot-mini { display: flex; gap: 6px; font-size: 10px; color: var(--text-secondary); flex-shrink: 0; flex-wrap: wrap; }
         .bot-actions { display: flex; gap: 3px; flex-shrink: 0; }
 
         /* CHAT */
@@ -142,17 +141,18 @@
         .chat-msg .cs { color: var(--accent); font-size: 10px; cursor: pointer; }
         .chat-msg .cm { color: var(--text-muted); font-style: italic; font-size: 10px; }
         .chat-msg .cu { color: var(--success); font-weight: 600; }
+        .chat-msg .cu.bot-user { color: var(--warning); }
         .chat-msg .cx { color: var(--text-primary); }
         .chat-msg.mentioned { background: rgba(99,102,241,0.12); border-left: 3px solid var(--accent); }
         .chat-msg .sentiment-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px; }
         .chat-msg .sentiment-dot.positive { background: var(--success); }
         .chat-msg .sentiment-dot.negative { background: var(--danger); }
-        .chat-input { display: flex; gap: 6px; padding: 10px 0; }
+        .chat-input { display: flex; gap: 6px; padding: 10px 0; flex-wrap: wrap; }
 
         /* SERVER CARDS */
         .srv-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
         .srv-card:hover { border-color: var(--accent); }
-        .srv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+        .srv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 4px; }
         .srv-name { font-weight: 600; font-size: 12px; }
         .srv-motd { font-size: 11px; color: var(--text-secondary); font-style: italic; margin-bottom: 4px; }
         .srv-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 10px; color: var(--text-muted); }
@@ -163,6 +163,7 @@
         .srv-tag.minigame { background: #f59e0b22; color: var(--warning); }
         .srv-tag.smp { background: #a855f722; color: #a855f7; }
         .srv-tag.lojinha { background: #ec489922; color: #ec4899; }
+        .srv-plugins { font-size: 10px; color: var(--text-muted); margin-top: 4px; padding: 4px 8px; background: var(--bg-input); border-radius: 4px; }
         .rep-bar { width: 100%; height: 3px; background: var(--bg-input); border-radius: 2px; overflow: hidden; margin-top: 4px; }
         .rep-bar .fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
 
@@ -183,9 +184,11 @@
 
         /* LEARNING */
         .word-cloud { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; }
-        .word-tag { padding: 3px 8px; border-radius: 5px; font-size: 11px; background: var(--bg-input); border: 1px solid var(--border); }
+        .word-tag { padding: 3px 8px; border-radius: 5px; font-size: 11px; background: var(--bg-input); border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 3px; }
         .word-tag:hover { border-color: var(--accent); }
-        .word-tag .cnt { color: var(--text-muted); font-size: 9px; margin-left: 3px; }
+        .word-tag .cnt { color: var(--text-muted); font-size: 9px; }
+        .word-del { color: var(--danger); cursor: pointer; font-weight: 700; font-size: 13px; }
+        .word-del:hover { color: #ff6b6b; }
 
         /* TERMINAL */
         .term-screen { background: #0a0a1a; border: 1px solid var(--border); border-radius: 10px; font-family: monospace; font-size: 11px; color: #c8d6e5; height: calc(100vh - 320px); overflow-y: auto; padding: 10px; }
@@ -196,7 +199,7 @@
         .term-line.warn .tv { color: #ffa502; }
 
         /* SYS INFO */
-        .sys-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 14px; }
+        .sys-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 14px; }
         .sys-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; }
         .sys-card .sv { font-size: 18px; font-weight: 700; color: var(--accent); }
         .sys-card .sl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
@@ -213,10 +216,10 @@
         .tsc-h { padding: 8px 12px; background: var(--bg-input); border-bottom: 1px solid var(--border); font-size: 11px; }
         .tsc-m { padding: 3px 12px; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,0.02); }
 
-        /* PLAYER PROFILE */
+        /* PLAYER CARD */
         .player-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
         .player-card:hover { border-color: var(--accent); }
-        .player-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .player-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
         .player-avatar { width: 32px; height: 32px; border-radius: 4px; }
         .player-name { font-size: 13px; font-weight: 600; }
         .player-role { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 600; background: var(--accent); color: white; }
@@ -226,7 +229,7 @@
         /* KEYS */
         .key-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
         .key-card:hover { border-color: var(--accent); }
-        .key-value { font-family: monospace; font-size: 11px; color: var(--accent); background: var(--bg-input); padding: 4px 8px; border-radius: 4px; user-select: all; }
+        .key-value { font-family: monospace; font-size: 11px; color: var(--accent); background: var(--bg-input); padding: 4px 8px; border-radius: 4px; user-select: all; word-break: break-all; }
         .key-meta { display: flex; gap: 8px; font-size: 10px; color: var(--text-muted); margin-top: 6px; flex-wrap: wrap; }
 
         /* ADS */
@@ -234,12 +237,46 @@
         .ad-progress { width: 100%; height: 4px; background: var(--bg-input); border-radius: 2px; overflow: hidden; margin-top: 6px; }
         .ad-progress .fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 1s; }
 
+        /* INVENTORY */
+        .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; }
+        .inv-slot { background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 6px; text-align: center; font-size: 10px; }
+        .inv-slot.armor { border-color: var(--accent); }
+        .inv-slot .inv-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .inv-slot .inv-count { color: var(--text-muted); }
+
+        /* VIEWER */
+        .viewer-frame { width: 100%; height: 400px; border: 1px solid var(--border); border-radius: 10px; background: #000; }
+
         /* TOAST */
         .toast-c { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 6px; }
         .toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: 7px; padding: 8px 14px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; max-width: 320px; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        @media (max-width: 900px) {
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            :root { --sidebar-width: 0px; }
+            .sidebar { position: fixed; left: -260px; width: 260px; height: 100vh; transition: left 0.3s; z-index: 1000; }
+            .sidebar.open { left: 0; }
+            .mobile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
+            .mobile-overlay.show { display: block; }
+            .mobile-menu-btn { display: flex !important; }
+            .dash-grid { grid-template-columns: 1fr; }
+            .topbar { padding: 0 10px; }
+            .content { padding: 10px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .chat-toolbar { gap: 4px; }
+            .chat-input { flex-direction: column; }
+            .chat-input .inp { max-width: 100% !important; }
+            .inp-row { flex-direction: column; }
+            .inp-row .inp { max-width: 100% !important; }
+            .sys-grid { grid-template-columns: repeat(2, 1fr); }
+            .topbar-stat:not(:first-child) { display: none; }
+        }
+        @media (min-width: 769px) {
+            .mobile-menu-btn { display: none !important; }
+            .mobile-overlay { display: none !important; }
+        }
+        @media (max-width: 900px) and (min-width: 769px) {
             .sidebar { width: 50px; }
             .nav-item span, .nav-sec, .sb-header h1, .sb-header .ver, .sb-footer .user-info span, .nav-item .badge { display: none; }
             .nav-item { justify-content: center; padding: 8px; }
@@ -253,7 +290,7 @@
 <div class="login-overlay" id="loginOverlay">
     <div class="login-box">
         <h2>🤖 Bot Anunciador</h2>
-        <p>v8.0 — Login</p>
+        <p>v9.0 — Login</p>
         <div class="ig"><label>Usuário / Key</label><input type="text" id="loginUser" placeholder="Usuário ou API Key" autocomplete="off"></div>
         <div class="ig"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha" autocomplete="off"></div>
         <button onclick="doLogin()" id="loginBtn">Entrar</button>
@@ -261,10 +298,13 @@
     </div>
 </div>
 
+<!-- MOBILE OVERLAY -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
 <!-- APP -->
 <div class="app" id="app" style="display:none;">
-    <div class="sidebar">
-        <div class="sb-header"><h1>Bot Anunciador</h1><div class="ver">v8.0</div></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sb-header"><h1>Bot Anunciador</h1><div class="ver">v9.0</div></div>
         <div class="sb-nav">
             <div class="nav-sec">Principal</div>
             <div class="nav-item active" data-page="dashboard" onclick="nav('dashboard')"><i class="fas fa-home"></i><span>Dashboard</span></div>
@@ -274,10 +314,12 @@
             <div class="nav-sec">Gerenciar</div>
             <div class="nav-item" data-page="servers" onclick="nav('servers')"><i class="fas fa-server"></i><span>Servidores</span></div>
             <div class="nav-item" data-page="players" onclick="nav('players')"><i class="fas fa-users"></i><span>Players</span></div>
+            <div class="nav-item" data-page="inventory" onclick="nav('inventory')"><i class="fas fa-box"></i><span>Inventário</span></div>
             <div class="nav-item" data-page="messages" onclick="nav('messages')"><i class="fas fa-bullhorn"></i><span>Mensagens</span></div>
             <div class="nav-item" data-page="blacklist" onclick="nav('blacklist')"><i class="fas fa-ban"></i><span>Blacklist</span></div>
             <div class="nav-sec">Análise</div>
             <div class="nav-item" data-page="analytics" onclick="nav('analytics')"><i class="fas fa-chart-bar"></i><span>Analytics</span></div>
+            <div class="nav-item" data-page="viewer" onclick="nav('viewer')"><i class="fas fa-eye"></i><span>Viewer 3D</span></div>
             <div class="nav-item" data-page="terminal" onclick="nav('terminal')"><i class="fas fa-terminal"></i><span>Terminal</span></div>
             <div class="nav-item" data-page="logs" onclick="nav('logs')"><i class="fas fa-list-alt"></i><span>Logs</span></div>
             <div class="nav-sec admin-only">Admin</div>
@@ -291,11 +333,15 @@
     </div>
     <div class="main">
         <div class="topbar">
-            <div class="topbar-title" id="pageTitle">Dashboard</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn sm mobile-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <div class="topbar-title" id="pageTitle">Dashboard</div>
+            </div>
             <div class="topbar-right">
                 <div class="topbar-stat"><span class="status-dot" id="botDot"></span><span id="botText">Offline</span></div>
                 <div class="topbar-stat"><i class="fas fa-clock"></i><span id="uptime">0m</span></div>
                 <div class="topbar-stat"><i class="fas fa-memory"></i><span id="memText">—</span></div>
+                <div class="topbar-stat"><i class="fas fa-tachometer-alt"></i><span id="tpsText">—</span></div>
             </div>
         </div>
         <div class="content">
@@ -308,18 +354,19 @@
                     <div class="stat-card"><div class="si">💬</div><div class="sv" id="sMsgs">0</div><div class="sl">Mensagens</div></div>
                     <div class="stat-card"><div class="si">🚫</div><div class="sv" id="sBl">0</div><div class="sl">Blacklist</div></div>
                     <div class="stat-card"><div class="si">👥</div><div class="sv" id="sPlayers">0</div><div class="sl">Players</div></div>
-                    <div class="stat-card"><div class="si">📢</div><div class="sv" id="sAds">0</div><div class="sl">Anúncios Ativos</div></div>
+                    <div class="stat-card"><div class="si">📢</div><div class="sv" id="sAds">0</div><div class="sl">Anúncios</div></div>
+                    <div class="stat-card"><div class="si">📊</div><div class="sv" id="sImpressions">0</div><div class="sl">Impressões</div></div>
                 </div>
                 <div class="dash-grid">
                     <div class="dash-left">
-                        <div class="panel"><div class="panel-h"><span>🏆 Top 3 Servidores</span></div><div class="panel-b np" id="topSrvPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Aguardando...</div></div></div>
-                        <div class="panel"><div class="panel-h"><span>🤖 Bots Ativos</span><div><button class="btn sm primary admin-only" onclick="cmd('announce')"><i class="fas fa-bullhorn"></i></button> <button class="btn sm danger admin-only" onclick="cmd('restartBots')"><i class="fas fa-redo"></i></button></div></div><div class="panel-b np" id="botsPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Nenhum bot</div></div></div>
+                        <div class="panel"><div class="panel-h"><span>🏆 Top 3</span></div><div class="panel-b np" id="topSrvPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Aguardando...</div></div></div>
+                        <div class="panel"><div class="panel-h"><span>🤖 Bots</span><div><button class="btn sm primary admin-only" onclick="cmd('announce')"><i class="fas fa-bullhorn"></i></button> <button class="btn sm danger admin-only" onclick="cmd('restartBots')"><i class="fas fa-redo"></i></button></div></div><div class="panel-b np" id="botsPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Nenhum bot</div></div></div>
                         <div class="panel"><div class="panel-h"><span>📋 Logs</span></div><div class="panel-b np" id="dashLogs" style="max-height:180px;overflow-y:auto;"></div></div>
                     </div>
                     <div class="dash-right">
                         <div class="panel"><div class="panel-h"><span>💬 Chat Popular</span></div><div class="panel-b np"><div class="tsc" id="tscPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Aguardando...</div></div></div></div>
                         <div class="panel"><div class="panel-h"><span>🔗 Conectar</span></div><div class="panel-b"><div class="inp-row"><input class="inp admin-only" id="cIp" placeholder="ip:porta"><button class="btn primary admin-only" onclick="connectSrv()"><i class="fas fa-plug"></i></button></div></div></div>
-                        <div class="panel"><div class="panel-h"><span>📊 Pico Horário</span></div><div class="panel-b"><div class="chart-bars" id="peakChart" style="height:70px;"></div><div style="height:18px;"></div></div></div>
+                        <div class="panel"><div class="panel-h"><span>📊 Pico</span></div><div class="panel-b"><div class="chart-bars" id="peakChart" style="height:70px;"></div><div style="height:18px;"></div></div></div>
                     </div>
                 </div>
             </div>
@@ -335,10 +382,10 @@
                 <div class="chat-container">
                     <div class="chat-toolbar">
                         <select class="inp" id="chatFilter" style="max-width:220px;" onchange="filterChat()"><option value="all">Todos servidores</option></select>
-                        <select class="inp" id="chatSType" style="max-width:110px;"><option value="all">Tudo</option><option value="player">Jogador</option><option value="message">Mensagem</option></select>
+                        <select class="inp" id="chatSType" style="max-width:110px;"><option value="all">Tudo</option><option value="player">Jogador</option><option value="message">Mensagem</option><option value="positive">😊 Positivo</option><option value="negative">😡 Negativo</option></select>
                         <input class="inp" id="chatSearch" placeholder="Pesquisar..." style="max-width:200px;" oninput="filterChat()">
                         <button class="btn sm" onclick="filterChat()"><i class="fas fa-search"></i></button>
-                        <button class="btn sm" onclick="dlChat()"><i class="fas fa-download"></i> Baixar</button>
+                        <button class="btn sm" onclick="dlChat()"><i class="fas fa-download"></i></button>
                         <button class="btn sm danger admin-only" onclick="cmd('clearChatDatabase')"><i class="fas fa-trash"></i></button>
                     </div>
                     <div class="chat-msgs" id="chatMsgs"></div>
@@ -354,13 +401,13 @@
 
             <!-- LEARNING -->
             <div class="page" id="p-learning">
-                <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));">
+                <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));">
                     <div class="stat-card"><div class="si">🧠</div><div class="sv" id="lTotal">0</div><div class="sl">Analisadas</div></div>
                     <div class="stat-card"><div class="si">📝</div><div class="sv" id="lMin">0%</div><div class="sl">Minúscula</div></div>
                     <div class="stat-card"><div class="si">🔤</div><div class="sv" id="lAcento">0%</div><div class="sl">Acento</div></div>
                     <div class="stat-card"><div class="si">✂️</div><div class="sv" id="lAbrev">0%</div><div class="sl">Abreviações</div></div>
                 </div>
-                <div class="inp-row"><button class="btn primary" onclick="reqLearn()"><i class="fas fa-sync"></i> Atualizar</button><button class="btn success" onclick="exportLearn()"><i class="fas fa-download"></i> Exportar DB</button></div>
+                <div class="inp-row"><button class="btn primary" onclick="reqLearn()"><i class="fas fa-sync"></i> Atualizar</button><button class="btn success" onclick="exportLearn()"><i class="fas fa-download"></i> Exportar</button></div>
                 <div class="panel"><div class="panel-h"><span>🗣️ Gírias</span></div><div class="panel-b"><div class="word-cloud" id="giriasC"></div></div></div>
                 <div class="panel"><div class="panel-h"><span>💬 Expressões</span></div><div class="panel-b"><div class="word-cloud" id="exprC"></div></div></div>
                 <div class="panel"><div class="panel-h"><span>📜 Frases</span></div><div class="panel-b np" id="frasesP"></div></div>
@@ -369,9 +416,9 @@
             <!-- SERVERS -->
             <div class="page" id="p-servers">
                 <div class="inp-row">
-                    <select class="inp" id="srvCatF" style="max-width:160px;" onchange="renderSrvs()"><option value="all">Todas</option><option value="survival">Survival</option><option value="pvp">PvP</option><option value="criativo">Criativo</option><option value="minigame">Minigame</option><option value="smp">SMP</option><option value="lojinha">Lojinha</option><option value="outro">Outro</option></select>
-                    <select class="inp" id="srvStatF" style="max-width:130px;" onchange="renderSrvs()"><option value="all">Todos</option><option value="online">Online</option><option value="offline">Offline</option></select>
-                    <input class="inp" id="srvSearch" placeholder="Pesquisar..." style="max-width:220px;" oninput="renderSrvs()">
+                    <select class="inp" id="srvCatF" style="max-width:140px;" onchange="renderSrvs()"><option value="all">Todas</option><option value="survival">Survival</option><option value="pvp">PvP</option><option value="criativo">Criativo</option><option value="minigame">Minigame</option><option value="smp">SMP</option><option value="lojinha">Lojinha</option><option value="outro">Outro</option></select>
+                    <select class="inp" id="srvStatF" style="max-width:110px;" onchange="renderSrvs()"><option value="all">Todos</option><option value="online">Online</option><option value="offline">Offline</option></select>
+                    <input class="inp" id="srvSearch" placeholder="Pesquisar..." style="max-width:200px;" oninput="renderSrvs()">
                 </div>
                 <div id="srvsPanel"></div>
             </div>
@@ -381,15 +428,25 @@
                 <div class="inp-row">
                     <input class="inp" id="playerSearch" placeholder="Pesquisar jogador..." style="max-width:260px;" oninput="searchPlayers()">
                     <button class="btn" onclick="searchPlayers()"><i class="fas fa-search"></i></button>
-                    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);"><input type="checkbox" id="playerToxicOnly" onchange="searchPlayers()"> Só tóxicos</label>
+                    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);"><input type="checkbox" id="playerToxicOnly" onchange="searchPlayers()"> Tóxicos</label>
                 </div>
                 <div id="playersPanel"></div>
+            </div>
+
+            <!-- INVENTORY -->
+            <div class="page" id="p-inventory">
+                <div class="inp-row">
+                    <select class="inp" id="invBotSelect" style="max-width:260px;" onchange="renderInventory()"><option value="">Selecione um bot</option></select>
+                </div>
+                <div class="panel"><div class="panel-h"><span>🛡️ Armadura</span></div><div class="panel-b" id="invArmor"><div style="color:var(--text-muted);font-size:12px;">Selecione um bot</div></div></div>
+                <div class="panel"><div class="panel-h"><span>📦 Inventário</span></div><div class="panel-b" id="invItems"><div style="color:var(--text-muted);font-size:12px;">Selecione um bot</div></div></div>
             </div>
 
             <!-- MESSAGES -->
             <div class="page" id="p-messages">
                 <div class="panel"><div class="panel-h"><span>📣 Anúncios</span></div><div class="panel-b"><div class="inp-row"><input class="inp admin-only" id="newMsg" placeholder="Nova mensagem..."><button class="btn primary admin-only" onclick="addMsg()"><i class="fas fa-plus"></i></button></div></div><div class="panel-b np" id="msgsPanel"></div></div>
-                <div class="panel"><div class="panel-h"><span>⚙️ Config</span></div><div class="panel-b"><div class="inp-row"><label style="font-size:12px;min-width:100px;display:flex;align-items:center;">Intervalo(s):</label><input type="number" class="inp admin-only" id="intInp" min="10" style="max-width:100px;"><button class="btn primary admin-only" onclick="setInt()">Salvar</button></div><div class="inp-row"><label style="font-size:12px;min-width:100px;display:flex;align-items:center;">Username:</label><input class="inp admin-only" id="unameInp" style="max-width:180px;"><button class="btn primary admin-only" onclick="setUname()">Salvar</button></div></div></div>
+                <div class="panel"><div class="panel-h"><span>⚙️ Config</span></div><div class="panel-b"><div class="inp-row"><label style="font-size:12px;min-width:90px;">Intervalo(s):</label><input type="number" class="inp admin-only" id="intInp" min="10" style="max-width:100px;"><button class="btn primary admin-only" onclick="setInt()">Salvar</button></div><div class="inp-row"><label style="font-size:12px;min-width:90px;">Username:</label><input class="inp admin-only" id="unameInp" style="max-width:180px;"><button class="btn primary admin-only" onclick="setUname()">Salvar</button></div></div></div>
+                <div class="panel"><div class="panel-h"><span>📊 Impressões</span></div><div class="panel-b" id="impressionsPanel"><div style="color:var(--text-muted);font-size:12px;">Carregando...</div></div></div>
             </div>
 
             <!-- BLACKLIST -->
@@ -402,10 +459,19 @@
             <!-- ANALYTICS -->
             <div class="page" id="p-analytics">
                 <div class="inp-row"><button class="btn sm" onclick="loadAn('1h')">1H</button><button class="btn sm primary" onclick="loadAn('24h')">24H</button><button class="btn sm" onclick="loadAn('7d')">7D</button></div>
-                <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));"><div class="stat-card"><div class="si">💬</div><div class="sv" id="anMsgs">0</div><div class="sl">Msgs Período</div></div></div>
+                <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));"><div class="stat-card"><div class="si">💬</div><div class="sv" id="anMsgs">0</div><div class="sl">Msgs Período</div></div></div>
                 <div class="panel"><div class="panel-h"><span>📊 Msgs/Hora</span></div><div class="panel-b"><div class="chart-bars" id="anMsgChart" style="height:100px;"></div><div style="height:20px;"></div></div></div>
                 <div class="panel"><div class="panel-h"><span>👥 Players</span></div><div class="panel-b"><div class="chart-bars" id="anPlayChart" style="height:100px;"></div><div style="height:20px;"></div></div></div>
                 <div class="panel"><div class="panel-h"><span>🏆 Top Servers</span></div><div class="panel-b np" id="anTopSrv"></div></div>
+            </div>
+
+            <!-- VIEWER 3D -->
+            <div class="page" id="p-viewer">
+                <div class="inp-row">
+                    <select class="inp" id="viewerBotSelect" style="max-width:260px;" onchange="loadViewer()"><option value="">Selecione um bot</option></select>
+                    <button class="btn primary" onclick="loadViewer()"><i class="fas fa-sync"></i></button>
+                </div>
+                <div class="panel"><div class="panel-h"><span>👁️ Visão do Bot</span></div><div class="panel-b" id="viewerPanel"><div style="color:var(--text-muted);text-align:center;padding:40px;font-size:12px;">Selecione um bot com viewer ativo</div></div></div>
             </div>
 
             <!-- TERMINAL -->
@@ -420,7 +486,7 @@
                     <div class="sys-card"><div class="sv" id="sysNode">—</div><div class="sl">Node</div></div>
                     <div class="sys-card"><div class="sv" id="sysPlat">—</div><div class="sl">OS</div></div>
                 </div>
-                <div class="inp-row"><button class="btn primary" onclick="reqSys()"><i class="fas fa-sync"></i> Info</button><button class="btn danger admin-only" onclick="restartBot()"><i class="fas fa-power-off"></i> Reiniciar Bot</button><button class="btn" onclick="clearTerm()"><i class="fas fa-eraser"></i> Limpar</button></div>
+                <div class="inp-row"><button class="btn primary" onclick="reqSys()"><i class="fas fa-sync"></i> Info</button><button class="btn danger admin-only" onclick="restartBot()"><i class="fas fa-power-off"></i> Reiniciar</button><button class="btn" onclick="clearTerm()"><i class="fas fa-eraser"></i> Limpar</button></div>
                 <div class="panel" style="margin-top:10px;"><div class="panel-h"><span><i class="fas fa-terminal"></i> Console</span><span style="font-size:10px;color:var(--text-muted);" id="termCount">0</span></div><div class="panel-b np"><div class="term-screen" id="termScreen"><div class="term-line"><span class="tv">Aguardando bot...</span></div></div></div></div>
             </div>
 
@@ -429,15 +495,15 @@
                 <div class="panel"><div class="panel-h"><span>📋 Logs</span><button class="btn sm" onclick="cmd('refresh')"><i class="fas fa-sync"></i></button></div><div class="panel-b np" id="logsP" style="max-height:calc(100vh - 180px);overflow-y:auto;"></div></div>
             </div>
 
-            <!-- KEYS (admin) -->
+            <!-- KEYS -->
             <div class="page" id="p-keys">
-                <div class="panel"><div class="panel-h"><span>🔑 Criar Nova Key</span></div><div class="panel-b">
+                <div class="panel"><div class="panel-h"><span>🔑 Nova Key</span></div><div class="panel-b">
                     <div class="inp-row"><label style="font-size:12px;min-width:80px;">Label:</label><input class="inp" id="keyLabel" placeholder="Nome do cliente" style="max-width:200px;"></div>
                     <div class="inp-row"><label style="font-size:12px;min-width:80px;">Duração(h):</label><input type="number" class="inp" id="keyDuration" placeholder="24" min="1" style="max-width:100px;"></div>
                     <div class="inp-row"><label style="font-size:12px;min-width:80px;">Anúncio:</label><input class="inp" id="keyAdMsg" placeholder="Mensagem do anúncio pago"></div>
-                    <button class="btn primary" onclick="createKey()"><i class="fas fa-plus"></i> Criar Key</button>
+                    <button class="btn primary" onclick="createKey()"><i class="fas fa-plus"></i> Criar</button>
                 </div></div>
-                <div class="panel"><div class="panel-h"><span>📋 Keys Ativas</span></div><div class="panel-b np" id="keysPanel"></div></div>
+                <div class="panel"><div class="panel-h"><span>📋 Keys</span></div><div class="panel-b np" id="keysPanel"></div></div>
                 <div class="panel"><div class="panel-h"><span>📢 Anúncios Pagos</span></div><div class="panel-b np" id="adsPanel"></div></div>
             </div>
 
@@ -447,7 +513,7 @@
                     <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border);"><span>Relay</span><span style="color:var(--accent);" id="setRelay">—</span></div>
                     <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border);"><span>Bot</span><span style="color:var(--accent);" id="setBot">—</span></div>
                     <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border);"><span>Papel</span><span style="color:var(--accent);" id="setRole">—</span></div>
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;"><span>Versão</span><span style="color:var(--accent);">8.0</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;"><span>Versão</span><span style="color:var(--accent);">9.0</span></div>
                 </div></div>
                 <div class="panel"><div class="panel-h"><span>💾 Dados</span></div><div class="panel-b"><div class="inp-row"><button class="btn admin-only" onclick="cmd('saveChat')"><i class="fas fa-save"></i> Salvar</button><button class="btn" onclick="dlChat()"><i class="fas fa-download"></i> Chat</button><button class="btn" onclick="exportLearn()"><i class="fas fa-brain"></i> Learning</button></div></div></div>
             </div>
@@ -460,7 +526,21 @@
 // ========== STATE ==========
 let socket=null,currentUser=null,currentRole=null,currentPage='dashboard',botOnline=false;
 let allBots=[],allServers=[],allChat=[],allLogs=[],stats={},analyticsData={},learningData={},topServerChat={},sessionToken=null;
+let inventoryData={},isMobile=window.innerWidth<=768;
 const RELAY=window.location.origin;
+
+// ========== MOBILE ==========
+function toggleSidebar(){
+    const sb=document.getElementById('sidebar');
+    const ov=document.getElementById('mobileOverlay');
+    sb.classList.toggle('open');
+    ov.classList.toggle('show');
+}
+function closeSidebar(){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('mobileOverlay').classList.remove('show');
+}
+window.addEventListener('resize',()=>{isMobile=window.innerWidth<=768;});
 
 // ========== LOGIN ==========
 function doLogin(){
@@ -482,9 +562,7 @@ function doLogin(){
                 document.getElementById('sbRole').className='role '+r.role;
                 document.getElementById('setRole').textContent=rl;
                 document.getElementById('setRelay').textContent=RELAY;
-                applyPerms();
-                startKeepAlive();
-                toast('✅ Login!');
+                applyPerms();startKeepAlive();toast('✅ Login!');
                 if(r.role==='client'&&r.keyData)showClientInfo(r.keyData);
             }else{
                 document.getElementById('loginError').style.display='block';
@@ -503,39 +581,71 @@ function doLogin(){
     setupEvents();
 }
 
-function doLogout(){if(socket){socket.disconnect();socket=null;}currentUser=null;currentRole=null;sessionToken=null;document.getElementById('loginOverlay').classList.remove('hidden');document.getElementById('app').style.display='none';document.getElementById('loginBtn').disabled=false;document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';}
+function doLogout(){
+    if(socket){socket.disconnect();socket=null;}
+    currentUser=null;currentRole=null;sessionToken=null;
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('app').style.display='none';
+    document.getElementById('loginBtn').disabled=false;
+    document.getElementById('loginUser').value='';
+    document.getElementById('loginPass').value='';
+}
 
 function applyPerms(){
     if(currentRole==='viewer'||currentRole==='client'){
         document.querySelectorAll('.admin-only').forEach(el=>{el.classList.add('no-perm');el.title='Sem permissão';});
-    }else{document.querySelectorAll('.admin-only').forEach(el=>{el.classList.remove('no-perm');el.title='';});}
+    }else{
+        document.querySelectorAll('.admin-only').forEach(el=>{el.classList.remove('no-perm');el.title='';});
+    }
 }
 
 function startKeepAlive(){
-    setInterval(()=>{if(socket&&sessionToken)socket.emit('keepAlive',{sessionToken},(r)=>{if(r&&!r.valid){toast('⏰ Sessão expirou!');doLogout();}});},30000);
+    setInterval(()=>{
+        if(socket&&sessionToken)socket.emit('keepAlive',{sessionToken},(r)=>{
+            if(r&&!r.valid){toast('⏰ Sessão expirou!');doLogout();}
+        });
+    },30000);
 }
 
 function showClientInfo(kd){
     const rem=kd.remainingMs||0;
     const h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);
-    toast(`🔑 Bem-vindo ${kd.label}! Tempo restante: ${h}h ${m}m`);
+    toast(`🔑 Bem-vindo ${kd.label}! Tempo: ${h}h ${m}m`);
 }
 
 // ========== EVENTS ==========
 function setupEvents(){
     socket.on('init',(d)=>{
         if(d.stats){stats=d.stats;updateStats();}
-        if(d.bots){allBots=d.bots;renderBots();}
+        if(d.bots){allBots=d.bots;renderBots();updateBotSelectors();}
         if(d.logs){allLogs=d.logs;renderLogs();}
-        if(d.chatDatabase){allChat=d.chatDatabase;renderChat();updateChatFilter();}
+        if(d.chatDatabase){allChat=d.chatDatabase;renderChat();updateChatFilters();}
         if(d.servers){allServers=d.servers;renderSrvs();}
         if(d.topServerChat){topServerChat=d.topServerChat;renderTSC();}
     });
-    socket.on('botStatus',(on)=>{botOnline=on;document.getElementById('botDot').className='status-dot '+(on?'online':'offline');document.getElementById('botText').textContent=on?'Online':'Offline';document.getElementById('setBot').textContent=on?'🟢 Online':'🔴 Offline';});
+    socket.on('botStatus',(on)=>{
+        botOnline=on;
+        document.getElementById('botDot').className='status-dot '+(on?'online':'offline');
+        document.getElementById('botText').textContent=on?'Online':'Offline';
+        document.getElementById('setBot').textContent=on?'🟢 Online':'🔴 Offline';
+    });
     socket.on('statsUpdate',(d)=>{stats=d;updateStats();});
-    socket.on('botsUpdate',(d)=>{allBots=d||[];renderBots();document.getElementById('botsCount').textContent=allBots.filter(b=>b.conectado).length;});
-    socket.on('serverUpdate',(d)=>{if(Array.isArray(d))allServers=d;else if(d?.key){const i=allServers.findIndex(s=>s.key===d.key);if(i>=0)allServers[i]={...allServers[i],...d};else allServers.push(d);}renderSrvs();updateChatFilter();});
-    socket.on('chatMessage',(m)=>{allChat.push(m);if(allChat.length>5000)allChat.shift();appendChat(m);updateChatFilter();});
+    socket.on('botsUpdate',(d)=>{
+        allBots=d||[];renderBots();updateBotSelectors();
+        document.getElementById('botsCount').textContent=allBots.filter(b=>b.conectado).length;
+    });
+    socket.on('serverUpdate',(d)=>{
+        if(Array.isArray(d))allServers=d;
+        else if(d?.key){const i=allServers.findIndex(s=>s.key===d.key);if(i>=0)allServers[i]={...allServers[i],...d};else allServers.push(d);}
+        renderSrvs();updateChatFilters();
+    });
+    socket.on('chatMessage',(m)=>{
+        // Anti-duplicação client-side
+        const hash=`${m.timestamp}-${m.serverKey}-${m.username}`;
+        if(allChat.some(c=>`${c.timestamp}-${c.serverKey}-${c.username}`===hash))return;
+        allChat.push(m);if(allChat.length>5000)allChat.shift();
+        appendChat(m);updateChatFilters();
+    });
     socket.on('chatMessages',(m)=>{allChat=m||[];renderChat();});
     socket.on('log',(e)=>{allLogs.push(e);if(allLogs.length>200)allLogs.shift();appendLog(e);});
     socket.on('topServerChat',(d)=>{topServerChat=d;renderTSC();});
@@ -547,10 +657,19 @@ function setupEvents(){
     socket.on('playersDBData',(d)=>{renderPlayersResult(d);});
     socket.on('botSystemInfo',(d)=>{updateSysInfo(d);});
     socket.on('botConsoleLog',(e)=>{appendTerm(e);});
+    socket.on('inventoryUpdate',(d)=>{inventoryData[d.serverKey]=d.inventory;if(currentPage==='inventory')renderInventory();});
     socket.on('toast',(m)=>toast(m));
     socket.on('systemAlert',(a)=>{toast(`🚨 ${a.message}`);});
-    socket.on('disconnect',()=>{document.getElementById('botDot').className='status-dot offline';document.getElementById('botText').textContent='Desconectado';});
-    socket.on('reconnect',()=>{if(sessionToken)socket.emit('keepAlive',{sessionToken},(r)=>{if(!r?.valid)doLogout();else toast('🔄 Reconectado!');});});
+    socket.on('impressionsData',(d)=>{renderImpressions(d);});
+    socket.on('disconnect',()=>{
+        document.getElementById('botDot').className='status-dot offline';
+        document.getElementById('botText').textContent='Desconectado';
+    });
+    socket.on('reconnect',()=>{
+        if(sessionToken)socket.emit('keepAlive',{sessionToken},(r)=>{
+            if(!r?.valid)doLogout();else toast('🔄 Reconectado!');
+        });
+    });
 }
 
 // ========== NAV ==========
@@ -560,7 +679,7 @@ function nav(p){
     document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
     document.getElementById('p-'+p)?.classList.add('active');
     document.querySelector(`.nav-item[data-page="${p}"]`)?.classList.add('active');
-    const t={dashboard:'Dashboard',bots:'Bots',chat:'Chat',learning:'Aprendizado',servers:'Servidores',players:'Players',messages:'Mensagens',blacklist:'Blacklist',analytics:'Analytics',terminal:'Terminal',logs:'Logs',keys:'Keys/Ads',settings:'Config'};
+    const t={dashboard:'Dashboard',bots:'Bots',chat:'Chat',learning:'Aprendizado',servers:'Servidores',players:'Players',inventory:'Inventário',messages:'Mensagens',blacklist:'Blacklist',analytics:'Analytics',viewer:'Viewer 3D',terminal:'Terminal',logs:'Logs',keys:'Keys/Ads',settings:'Config'};
     document.getElementById('pageTitle').textContent=t[p]||p;
     if(p==='analytics')loadAn('24h');
     if(p==='learning')reqLearn();
@@ -568,6 +687,10 @@ function nav(p){
     if(p==='terminal')reqSys();
     if(p==='keys')loadKeys();
     if(p==='players')searchPlayers();
+    if(p==='messages'&&socket)socket.emit('getImpressions');
+    if(p==='inventory')updateBotSelectors();
+    if(p==='viewer')updateBotSelectors();
+    if(isMobile)closeSidebar();
 }
 
 // ========== STATS ==========
@@ -575,6 +698,7 @@ function updateStats(){
     document.getElementById('sBots').textContent=stats.botsAtivos||0;
     document.getElementById('sMsgs').textContent=allChat.length;
     document.getElementById('sBl').textContent=stats.blacklistSize||0;
+    document.getElementById('sImpressions').textContent=stats.impressions?.total||0;
     const on=allServers.filter(s=>s.status==='online');
     document.getElementById('sServers').textContent=on.length;
     let tp=0;allServers.forEach(s=>{if(s.players&&Array.isArray(s.players))tp+=s.players.length;});
@@ -584,7 +708,7 @@ function updateStats(){
     renderMsgs();renderBl();renderTopSrv();renderPeakMini();
 }
 
-// ========== RENDER BOTS ==========
+// ========== BOTS ==========
 function renderBots(){
     const bp=document.getElementById('botsPanel'),fp=document.getElementById('botsFull');
     const bl=allBots.filter(b=>b.conectado);
@@ -593,20 +717,58 @@ function renderBots(){
     const rc=b=>{
         const isA=currentRole==='admin';
         const pt=b.protocolType&&b.protocolType!=='vanilla'?` [${b.protocolType}]`:'';
-        return`<div class="bot-card"><div class="bot-dot on"></div><div class="bot-info"><div class="bot-name">${esc(b.username||'?')}${pt}</div><div class="bot-srv">${esc(b.key)} (v${b.versao||'?'})</div>${b.motd?`<div class="bot-motd">${esc(b.motd)}</div>`:''}</div><div class="bot-mini">${b.hp!=null?`<span>❤${Math.round(b.hp)}</span>`:''} ${b.players?`<span>👥${b.players.length}</span>`:''}</div><div class="bot-actions">${isA?`<button class="btn sm" onclick="cmd('jump','${b.key}')"><i class="fas fa-arrow-up"></i></button><button class="btn sm danger" onclick="cmd('disconnect_server','${b.key}')"><i class="fas fa-power-off"></i></button>`:''}</div></div>`;
+        const tps=b.tps?` TPS:${b.tps}`:'';
+        return`<div class="bot-card"><div class="bot-dot on"></div><div class="bot-info"><div class="bot-name">${esc(b.username||'?')}${pt}</div><div class="bot-srv">${esc(b.key)} (v${b.versao||'?'})${tps}</div>${b.motd?`<div class="bot-motd">${esc(b.motd)}</div>`:''}</div><div class="bot-mini">${b.hp!=null?`<span>❤${Math.round(b.hp)}</span>`:''} ${b.food!=null?`<span>🍖${Math.round(b.food)}</span>`:''} ${b.players?`<span>👥${b.players.length}</span>`:''}</div><div class="bot-actions">${isA?`<button class="btn sm" onclick="cmd('jump','${b.key}')"><i class="fas fa-arrow-up"></i></button><button class="btn sm danger" onclick="cmd('disconnect_server','${b.key}')"><i class="fas fa-power-off"></i></button>`:''}</div></div>`;
     };
     bp.innerHTML=bl.slice(0,5).map(rc).join('');
     fp.innerHTML=bl.map(rc).join('');
 }
 
-// ========== RENDER CHAT ==========
-function renderChat(){const c=document.getElementById('chatMsgs');const msgs=getFiltered().slice(-500);c.innerHTML=msgs.map(fmtChat).join('');c.scrollTop=c.scrollHeight;}
+function updateBotSelectors(){
+    const bl=allBots.filter(b=>b.conectado);
+    // Inventory selector
+    const invSel=document.getElementById('invBotSelect');
+    if(invSel){
+        const cv=invSel.value;
+        invSel.innerHTML='<option value="">Selecione um bot</option>'+bl.map(b=>`<option value="${esc(b.key)}">${esc(b.key)} (${esc(b.username||'?')})</option>`).join('');
+        if(cv)invSel.value=cv;
+    }
+    // Viewer selector
+    const vSel=document.getElementById('viewerBotSelect');
+    if(vSel){
+        const cv=vSel.value;
+        const withViewer=bl.filter(b=>b.viewerPort);
+        vSel.innerHTML='<option value="">Selecione um bot</option>'+withViewer.map(b=>`<option value="${b.viewerPort}">${esc(b.key)} (porta ${b.viewerPort})</option>`).join('');
+        if(cv)vSel.value=cv;
+    }
+    // Chat send selector
+    updateChatFilters();
+}
+
+// ========== CHAT ==========
+function renderChat(){
+    const c=document.getElementById('chatMsgs');
+    const msgs=getFiltered().slice(-500);
+    c.innerHTML=msgs.map(fmtChat).join('');
+    c.scrollTop=c.scrollHeight;
+}
 
 function appendChat(m){
     const c=document.getElementById('chatMsgs');
-    const f=document.getElementById('chatFilter').value,s=document.getElementById('chatSearch').value.toLowerCase(),st=document.getElementById('chatSType').value;
+    const f=document.getElementById('chatFilter').value;
+    const s=document.getElementById('chatSearch').value.toLowerCase();
+    const st=document.getElementById('chatSType').value;
     if(f!=='all'&&m.serverKey!==f)return;
-    if(s){if(st==='player'&&!(m.username||'').toLowerCase().includes(s))return;if(st==='message'&&!(m.message||'').toLowerCase().includes(s))return;if(st==='all'&&!(m.username||'').toLowerCase().includes(s)&&!(m.message||'').toLowerCase().includes(s))return;}
+    if(s){
+        if(st==='player'&&!(m.username||'').toLowerCase().includes(s))return;
+        if(st==='message'&&!(m.message||'').toLowerCase().includes(s))return;
+        if(st==='positive'&&m.sentiment!=='positive')return;
+        if(st==='negative'&&m.sentiment!=='negative')return;
+        if(st==='all'&&!(m.username||'').toLowerCase().includes(s)&&!(m.message||'').toLowerCase().includes(s))return;
+    }else{
+        if(st==='positive'&&m.sentiment!=='positive')return;
+        if(st==='negative'&&m.sentiment!=='negative')return;
+    }
     const atBot=c.scrollTop+c.clientHeight>=c.scrollHeight-40;
     c.insertAdjacentHTML('beforeend',fmtChat(m));
     while(c.children.length>500)c.removeChild(c.firstChild);
@@ -615,27 +777,62 @@ function appendChat(m){
 
 function fmtChat(m){
     const bn=(stats.username||'Anunciador').toLowerCase();
-    const men=m.botMentioned||(m.message||'').toLowerCase().includes(bn);
+    const men=m.botMentioned;
+    const isBot=m.isBotMessage;
     const srv=allServers.find(s=>s.key===m.serverKey);
     const motd=m.motd||(srv?cleanMotd(srv.motd):'');
     const sentDot=m.sentiment==='positive'?'<span class="sentiment-dot positive"></span>':m.sentiment==='negative'?'<span class="sentiment-dot negative"></span>':'';
-    return`<div class="chat-msg${men?' mentioned':''}">${sentDot}<span class="ct">${m.time||''}</span> <span class="cs" onclick="filterBySrv('${esc(m.serverKey)}')">[${esc(m.serverKey)}${motd?' <span class="cm">'+esc(motd)+'</span>':''}]</span> <span class="cu">${esc(m.username||'?')}</span>: <span class="cx">${esc(m.message||'')}</span></div>`;
+    const countryFlag=m.country?` <span style="font-size:9px;">${m.country==='BR'?'🇧🇷':m.country==='US'?'🇺🇸':m.country==='RU'?'🇷🇺':m.country==='ES'?'🇪🇸':''}</span>`:'';
+    const userClass=isBot?'cu bot-user':'cu';
+    return`<div class="chat-msg${men?' mentioned':''}">${sentDot}<span class="ct">${m.time||''}</span> <span class="cs" onclick="filterBySrv('${esc(m.serverKey)}')">[${esc(m.serverKey)}${motd?' <span class="cm">'+esc(motd)+'</span>':''}]</span> <span class="${userClass}">${esc(m.username||'?')}${countryFlag}</span>: <span class="cx">${esc(m.message||'')}</span></div>`;
 }
 
 function filterBySrv(k){document.getElementById('chatFilter').value=k;filterChat();}
-function filterChat(){if(!socket)return;const sk=document.getElementById('chatFilter').value,s=document.getElementById('chatSearch').value,st=document.getElementById('chatSType').value;socket.emit('getChatMessages',{serverKey:sk,search:s,searchType:st});}
-function getFiltered(){const f=document.getElementById('chatFilter')?.value||'all',s=(document.getElementById('chatSearch')?.value||'').toLowerCase(),st=document.getElementById('chatSType')?.value||'all';let m=allChat;if(f!=='all')m=m.filter(x=>x.serverKey===f);if(s)m=m.filter(x=>{if(st==='player')return(x.username||'').toLowerCase().includes(s);if(st==='message')return(x.message||'').toLowerCase().includes(s);return(x.username||'').toLowerCase().includes(s)||(x.message||'').toLowerCase().includes(s);});return m;}
 
-function updateChatFilter(){
-    const sel=document.getElementById('chatFilter'),send=document.getElementById('chatSendSrv');
-    const cur=sel.value;
+function filterChat(){
+    if(!socket)return;
+    const sk=document.getElementById('chatFilter').value;
+    const s=document.getElementById('chatSearch').value;
+    const st=document.getElementById('chatSType').value;
+    // Sentiment filter
+    let searchVal=s;
+    let searchType=st;
+    if(st==='positive'||st==='negative'){searchType='sentiment';searchVal=st;}
+    socket.emit('getChatMessages',{serverKey:sk,search:searchVal,searchType:searchType});
+}
+
+function getFiltered(){
+    const f=document.getElementById('chatFilter')?.value||'all';
+    const s=(document.getElementById('chatSearch')?.value||'').toLowerCase();
+    const st=document.getElementById('chatSType')?.value||'all';
+    let m=allChat;
+    if(f!=='all')m=m.filter(x=>x.serverKey===f);
+    if(st==='positive')m=m.filter(x=>x.sentiment==='positive');
+    else if(st==='negative')m=m.filter(x=>x.sentiment==='negative');
+    if(s){
+        m=m.filter(x=>{
+            if(st==='player')return(x.username||'').toLowerCase().includes(s);
+            if(st==='message')return(x.message||'').toLowerCase().includes(s);
+            return(x.username||'').toLowerCase().includes(s)||(x.message||'').toLowerCase().includes(s);
+        });
+    }
+    return m;
+}
+
+function updateChatFilters(){
+    const sel=document.getElementById('chatFilter');
+    const send=document.getElementById('chatSendSrv');
+    const curFilter=sel.value;
+    const curSend=send.value;
     const keys=[...new Set([...allChat.map(m=>m.serverKey),...allBots.filter(b=>b.conectado).map(b=>b.key)].filter(Boolean))];
     let o='<option value="all">Todos</option>';
     keys.forEach(k=>{const srv=allServers.find(s=>s.key===k);const motd=srv?cleanMotd(srv.motd):'';o+=`<option value="${esc(k)}">${esc(motd?k+' — '+motd:k)}</option>`;});
-    sel.innerHTML=o;sel.value=cur||'all';
+    sel.innerHTML=o;
+    sel.value=curFilter||'all';
     let so='<option value="all">Todos</option>';
     allBots.filter(b=>b.conectado).forEach(b=>{so+=`<option value="${esc(b.key)}">${esc(b.key)}</option>`;});
     send.innerHTML=so;
+    send.value=curSend||'all';
 }
 
 function sendChat(){if(currentRole!=='admin')return;const m=document.getElementById('chatSendMsg').value.trim(),s=document.getElementById('chatSendSrv').value;if(!m)return;socket.emit('chat',{serverKey:s,message:m});document.getElementById('chatSendMsg').value='';}
@@ -657,9 +854,14 @@ function renderSrvs(){
         const rc=rep>70?'var(--success)':rep>40?'var(--warning)':'var(--danger)';
         const pc=s.players?.length||s.onlinePlayers||0;
         const isA=currentRole==='admin';
-        return`<div class="srv-card"><div class="srv-head"><div><span class="srv-name" style="color:${sc}">● ${esc(s.key)}</span> <span class="srv-tag ${cat}">${cat}</span>${(s.tags||[]).map(t=>`<span class="srv-tag">${esc(t)}</span>`).join('')}</div><div>${isA?`<button class="btn sm" onclick="addTag('${esc(s.key)}')"><i class="fas fa-tag"></i></button><button class="btn sm" onclick="setCat('${esc(s.key)}')"><i class="fas fa-folder"></i></button><button class="btn sm" onclick="scanSrv('${esc(s.key)}')"><i class="fas fa-search"></i></button>`:''}<span style="font-size:10px;color:var(--text-muted);">👥${pc}/${s.maxPlayers||'?'}</span></div></div>${motd?`<div class="srv-motd">"${esc(motd)}"</div>`:''}<div class="srv-meta"><span>📡${s.version||'?'}</span><span>📊${s.status}</span>${s.ping?`<span>🏓${s.ping}ms</span>`:''}<span>⭐${rep}</span></div><div class="rep-bar"><div class="fill" style="width:${rep}%;background:${rc}"></div></div></div>`;
+        const plugins=(s.plugins||[]).slice(0,8).join(', ');
+        const sw=s.serverSoftware?` [${s.serverSoftware}]`:'';
+        const country=s.country?` ${s.country==='BR'?'🇧🇷':s.country==='US'?'🇺🇸':s.country}`:'';
+        return`<div class="srv-card"><div class="srv-head"><div><span class="srv-name" style="color:${sc}">● ${esc(s.key)}${sw}${country}</span> <span class="srv-tag ${cat}">${cat}</span>${(s.tags||[]).map(t=>`<span class="srv-tag">${esc(t)}</span>`).join('')}</div><div style="display:flex;gap:3px;align-items:center;">${isA?`<button class="btn sm" onclick="addTag('${esc(s.key)}')"><i class="fas fa-tag"></i></button><button class="btn sm" onclick="setCat('${esc(s.key)}')"><i class="fas fa-folder"></i></button><button class="btn sm" onclick="scanSrv('${esc(s.key)}')"><i class="fas fa-search"></i></button><button class="btn sm ${(stats.silentServers||[]).includes(s.key)?'danger':''}\" onclick="toggleSilent('${esc(s.key)}')"><i class="fas fa-volume-${(stats.silentServers||[]).includes(s.key)?'mute':'up'}"></i></button>`:''}<span style="font-size:10px;color:var(--text-muted);">👥${pc}/${s.maxPlayers||'?'}</span></div></div>${motd?`<div class="srv-motd">"${esc(motd)}"</div>`:''}<div class="srv-meta"><span>📡${s.version||'?'}</span><span>📊${s.status}</span>${s.ping?`<span>🏓${s.ping}ms</span>`:''}<span>⭐${rep}</span>${s.peakPlayers?`<span>🔝${s.peakPlayers}</span>`:''}</div>${plugins?`<div class="srv-plugins">🔌 ${esc(plugins)}${(s.plugins||[]).length>8?'...':''}</div>`:''}<div class="rep-bar"><div class="fill" style="width:${rep}%;background:${rc}"></div></div></div>`;
     }).join('');
 }
+
+function toggleSilent(k){socket.emit('setSilentServer',{serverKey:k,silent:!(stats.silentServers||[]).includes(k)});}
 
 // ========== PLAYERS ==========
 function searchPlayers(){
@@ -670,18 +872,58 @@ function searchPlayers(){
 
 function renderPlayersResult(players){
     const p=document.getElementById('playersPanel');
-    if(!players||!players.length){p.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-muted);">Nenhum jogador encontrado</div>';return;}
+    if(!players||!players.length){p.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-muted);">Nenhum</div>';return;}
     p.innerHTML=players.map(pl=>{
         const roles=(pl.roles||[]).map(r=>`<span class="player-role">${r}</span>`).join(' ');
         const peak=pl.peakHour||'?';
         const lastDate=pl.lastSeen?new Date(pl.lastSeen).toLocaleString('pt-BR'):'?';
         const sentTotal=(pl.sentiment?.positive||0)+(pl.sentiment?.negative||0)+(pl.sentiment?.neutral||0);
         const sentPct=sentTotal>0?Math.round((pl.sentiment.positive/sentTotal)*100):50;
-        return`<div class="player-card"><div class="player-head"><img class="player-avatar" src="https://mc-heads.net/avatar/${esc(pl.username)}/32" onerror="this.src='https://mc-heads.net/avatar/Steve/32'"><div><div class="player-name">${esc(pl.username)} ${roles} ${pl.toxic?'<span class="player-toxic">☠ TÓXICO</span>':''}</div><div style="font-size:10px;color:var(--text-muted);">Visto: ${lastDate}</div></div></div><div class="player-stats"><span>💬 ${pl.messageCount||0} msgs</span><span>🖥️ ${(pl.servers||[]).length} servers</span><span>⏰ Pico: ${peak}h</span><span>😊 ${sentPct}% positivo</span><span>🗓️ Desde: ${pl.firstSeen?new Date(pl.firstSeen).toLocaleDateString('pt-BR'):'?'}</span></div>${pl.messages&&pl.messages.length>0?`<div style="margin-top:8px;font-size:11px;color:var(--text-secondary);">Últimas msgs:<br>${pl.messages.slice(-3).map(m=>`<div style="padding:2px 0;"><span style="color:var(--text-muted);">[${esc(m.server||'')}]</span> ${esc(m.text||'')}</div>`).join('')}</div>`:''}</div>`;
+        const country=pl.dominantCountry?` ${pl.dominantCountry==='BR'?'🇧🇷':pl.dominantCountry}`:'';
+        const cross=pl.crossServer?'<span style="color:var(--accent);font-size:9px;font-weight:600;"> CROSS-SERVER</span>':'';
+        const influential=pl.isInfluential?'<span style="color:var(--warning);font-size:9px;font-weight:600;"> ⭐ INFLUENTE</span>':'';
+        return`<div class="player-card"><div class="player-head"><img class="player-avatar" src="https://mc-heads.net/avatar/${esc(pl.username)}/32" onerror="this.src='https://mc-heads.net/avatar/Steve/32'"><div><div class="player-name">${esc(pl.username)}${country} ${roles} ${pl.toxic?'<span class="player-toxic">☠ TÓXICO</span>':''}${cross}${influential}</div><div style="font-size:10px;color:var(--text-muted);">Visto: ${lastDate}</div></div></div><div class="player-stats"><span>💬 ${pl.messageCount||0}</span><span>🖥️ ${(pl.servers||[]).length} srv</span><span>⏰ ${peak}h</span><span>😊 ${sentPct}%</span></div>${pl.messages&&pl.messages.length>0?`<div style="margin-top:6px;font-size:11px;color:var(--text-secondary);">${pl.messages.slice(-3).map(m=>`<div style="padding:1px 0;"><span style="color:var(--text-muted);">[${esc(m.server||'')}]</span> ${esc(m.text||'')}</div>`).join('')}</div>`:''}</div>`;
     }).join('');
 }
 
-// ========== TOP SERVER PANEL ==========
+// ========== INVENTORY ==========
+function renderInventory(){
+    const sel=document.getElementById('invBotSelect');
+    const key=sel.value;
+    const armorP=document.getElementById('invArmor');
+    const itemsP=document.getElementById('invItems');
+    if(!key){armorP.innerHTML='<div style="color:var(--text-muted);font-size:12px;">Selecione um bot</div>';itemsP.innerHTML=armorP.innerHTML;return;}
+    const bot=allBots.find(b=>b.key===key);
+    const inv=bot?.inventory||inventoryData[key];
+    if(!inv){armorP.innerHTML='<div style="color:var(--text-muted);font-size:12px;">Sem dados</div>';itemsP.innerHTML=armorP.innerHTML;return;}
+    armorP.innerHTML=(inv.armor||[]).length?`<div class="inv-grid">${inv.armor.map(a=>`<div class="inv-slot armor"><div class="inv-name">${esc(a.displayName||a.name)}</div></div>`).join('')}</div>`:'<div style="color:var(--text-muted);font-size:12px;">Sem armadura</div>';
+    itemsP.innerHTML=(inv.items||[]).length?`<div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;">${inv.usedSlots||0}/${inv.totalSlots||36} slots</div><div class="inv-grid">${inv.items.map(i=>`<div class="inv-slot"><div class="inv-name">${esc(i.displayName||i.name)}</div><div class="inv-count">x${i.count}</div></div>`).join('')}</div>`:'<div style="color:var(--text-muted);font-size:12px;">Vazio</div>';
+}
+
+// ========== VIEWER ==========
+function loadViewer(){
+    const sel=document.getElementById('viewerBotSelect');
+    const port=sel.value;
+    const panel=document.getElementById('viewerPanel');
+    if(!port){panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:40px;font-size:12px;">Selecione um bot</div>';return;}
+    panel.innerHTML=`<iframe class="viewer-frame" src="http://localhost:${port}" frameborder="0" allowfullscreen></iframe><div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Porta: ${port} | Use mouse pra rotacionar</div>`;
+}
+
+// ========== IMPRESSIONS ==========
+function renderImpressions(data){
+    const p=document.getElementById('impressionsPanel');
+    if(!data||!data.total){p.innerHTML='<div style="color:var(--text-muted);font-size:12px;">Sem dados</div>';return;}
+    let h=`<div style="font-size:12px;margin-bottom:8px;">Total: <strong>${data.total}</strong></div>`;
+    if(data.byMessage){
+        h+='<div style="font-size:11px;font-weight:600;margin-bottom:4px;">Por Mensagem:</div>';
+        Object.entries(data.byMessage).forEach(([k,v])=>{
+            h+=`<div style="font-size:11px;padding:2px 0;color:var(--text-secondary);">${esc(k)}: ${v.count}x em ${v.servers.length} servers</div>`;
+        });
+    }
+    p.innerHTML=h;
+}
+
+// ========== TOP SERVER ==========
 function renderTopSrv(){
     const p=document.getElementById('topSrvPanel');
     const ss={};allChat.forEach(m=>{if(!m.serverKey)return;if(!ss[m.serverKey])ss[m.serverKey]={msgs:0,pl:new Set()};ss[m.serverKey].msgs++;if(m.username)ss[m.serverKey].pl.add(m.username);});
@@ -695,8 +937,7 @@ function renderTSC(){
     const p=document.getElementById('tscPanel');
     if(!topServerChat.serverKey){p.innerHTML='<div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Nenhum</div>';return;}
     let h=`<div class="tsc-h"><strong>${esc(topServerChat.serverKey)}</strong>${topServerChat.motd?' — <em>'+esc(topServerChat.motd)+'</em>':''}<span style="float:right;">👥${topServerChat.players||0}</span></div>`;
-    const msgs=topServerChat.messages||[];
-    h+=msgs.slice(-25).map(m=>`<div class="tsc-m"><span style="color:var(--text-muted);font-size:9px;">${m.time||''}</span> <span style="color:var(--success);font-weight:600;">${esc(m.username||'?')}</span>: ${esc(m.message||'')}</div>`).join('');
+    (topServerChat.messages||[]).slice(-25).forEach(m=>{h+=`<div class="tsc-m"><span style="color:var(--text-muted);font-size:9px;">${m.time||''}</span> <span style="color:var(--success);font-weight:600;">${esc(m.username||'?')}</span>: ${esc(m.message||'')}</div>`;});
     p.innerHTML=h;p.scrollTop=p.scrollHeight;
 }
 
@@ -706,6 +947,7 @@ function renderPeakMini(){
     const data=[];for(let i=0;i<24;i++)data.push({hour:i,count:hrs[i]||0});
     renderBars(c,data,'hour','count',h=>h+'h');
 }
+
 // ========== LOGS ==========
 function renderLogs(){
     const p=document.getElementById('logsP'),dp=document.getElementById('dashLogs');
@@ -745,14 +987,16 @@ function renderLearn(){
     document.getElementById('lMin').textContent=(learningData.padroes?.percentMinuscula||0)+'%';
     document.getElementById('lAcento').textContent=(learningData.padroes?.percentAcento||0)+'%';
     document.getElementById('lAbrev').textContent=(learningData.padroes?.percentAbreviacao||0)+'%';
-    document.getElementById('giriasC').innerHTML=(learningData.topGirias||[]).map(([w,c])=>`<span class="word-tag">${esc(w)} <span class="cnt">(${c})</span></span>`).join('');
-    document.getElementById('exprC').innerHTML=(learningData.topExpressoes||[]).map(e=>`<span class="word-tag">${esc(e.texto)} <span class="cnt">(${e.count})</span></span>`).join('');
+    const isA=currentRole==='admin';
+    document.getElementById('giriasC').innerHTML=(learningData.topGirias||[]).map(([w,c])=>`<span class="word-tag">${esc(w)} <span class="cnt">(${c})</span>${isA?`<span class="word-del" onclick="removeLearnItem('giria','${esc(w)}')" title="Remover">×</span>`:''}</span>`).join('');
+    document.getElementById('exprC').innerHTML=(learningData.topExpressoes||[]).map(e=>`<span class="word-tag">${esc(e.texto)} <span class="cnt">(${e.count})</span>${isA?`<span class="word-del" onclick="removeLearnItem('expressao','${esc(e.texto)}')" title="Remover">×</span>`:''}</span>`).join('');
     const fp=document.getElementById('frasesP');
     const fr=learningData.topFrases||[];
-    fp.innerHTML=fr.length?fr.map(f=>`<div class="msg-item"><span class="msg-txt">"${esc(f.texto)}"</span><span style="font-size:10px;color:var(--text-muted);">×${f.count}</span></div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma</div>';
+    fp.innerHTML=fr.length?fr.map(f=>`<div class="msg-item"><span class="msg-txt">"${esc(f.texto)}"</span><span style="font-size:10px;color:var(--text-muted);">×${f.count}</span>${isA?`<button class="btn sm danger" onclick="removeLearnItem('frase','${esc(f.texto)}')"><i class="fas fa-trash"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma</div>';
 }
 function reqLearn(){if(socket)socket.emit('getLearningData');}
 function exportLearn(){if(socket)socket.emit('exportLearningDB');}
+function removeLearnItem(type,value){if(currentRole!=='admin')return;if(!confirm(`Remover "${value}"?`))return;socket.emit('removeLearnItem',{type,value});toast(`🗑️ Removido`);setTimeout(reqLearn,1000);}
 
 // ========== ANALYTICS ==========
 function loadAn(p){if(socket)socket.emit('getAnalytics',p);}
@@ -767,7 +1011,7 @@ function renderAnalytics(d){
     tp.innerHTML=top.length?top.map((s,i)=>`<div class="bot-card"><div style="min-width:20px;font-weight:700;color:var(--accent);">#${i+1}</div><div class="bot-info"><div class="bot-name">${esc(s.serverKey)}</div></div><div class="bot-mini"><span>💬${s.messages}</span><span>👥${s.uniquePlayers}</span></div></div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Sem dados</div>';
 }
 
-// ========== BAR CHART ==========
+// ========== CHART ==========
 function renderBars(c,data,lk,vk,fmt){
     if(!data||!data.length){c.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:11px;">Sem dados</div>';return;}
     const mx=Math.max(...data.map(d=>d[vk]||0),1);
@@ -786,24 +1030,17 @@ function updateSysInfo(d){
     if(d.memory?.heapUsed)document.getElementById('memText').textContent=d.memory.heapUsed+'MB';
     if(d.uptime)document.getElementById('uptime').textContent=d.uptime;
 }
-
 function appendTerm(e){
     const s=document.getElementById('termScreen');if(!s)return;
-    const t=e.text||'';
-    let cls='';if(t.includes('❌')||t.includes('FATAL'))cls=' err';else if(t.includes('✅'))cls=' ok';else if(t.includes('⚠'))cls=' warn';
+    const t=e.text||'';let cls='';if(t.includes('❌')||t.includes('FATAL'))cls=' err';else if(t.includes('✅'))cls=' ok';else if(t.includes('⚠'))cls=' warn';
     const l=document.createElement('div');l.className='term-line'+cls;l.innerHTML=`<span class="tt">[${esc(e.time||'')}]</span> <span class="tv">${esc(t)}</span>`;
     s.appendChild(l);while(s.children.length>800)s.removeChild(s.firstChild);
     s.scrollTop=s.scrollHeight;
-    document.getElementById('termCount').textContent=s.children.length+' linhas';
+    document.getElementById('termCount').textContent=s.children.length;
 }
 function clearTerm(){document.getElementById('termScreen').innerHTML='<div class="term-line"><span class="tv">Limpo.</span></div>';}
 function reqSys(){if(socket)socket.emit('getBotSystemInfo');}
-function restartBot(){
-    if(currentRole!=='admin')return;
-    if(!confirm('⚠️ Reiniciar o bot? Todos os bots serão desconectados.'))return;
-    socket.emit('restartBotProcess');
-    appendTerm({time:new Date().toLocaleTimeString('pt-BR',{hour12:false}),text:'🔄 Reinício enviado...'});
-}
+function restartBot(){if(currentRole!=='admin')return;if(!confirm('⚠️ Reiniciar bot?'))return;socket.emit('restartBotProcess');}
 
 // ========== KEYS ==========
 function loadKeys(){
@@ -811,61 +1048,51 @@ function loadKeys(){
     socket.emit('getKeys',(keys)=>{renderKeys(keys);});
     socket.emit('getAds',(ads)=>{renderAds(ads);});
 }
-
 function createKey(){
     const label=document.getElementById('keyLabel').value.trim();
     const dur=parseInt(document.getElementById('keyDuration').value)||24;
     const msg=document.getElementById('keyAdMsg').value.trim();
-    if(!label){toast('⚠️ Label obrigatório!');return;}
+    if(!label){toast('⚠️ Label!');return;}
     socket.emit('createKey',{label,durationHours:dur,adMessage:msg},(r)=>{
-        if(r.success){
-            toast(`✅ Key criada: ${r.key}`);
-            document.getElementById('keyLabel').value='';
-            document.getElementById('keyDuration').value='';
-            document.getElementById('keyAdMsg').value='';
-            loadKeys();
-        }else toast('❌ Erro ao criar key');
+        if(r.success){toast(`✅ Key: ${r.key}`);document.getElementById('keyLabel').value='';document.getElementById('keyDuration').value='';document.getElementById('keyAdMsg').value='';loadKeys();}
+        else toast('❌ Erro');
     });
 }
-
 function renderKeys(keys){
     const p=document.getElementById('keysPanel');
-    if(!keys||!keys.length){p.innerHTML='<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma key</div>';return;}
+    if(!keys||!keys.length){p.innerHTML='<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma</div>';return;}
     p.innerHTML=keys.map(k=>{
         const exp=k.expiresAt?new Date(k.expiresAt).toLocaleString('pt-BR'):'∞';
-        const active=k.active;
-        return`<div class="key-card"><div style="display:flex;justify-content:space-between;align-items:center;"><strong>${esc(k.label||'?')}</strong><span style="font-size:10px;color:${active?'var(--success)':'var(--danger)'};">${active?'✅ Ativa':'❌ Inativa'}</span></div><div class="key-value">${esc(k.fullKey||k.key)}</div><div class="key-meta"><span>📅 Criada: ${new Date(k.createdAt).toLocaleDateString('pt-BR')}</span><span>⏰ Expira: ${exp}</span><span>👤 Por: ${esc(k.createdBy||'?')}</span></div><div style="margin-top:8px;display:flex;gap:4px;">${active?`<button class="btn sm danger" onclick="revokeKey('${k.id}')">Revogar</button>`:''}<button class="btn sm" onclick="deleteKey('${k.id}')">Deletar</button><button class="btn sm" onclick="copyKey('${esc(k.fullKey||k.key)}')">Copiar</button></div></div>`;
+        return`<div class="key-card"><div style="display:flex;justify-content:space-between;align-items:center;"><strong>${esc(k.label||'?')}</strong><span style="font-size:10px;color:${k.active?'var(--success)':'var(--danger)'};">${k.active?'✅':'❌'}</span></div><div class="key-value">${esc(k.fullKey||k.key)}</div><div class="key-meta"><span>📅 ${new Date(k.createdAt).toLocaleDateString('pt-BR')}</span><span>⏰ ${exp}</span><span>👤 ${esc(k.createdBy||'?')}</span></div><div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;">${k.active?`<button class="btn sm danger" onclick="revokeKey('${k.id}')">Revogar</button>`:''}<button class="btn sm" onclick="deleteKey('${k.id}')">Deletar</button><button class="btn sm" onclick="copyKey('${esc(k.fullKey||k.key)}')">Copiar</button></div></div>`;
     }).join('');
 }
-
 function renderAds(ads){
     const p=document.getElementById('adsPanel');
-    if(!ads||!ads.length){p.innerHTML='<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhum anúncio</div>';document.getElementById('sAds').textContent='0';return;}
+    if(!ads||!ads.length){p.innerHTML='<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhum</div>';document.getElementById('sAds').textContent='0';return;}
     const active=ads.filter(a=>a.status==='active');
     document.getElementById('sAds').textContent=active.length;
     p.innerHTML=ads.map(a=>{
         const pct=a.totalMs>0?Math.max(0,Math.min(100,(a.remainingMs/a.totalMs)*100)):0;
         const rem=a.remainingMs>0?`${Math.floor(a.remainingMs/3600000)}h ${Math.floor((a.remainingMs%3600000)/60000)}m`:'Expirado';
-        const sc=a.status==='active'?'var(--success)':a.status==='expired'?'var(--danger)':'var(--text-muted)';
+        const sc=a.status==='active'?'var(--success)':'var(--danger)';
         return`<div class="ad-card"><div style="display:flex;justify-content:space-between;"><strong style="font-size:12px;">${esc(a.label||'?')}</strong><span style="font-size:10px;color:${sc};">${a.status}</span></div><div style="font-size:11px;color:var(--text-secondary);margin:4px 0;">"${esc(a.message||'')}"</div><div style="font-size:10px;color:var(--text-muted);">⏳ ${rem}</div><div class="ad-progress"><div class="fill" style="width:${pct}%"></div></div></div>`;
     }).join('');
 }
-
-function revokeKey(id){if(confirm('Revogar key?'))socket.emit('revokeKey',id,(r)=>{if(r.success){toast('✅ Revogada');loadKeys();}});}
-function deleteKey(id){if(confirm('Deletar key permanentemente?'))socket.emit('deleteKey',id,(r)=>{if(r.success){toast('✅ Deletada');loadKeys();}});}
+function revokeKey(id){if(confirm('Revogar?'))socket.emit('revokeKey',id,(r)=>{if(r.success){toast('✅');loadKeys();}});}
+function deleteKey(id){if(confirm('Deletar?'))socket.emit('deleteKey',id,(r)=>{if(r.success){toast('✅');loadKeys();}});}
 function copyKey(k){navigator.clipboard?.writeText(k);toast('📋 Copiada!');}
 
 // ========== ACTIONS ==========
-function cmd(c,d){if(currentRole!=='admin'&&!['refresh'].includes(c)){toast('⛔ Sem permissão!');return;}if(socket)socket.emit(c,d);}
-function connectSrv(){const ip=document.getElementById('cIp').value.trim();if(!ip)return;socket.emit('connect_server',ip);document.getElementById('cIp').value='';toast(`🔗 Conectando...`);}
-function connectSrv2(){const ip=document.getElementById('cIp2').value.trim();if(!ip)return;socket.emit('connect_server',ip);document.getElementById('cIp2').value='';toast(`🔗 Conectando...`);}
+function cmd(c,d){if(currentRole!=='admin'&&!['refresh'].includes(c)){toast('⛔');return;}if(socket)socket.emit(c,d);}
+function connectSrv(){const ip=document.getElementById('cIp').value.trim();if(!ip)return;socket.emit('connect_server',ip);document.getElementById('cIp').value='';toast('🔗 Conectando...');}
+function connectSrv2(){const ip=document.getElementById('cIp2').value.trim();if(!ip)return;socket.emit('connect_server',ip);document.getElementById('cIp2').value='';toast('🔗 Conectando...');}
 function addMsg(){const m=document.getElementById('newMsg').value.trim();if(!m)return;socket.emit('addMsg',m);document.getElementById('newMsg').value='';}
 function delMsg(i){socket.emit('delMsg',i);}
 function setInt(){const v=document.getElementById('intInp').value;if(v)socket.emit('setIntervalo',parseInt(v));}
 function setUname(){const v=document.getElementById('unameInp').value.trim();if(v)socket.emit('setUsername',v);}
 function addBl(){const v=document.getElementById('blInp').value.trim();if(!v)return;socket.emit('addBlacklist',v);document.getElementById('blInp').value='';}
 function addTag(k){const t=prompt('Tag:');if(t)socket.emit('addServerTag',{serverKey:k,tag:t.trim()});}
-function setCat(k){const c=prompt('Categoria (survival,pvp,criativo,minigame,smp,lojinha,outro):');if(c)socket.emit('setServerCategory',{serverKey:k,categoria:c.trim()});}
+function setCat(k){const c=prompt('Categoria:');if(c)socket.emit('setServerCategory',{serverKey:k,categoria:c.trim()});}
 function scanSrv(k){socket.emit('scanVulnerabilities',k);toast(`🔍 Scan: ${k}`);}
 function dlChat(){if(socket)socket.emit('downloadChat');}
 
@@ -883,7 +1110,6 @@ setInterval(()=>{
     if(socket?.connected){socket.emit('getTopServerChat');}
     document.getElementById('sMsgs').textContent=allChat.length;
 },15000);
-
 setInterval(()=>{if(currentPage==='keys'&&currentRole==='admin')loadKeys();},30000);
 </script>
 </body>
