@@ -564,6 +564,7 @@ function doLogin(){
                 document.getElementById('sbRole').className='role '+r.role;
                 document.getElementById('setRole').textContent=rl;
                 document.getElementById('setRelay').textContent=RELAY;
+                setupEvents();
                 applyPerms();startKeepAlive();toast('✅ Login!');
                 if(r.role==='admin'&&!loadKeysIntervalId)loadKeysIntervalId=setInterval(()=>{if(currentPage==='keys'&&socket)loadKeys();},30000);
                 if(r.role==='client'&&r.keyData)showClientInfo(r.keyData);
@@ -579,9 +580,7 @@ function doLogin(){
         document.getElementById('loginError').textContent='Erro de conexão!';
         document.getElementById('loginBtn').disabled=false;
     });
-    socket.on('requireAuth',()=>{});
     socket.on('sessionExpired',()=>{toast('⏰ Sessão expirou!');doLogout();});
-    setupEvents();
 }
 
 function doLogout(){
