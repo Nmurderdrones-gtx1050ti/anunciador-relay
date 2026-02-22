@@ -201,8 +201,13 @@ setInterval(savePlayersDB, 5 * 60 * 1000);
 
 // ========== SESSIONS ==========
 const sessions = new Map();
+const MAX_SESSIONS = 500;
 
 function createSession(userId, username, role, keyId = null) {
+    if (sessions.size >= MAX_SESSIONS) {
+        const entries = [...sessions.entries()].sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0));
+        for (let i = 0; i < Math.min(10, entries.length); i++) sessions.delete(entries[i][0]);
+    }
     const token = generateSessionToken();
     sessions.set(token, {
         userId, username, role, keyId,
@@ -423,7 +428,7 @@ function sendLogToDiscord(emoji, msg) {
 const app = express();
 const server_http = http.createServer(app);
 const io = new Server(server_http, {
-    cors: { origin: '*', methods: ['GET', 'POST'] },
+    cors: { origin: process.env.CORS_ORIGIN || '*', methods: ['GET', 'POST'] },
     pingTimeout: 60000, pingInterval: 25000, maxHttpBufferSize: 1e6,
 });
 
@@ -483,7 +488,8 @@ function updateAnalytics() {
 
     const h = new Date().getHours();
     const idx = botData.analytics.messagesPerHour.findIndex(x => x.hour === h);
-    const cnt = botData.chatDatabase.filter(m => { const t = m.timestamp || 0; return new Date(t).getHours() === h && (now - t) < 86400000; }).length;
+    const last24h = botData.chatDatabase.filter(m => (now - (m.timestamp || 0)) < 86400000);
+    const cnt = last24h.filter(m => new Date(m.timestamp || 0).getHours() === h).length;
     if (idx >= 0) botData.analytics.messagesPerHour[idx].count = cnt;
     else botData.analytics.messagesPerHour.push({ hour: h, count: cnt });
     if (botData.analytics.messagesPerHour.length > 24) botData.analytics.messagesPerHour = botData.analytics.messagesPerHour.slice(-24);
@@ -560,13 +566,17 @@ const authenticatedSockets = new Map();
 function isAuthenticated(socket) { return authenticatedSockets.has(socket.id); }
 function isAdmin(socket) { const u = authenticatedSockets.get(socket.id); return u && u.role === 'admin'; }
 
-function getInitData() {
-    return {
+function getInitData(socket) {
+    const role = socket ? authenticatedSockets.get(socket.id)?.role : null;
+    const data = {
         stats: botData.stats, bots: botData.bots, logs: botData.logs.slice(-50),
         chatDatabase: botData.chatDatabase.slice(-200), servers: botData.servers,
         analytics: botData.analytics, authRequired: true, topServerChat: getTopServerChat(),
-        activeAds: getActiveAds(), playersDB: Object.keys(playersDB).length,
+        playersDB: Object.keys(playersDB).length,
     };
+    if (role !== 'viewer') data.activeAds = getActiveAds();
+    else data.activeAdsCount = getActiveAds().length;
+    return data;
 }
 
 // ========== SOCKET.IO ==========
@@ -587,10 +597,15 @@ io.on('connection', (socket) => {
             if (Array.isArray(data.bots)) botData.bots = data.bots;
             if (Array.isArray(data.logs)) botData.logs = data.logs.slice(-MAX_LOGS);
             if (Array.isArray(data.chatDatabase)) {
+                const persistIds = new Set(persistedChat.map(p => p.id || `${p.timestamp}-${p.serverKey}-${(p.username||'').slice(0,20)}-${(p.message||'').slice(0,50)}`));
                 data.chatDatabase.forEach(m => {
                     if (!isDuplicate(m)) {
                         botData.chatDatabase.push(m);
-                        persistedChat.push(m);
+                        const id = m.id || `${m.timestamp}-${m.serverKey}-${(m.username||'').slice(0,20)}-${(m.message||'').slice(0,50)}`;
+                        if (!persistIds.has(id)) {
+                            persistIds.add(id);
+                            persistedChat.push(m);
+                        }
                     }
                 });
                 if (botData.chatDatabase.length > MAX_CHAT_MESSAGES) botData.chatDatabase = botData.chatDatabase.slice(-MAX_CHAT_MESSAGES);
@@ -702,7 +717,7 @@ io.on('connection', (socket) => {
             authenticatedSockets.set(socket.id, { username: user.username, role: user.role, sessionToken: token });
             if (typeof callback === 'function') callback({ success: true, role: user.role, username: user.username, sessionToken: token });
             syncServerStatus();
-            socket.emit('init', getInitData());
+            socket.emit('init', getInitData(socket));
             socket.emit('botStatus', !!botSocket);
             console.log(`🔓 ${user.username} autenticou (${user.role})`);
             return;
@@ -721,7 +736,7 @@ io.on('connection', (socket) => {
             authenticatedSockets.set(socket.id, { username: key.label || 'Key User', role: 'client', sessionToken: token, keyId: key.id });
             if (typeof callback === 'function') callback({ success: true, role: 'client', username: key.label, sessionToken: token, keyData: { label: key.label, expiresAt: key.expiresAt, message: key.adMessage, remainingMs: getKeyAdRemaining(key.id) } });
             syncServerStatus();
-            socket.emit('init', getInitData());
+            socket.emit('init', getInitData(socket));
             socket.emit('botStatus', !!botSocket);
             console.log(`🔑 Key login: ${key.label}`);
             return;
@@ -765,6 +780,13 @@ io.on('connection', (socket) => {
             if (botSocket) botSocket.emit(cmd, d);
             else if (cmd !== 'clearChatDatabase' && cmd !== 'refresh') socket.emit('toast', '⚠️ Bot offline!');
         });
+    });
+
+    socket.on('emergencyStop', () => {
+        if (!isAuthenticated(socket)) return;
+        if (!isAdmin(socket)) { socket.emit('toast', '⛔ Sem permissão!'); return; }
+        if (botSocket) { botSocket.emit('emergencyStop'); console.log('🛑 Emergency stop enviado ao bot'); socket.emit('toast', '🛑 Comando enviado: todos os bots devem parar.'); }
+        else socket.emit('toast', '⚠️ Bot offline!');
     });
 
     // === KEY MANAGEMENT ===

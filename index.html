@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bot Anunciador v9.0 — Painel</title>
+    <title>Bot Anunciador v9.0 — Painel (Refatorado)</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -360,7 +360,7 @@
                 <div class="dash-grid">
                     <div class="dash-left">
                         <div class="panel"><div class="panel-h"><span>🏆 Top 3</span></div><div class="panel-b np" id="topSrvPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Aguardando...</div></div></div>
-                        <div class="panel"><div class="panel-h"><span>🤖 Bots</span><div><button class="btn sm primary admin-only" onclick="cmd('announce')"><i class="fas fa-bullhorn"></i></button> <button class="btn sm danger admin-only" onclick="cmd('restartBots')"><i class="fas fa-redo"></i></button></div></div><div class="panel-b np" id="botsPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Nenhum bot</div></div></div>
+                        <div class="panel"><div class="panel-h"><span>🤖 Bots</span><div><button class="btn sm primary admin-only" onclick="cmd('announce')"><i class="fas fa-bullhorn"></i></button> <button class="btn sm danger admin-only" onclick="if(confirm('Parar TODOS os bots e impedir reconexão?'))cmd('emergencyStop')" title="Kill switch"><i class="fas fa-stop-circle"></i> Parar todos</button> <button class="btn sm danger admin-only" onclick="cmd('restartBots')"><i class="fas fa-redo"></i></button></div></div><div class="panel-b np" id="botsPanel"><div style="padding:16px;color:var(--text-muted);text-align:center;font-size:12px;">Nenhum bot</div></div></div>
                         <div class="panel"><div class="panel-h"><span>📋 Logs</span></div><div class="panel-b np" id="dashLogs" style="max-height:180px;overflow-y:auto;"></div></div>
                     </div>
                     <div class="dash-right">
@@ -373,7 +373,7 @@
 
             <!-- BOTS -->
             <div class="page" id="p-bots">
-                <div class="inp-row"><input class="inp admin-only" id="cIp2" placeholder="ip:porta" style="max-width:260px;"><button class="btn primary admin-only" onclick="connectSrv2()"><i class="fas fa-plug"></i> Conectar</button><button class="btn danger admin-only" onclick="cmd('disconnect_server','all')"><i class="fas fa-power-off"></i> Todos</button></div>
+                <div class="inp-row"><input class="inp admin-only" id="cIp2" placeholder="ip:porta" style="max-width:260px;"><button class="btn primary admin-only" onclick="connectSrv2()"><i class="fas fa-plug"></i> Conectar</button><button class="btn danger admin-only" onclick="if(confirm('Parar TODOS os bots (kill switch)?'))cmd('emergencyStop')"><i class="fas fa-stop-circle"></i> Kill switch</button> <button class="btn danger admin-only" onclick="cmd('disconnect_server','all')"><i class="fas fa-power-off"></i> Desconectar</button></div>
                 <div class="panel"><div class="panel-h"><span>🤖 Bots</span></div><div class="panel-b np" id="botsFull"></div></div>
             </div>
 
@@ -527,6 +527,8 @@
 let socket=null,currentUser=null,currentRole=null,currentPage='dashboard',botOnline=false;
 let allBots=[],allServers=[],allChat=[],allLogs=[],stats={},analyticsData={},learningData={},topServerChat={},sessionToken=null;
 let inventoryData={},isMobile=window.innerWidth<=768;
+let keepAliveIntervalId=null;
+let loadKeysIntervalId=null;
 const RELAY=window.location.origin;
 
 // ========== MOBILE ==========
@@ -563,6 +565,7 @@ function doLogin(){
                 document.getElementById('setRole').textContent=rl;
                 document.getElementById('setRelay').textContent=RELAY;
                 applyPerms();startKeepAlive();toast('✅ Login!');
+                if(r.role==='admin'&&!loadKeysIntervalId)loadKeysIntervalId=setInterval(()=>{if(currentPage==='keys'&&socket)loadKeys();},30000);
                 if(r.role==='client'&&r.keyData)showClientInfo(r.keyData);
             }else{
                 document.getElementById('loginError').style.display='block';
@@ -582,8 +585,11 @@ function doLogin(){
 }
 
 function doLogout(){
+    if(keepAliveIntervalId){clearInterval(keepAliveIntervalId);keepAliveIntervalId=null;}
+    if(loadKeysIntervalId){clearInterval(loadKeysIntervalId);loadKeysIntervalId=null;}
     if(socket){socket.disconnect();socket=null;}
     currentUser=null;currentRole=null;sessionToken=null;
+    allChat=[];allBots=[];allServers=[];allLogs=[];stats={};topServerChat={};
     document.getElementById('loginOverlay').classList.remove('hidden');
     document.getElementById('app').style.display='none';
     document.getElementById('loginBtn').disabled=false;
@@ -600,7 +606,8 @@ function applyPerms(){
 }
 
 function startKeepAlive(){
-    setInterval(()=>{
+    if(keepAliveIntervalId){clearInterval(keepAliveIntervalId);keepAliveIntervalId=null;}
+    keepAliveIntervalId=setInterval(()=>{
         if(socket&&sessionToken)socket.emit('keepAlive',{sessionToken},(r)=>{
             if(r&&!r.valid){toast('⏰ Sessão expirou!');doLogout();}
         });
@@ -615,6 +622,8 @@ function showClientInfo(kd){
 
 // ========== EVENTS ==========
 function setupEvents(){
+    if(!socket)return;
+    socket.removeAllListeners();
     socket.on('init',(d)=>{
         if(d.stats){stats=d.stats;updateStats();}
         if(d.bots){allBots=d.bots;renderBots();updateBotSelectors();}
@@ -683,10 +692,10 @@ function nav(p){
     document.getElementById('pageTitle').textContent=t[p]||p;
     if(p==='analytics')loadAn('24h');
     if(p==='learning')reqLearn();
-    if(p==='chat')filterChat();
+    if(p==='chat'&&socket)filterChat();
     if(p==='terminal')reqSys();
     if(p==='keys')loadKeys();
-    if(p==='players')searchPlayers();
+    if(p==='players'&&socket)searchPlayers();
     if(p==='messages'&&socket)socket.emit('getImpressions');
     if(p==='inventory')updateBotSelectors();
     if(p==='viewer')updateBotSelectors();
@@ -784,6 +793,10 @@ function fmtChat(m){
     const sentDot=m.sentiment==='positive'?'<span class="sentiment-dot positive"></span>':m.sentiment==='negative'?'<span class="sentiment-dot negative"></span>':'';
     const countryFlag=m.country?` <span style="font-size:9px;">${m.country==='BR'?'🇧🇷':m.country==='US'?'🇺🇸':m.country==='RU'?'🇷🇺':m.country==='ES'?'🇪🇸':''}</span>`:'';
     const userClass=isBot?'cu bot-user':'cu';
+    if(isBot&&m.message){
+        const idx=m.messageIndex!=null?m.messageIndex:(window._botMsgCount=(window._botMsgCount||0)+1);
+        return `<div class="chat-msg">${sentDot}<span class="ct">${m.time||''}</span> <span class="cs" onclick="filterBySrv('${esc(m.serverKey)}')">[${esc(m.serverKey)}${motd?' <span class="cm">'+esc(motd)+'</span>':''}]</span> <span class="${userClass}">${esc(m.username||'?')}${countryFlag}</span>: <span class="cx">[ Mensagem enviada, #${idx} ]</span></div><div class="chat-msg cm" style="padding-left:20px;font-size:11px;">#${idx} = ${esc(m.message)}</div>`;
+    }
     return`<div class="chat-msg${men?' mentioned':''}">${sentDot}<span class="ct">${m.time||''}</span> <span class="cs" onclick="filterBySrv('${esc(m.serverKey)}')">[${esc(m.serverKey)}${motd?' <span class="cm">'+esc(motd)+'</span>':''}]</span> <span class="${userClass}">${esc(m.username||'?')}${countryFlag}</span>: <span class="cx">${esc(m.message||'')}</span></div>`;
 }
 
@@ -906,7 +919,8 @@ function loadViewer(){
     const port=sel.value;
     const panel=document.getElementById('viewerPanel');
     if(!port){panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:40px;font-size:12px;">Selecione um bot</div>';return;}
-    panel.innerHTML=`<iframe class="viewer-frame" src="http://localhost:${port}" frameborder="0" allowfullscreen></iframe><div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Porta: ${port} | Use mouse pra rotacionar</div>`;
+    const host=window.location.hostname||'localhost';
+    panel.innerHTML=`<iframe class="viewer-frame" src="${window.location.protocol}//${host}:${port}" frameborder="0" allowfullscreen></iframe><div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Porta: ${port} | Use mouse pra rotacionar</div>`;
 }
 
 // ========== IMPRESSIONS ==========
@@ -951,13 +965,13 @@ function renderPeakMini(){
 // ========== LOGS ==========
 function renderLogs(){
     const p=document.getElementById('logsP'),dp=document.getElementById('dashLogs');
-    const h=allLogs.slice(-100).reverse().map(l=>`<div class="log-e"><span class="log-t">[${l.time||''}]</span> ${l.emoji||''} ${esc(l.msg||'')}</div>`).join('');
+    const h=allLogs.slice(-100).reverse().map(l=>`<div class="log-e"><span class="log-t">[${l.time||''}]</span> ${esc(l.emoji||'')} ${esc(l.msg||'')}</div>`).join('');
     p.innerHTML=h;
-    dp.innerHTML=allLogs.slice(-10).reverse().map(l=>`<div class="log-e"><span class="log-t">[${l.time||''}]</span> ${l.emoji||''} ${esc(l.msg||'')}</div>`).join('');
+    dp.innerHTML=allLogs.slice(-10).reverse().map(l=>`<div class="log-e"><span class="log-t">[${l.time||''}]</span> ${esc(l.emoji||'')} ${esc(l.msg||'')}</div>`).join('');
 }
 function appendLog(e){
     const p=document.getElementById('logsP'),dp=document.getElementById('dashLogs');
-    const h=`<div class="log-e"><span class="log-t">[${e.time||''}]</span> ${e.emoji||''} ${esc(e.msg||'')}</div>`;
+    const h=`<div class="log-e"><span class="log-t">[${e.time||''}]</span> ${esc(e.emoji||'')} ${esc(e.msg||'')}</div>`;
     p.insertAdjacentHTML('afterbegin',h);while(p.children.length>100)p.removeChild(p.lastChild);
     dp.insertAdjacentHTML('afterbegin',h);while(dp.children.length>10)dp.removeChild(dp.lastChild);
 }
@@ -976,8 +990,8 @@ function renderBl(){
     const pp=document.getElementById('blPerm'),tp=document.getElementById('blTemp');
     const items=stats.blacklistItems||[],temp=stats.tempBlacklistItems||[];
     const isA=currentRole==='admin';
-    pp.innerHTML=items.length?items.map(k=>`<div class="bl-item"><span class="bl-type perm">Perm</span><span style="flex:1;">${esc(k)}</span>${isA?`<button class="btn sm" onclick="cmd('removeBlacklist','${esc(k)}')"><i class="fas fa-times"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Vazio</div>';
-    tp.innerHTML=temp.length?temp.map(t=>`<div class="bl-item"><span class="bl-type temp">⏳${t.remainingMin||'?'}m</span><span style="flex:1;">${esc(t.key)}</span><span style="font-size:10px;color:var(--text-muted);">${esc(t.reason||'')}</span>${isA?`<button class="btn sm" onclick="cmd('removeBlacklist','${esc(t.key)}')"><i class="fas fa-times"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Vazio</div>';
+    pp.innerHTML=items.length?items.map(k=>`<div class="bl-item"><span class="bl-type perm">Perm</span><span style="flex:1;">${esc(k)}</span>${isA?`<button class="btn sm" data-action="removeBlacklist" data-key="${esc(k)}"><i class="fas fa-times"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Vazio</div>';
+    tp.innerHTML=temp.length?temp.map(t=>`<div class="bl-item"><span class="bl-type temp">⏳${t.remainingMin||'?'}m</span><span style="flex:1;">${esc(t.key)}</span><span style="font-size:10px;color:var(--text-muted);">${esc(t.reason||'')}</span>${isA?`<button class="btn sm" data-action="removeBlacklist" data-key="${esc(t.key)}"><i class="fas fa-times"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Vazio</div>';
 }
 
 // ========== LEARNING ==========
@@ -988,11 +1002,11 @@ function renderLearn(){
     document.getElementById('lAcento').textContent=(learningData.padroes?.percentAcento||0)+'%';
     document.getElementById('lAbrev').textContent=(learningData.padroes?.percentAbreviacao||0)+'%';
     const isA=currentRole==='admin';
-    document.getElementById('giriasC').innerHTML=(learningData.topGirias||[]).map(([w,c])=>`<span class="word-tag">${esc(w)} <span class="cnt">(${c})</span>${isA?`<span class="word-del" onclick="removeLearnItem('giria','${esc(w)}')" title="Remover">×</span>`:''}</span>`).join('');
-    document.getElementById('exprC').innerHTML=(learningData.topExpressoes||[]).map(e=>`<span class="word-tag">${esc(e.texto)} <span class="cnt">(${e.count})</span>${isA?`<span class="word-del" onclick="removeLearnItem('expressao','${esc(e.texto)}')" title="Remover">×</span>`:''}</span>`).join('');
+    document.getElementById('giriasC').innerHTML=(learningData.topGirias||[]).map(([w,c])=>`<span class="word-tag">${esc(w)} <span class="cnt">(${c})</span>${isA?`<span class="word-del" data-action="removeLearnItem" data-learn-type="giria" data-learn-value="${esc(w)}" title="Remover">×</span>`:''}</span>`).join('');
+    document.getElementById('exprC').innerHTML=(learningData.topExpressoes||[]).map(e=>`<span class="word-tag">${esc(e.texto)} <span class="cnt">(${e.count})</span>${isA?`<span class="word-del" data-action="removeLearnItem" data-learn-type="expressao" data-learn-value="${esc(e.texto)}" title="Remover">×</span>`:''}</span>`).join('');
     const fp=document.getElementById('frasesP');
     const fr=learningData.topFrases||[];
-    fp.innerHTML=fr.length?fr.map(f=>`<div class="msg-item"><span class="msg-txt">"${esc(f.texto)}"</span><span style="font-size:10px;color:var(--text-muted);">×${f.count}</span>${isA?`<button class="btn sm danger" onclick="removeLearnItem('frase','${esc(f.texto)}')"><i class="fas fa-trash"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma</div>';
+    fp.innerHTML=fr.length?fr.map(f=>`<div class="msg-item"><span class="msg-txt">"${esc(f.texto)}"</span><span style="font-size:10px;color:var(--text-muted);">×${f.count}</span>${isA?`<button class="btn sm danger" data-action="removeLearnItem" data-learn-type="frase" data-learn-value="${esc(f.texto)}"><i class="fas fa-trash"></i></button>`:''}</div>`).join(''):'<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma</div>';
 }
 function reqLearn(){if(socket)socket.emit('getLearningData');}
 function exportLearn(){if(socket)socket.emit('exportLearningDB');}
@@ -1100,7 +1114,7 @@ function dlChat(){if(socket)socket.emit('downloadChat');}
 function esc(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function cleanMotd(m){if(!m)return'';if(typeof m==='object'){if(m.text!==undefined){let r=cleanMotd(m.text);if(m.extra)r+=m.extra.map(e=>cleanMotd(e)).join('');return r;}return m.translate||'';}return String(m).replace(/§[0-9a-fk-or]/gi,'').trim();}
 function toast(m){const c=document.getElementById('toastC');const t=document.createElement('div');t.className='toast';t.textContent=m;c.appendChild(t);setTimeout(()=>t.remove(),4000);}
-function dlJSON(d,f){const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);toast(`📥 ${f}`);}
+function dlJSON(d,f){const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=f;try{document.body.appendChild(a);a.click();}finally{document.body.removeChild(a);URL.revokeObjectURL(u);}toast(`📥 ${f}`);}
 
 // ========== KEYBOARD ==========
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('loginOverlay').classList.contains('hidden'))doLogin();});
@@ -1108,9 +1122,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElement
 // ========== PERIODIC ==========
 setInterval(()=>{
     if(socket?.connected){socket.emit('getTopServerChat');}
-    document.getElementById('sMsgs').textContent=allChat.length;
+    const el=document.getElementById('sMsgs');if(el)el.textContent=allChat.length;
 },15000);
-setInterval(()=>{if(currentPage==='keys'&&currentRole==='admin')loadKeys();},30000);
+// loadKeys interval é criado só após login como admin (e limpo no logout)
+
+// ========== DELEGATED CLICKS (evita XSS em onclick) ==========
+document.addEventListener('click',e=>{
+    const bl=e.target.closest('[data-action="removeBlacklist"]');
+    if(bl){const k=bl.getAttribute('data-key');if(k!=null)cmd('removeBlacklist',k);return;}
+    const learn=e.target.closest('[data-action="removeLearnItem"]');
+    if(learn){const t=learn.getAttribute('data-learn-type'),v=learn.getAttribute('data-learn-value');if(t&&v!=null)removeLearnItem(t,v);}
+});
 </script>
 </body>
 </html>
